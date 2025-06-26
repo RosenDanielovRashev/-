@@ -205,7 +205,7 @@ if mode == "Ed / Ei":
                         left: 50%;
                         transform: translate(-50%, -50%);
                         font-weight: bold;
-                        font-size: 20px;
+                        font-size: 18px;
                         color: black;
                     ">
                         Ei = {Ei} MPa
@@ -215,7 +215,7 @@ if mode == "Ed / Ei":
                         position: absolute;
                         top: -20px;
                         right: 10px;
-                        font-size: 14px;
+                        font-size: 16px;
                         color: darkblue;
                         font-weight: bold;
                     ">
