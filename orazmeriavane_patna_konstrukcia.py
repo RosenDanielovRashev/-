@@ -264,6 +264,6 @@ else:
             fig.update_layout(
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                height=700
+                height=500
             )
             st.plotly_chart(fig, use_container_width=True)
