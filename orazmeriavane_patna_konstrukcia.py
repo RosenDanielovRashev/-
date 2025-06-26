@@ -184,38 +184,9 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # --- Текст със стойностите ---
-            st.markdown(f"""
-            ### Обобщени стойности за пласт 1:
-            - Ee = **{Ee:.2f} MPa**  
-            - Ei = **{Ei:.2f} MPa**  
-            - h = **{h:.2f} cm**  
-            """)
-
-            # --- HTML за правоъгълника с оформленията ---
-            st.markdown(f"""
-            <div style="
-                border: 2px solid black;
-                background-color: white;
-                width: 500px;
-                height: 150px;
-                position: relative;
-                margin-top: 20px;
-                margin-bottom: 40px;
-                font-family: Arial, sans-serif;
-            ">
-                <!-- Ei посредата -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 24px;
-                    font-weight: bold;
-                ">
-                    Ei = {Ei:.2f} MPa
-                </div>
-
+            # Показваме правоъгълник с параметрите под графиката
+            html_code = f"""
+            <div style="position: relative; width: 300px; height: 150px; border: 2px solid black; background-color: white; margin: 20px auto;">
                 <!-- h от ляво (центрирано вертикално) -->
                 <div style="
                     position: absolute;
@@ -238,8 +209,22 @@ if mode == "Ed / Ei":
                 ">
                     Ee = {Ee:.2f} MPa
                 </div>
+
+                <!-- Ei по средата -->
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 24px;
+                    font-weight: bold;
+                ">
+                    Ei = {Ei:.2f} MPa
+                </div>
             </div>
-            """, unsafe_allow_html=True)
+            """
+
+            st.markdown(html_code, unsafe_allow_html=True)
 
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
