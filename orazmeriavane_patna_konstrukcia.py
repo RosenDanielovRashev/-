@@ -29,7 +29,6 @@ def load_data():
 
 data = load_data()
 
-# --- Инициализация на сесийни променливи ---
 if "num_layers" not in st.session_state:
     st.session_state.num_layers = 1
 if "current_layer" not in st.session_state:
@@ -39,24 +38,19 @@ if "layers_data" not in st.session_state:
 
 st.title("Оразмеряване на пътна конструкция с няколко пластове")
 
-# Въвеждане на броя пластове (само при промяна през бутон)
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=st.session_state.num_layers)
 if num_layers != st.session_state.num_layers:
     st.session_state.num_layers = num_layers
-    # Актуализираме списъка с данни за пластовете
     if len(st.session_state.layers_data) < num_layers:
         st.session_state.layers_data += [{} for _ in range(num_layers - len(st.session_state.layers_data))]
     elif len(st.session_state.layers_data) > num_layers:
         st.session_state.layers_data = st.session_state.layers_data[:num_layers]
-    # Ако текущият пласт надхвърля новия брой, коригираме
     if st.session_state.current_layer >= num_layers:
         st.session_state.current_layer = num_layers - 1
 
-# Избор на D и axle load (за всички пластове)
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34])
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
 
-# Навигация между пластовете
 col1, col2, col3 = st.columns([1, 6, 1])
 with col1:
     if st.button("⬅️ Предишен пласт"):
@@ -70,7 +64,6 @@ with col3:
 layer_idx = st.session_state.current_layer
 st.subheader(f"Въвеждане на данни за пласт {layer_idx + 1}")
 
-# Вземаме съхранените стойности, ако има такива
 layer_data = st.session_state.layers_data[layer_idx]
 
 Ee = st.number_input("Ee (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ee", 2700.0), key=f"Ee_{layer_idx}")
@@ -90,8 +83,6 @@ else:
         st.write(f"Дебелина h (cm): {h:.2f}")
     else:
         st.write("Дебелина h (cm): -")
-
-# Функции compute_Ed и compute_h от твоя код
 
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
@@ -150,7 +141,6 @@ def compute_h(Ed, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
-# Изчисления и визуализация по режим
 if mode == "Ed / Ei":
     if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
@@ -162,7 +152,6 @@ if mode == "Ed / Ei":
             st.success(f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \nEd = Ei * {EdEi_point:.3f} = {result:.2f} MPa")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
-            # Запазваме резултата в session_state
             st.session_state.layers_data[layer_idx].update({
                 "Ee": Ee,
                 "Ei": Ei,
@@ -172,7 +161,6 @@ if mode == "Ed / Ei":
                 "mode": mode
             })
 
-            # Плот
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
@@ -215,7 +203,6 @@ elif mode == "h / D":
                 "mode": mode
             })
 
-            # Плот
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
@@ -240,18 +227,15 @@ elif mode == "h / D":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-# Показване на въведените пластове като графични правоъгълници
 st.markdown("---")
 st.subheader("Въведени пластове")
 
 for i, layer in enumerate(st.session_state.layers_data):
     Ee = layer.get('Ee', '-')
     Ei = layer.get('Ei', '-')
+    Ed = layer.get('Ed', '-')  # Ново
     h_val = layer.get('h', '-')
-    if isinstance(h_val, float):
-        h_result = h_val
-    else:
-        h_result = 0.0  # Ако няма стойност, показваме 0 или '-'
+    h_result = h_val if isinstance(h_val, float) else 0.0
 
     st.markdown(f"<b>Пласт {i + 1}</b>", unsafe_allow_html=True)
     st.markdown(
@@ -267,7 +251,7 @@ for i, layer in enumerate(st.session_state.layers_data):
             padding: 10px;
             font-family: Arial, sans-serif;
         ">
-            <!-- Ei в средата -->
+            <!-- Ei в центъра -->
             <div style="
                 position: absolute;
                 top: 50%;
@@ -279,7 +263,7 @@ for i, layer in enumerate(st.session_state.layers_data):
             ">
                 Ei = {Ei} MPa
             </div>
-            <!-- Ee в горния десен ъгъл -->
+            <!-- Ee горе вдясно -->
             <div style="
                 position: absolute;
                 top: -20px;
@@ -290,11 +274,22 @@ for i, layer in enumerate(st.session_state.layers_data):
             ">
                 Ee = {Ee} MPa
             </div>
-            <!-- h вдясно центрирано вертикално -->
+            <!-- Ed долу вдясно -->
+            <div style="
+                position: absolute;
+                bottom: -20px;
+                right: 10px;
+                font-size: 14px;
+                color: green;
+                font-weight: bold;
+            ">
+                Ed = {Ed} MPa
+            </div>
+            <!-- h вляво -->
             <div style="
                 position: absolute;
                 top: 50%;
-                leftt: 8px;
+                left: 8px;
                 transform: translateY(-50%);
                 font-size: 14px;
                 color: black;
