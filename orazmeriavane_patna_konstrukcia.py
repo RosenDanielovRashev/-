@@ -184,13 +184,6 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # Формули
-            st.markdown("---")
-            st.write("### Формули за изчисляване на Ed:")
-            st.latex(r"E_d = E_i \times \left(\frac{E_d}{E_i}\right)")
-            st.latex(r"\frac{E_d}{E_i} = \text{интерполирана стойност от номограмата}")
-            st.latex(r"h/D = \frac{h}{D}, \quad Ee/Ei = \frac{E_e}{E_i}")
-
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
     EeEi = Ee / Ei
@@ -249,5 +242,3 @@ else:
                 height=700
             )
             st.plotly_chart(fig, use_container_width=True)
-
-        
