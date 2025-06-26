@@ -3,7 +3,21 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")  # активира широк режим
+
+# задаваш конкретна максимална ширина на контейнера
+st.markdown(
+    """
+    <style>
+    .block-container {
+        max-width: 1400px;
+        padding-left: 2rem;
+        padding-right: 2rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 @st.cache_data
 def load_data():
