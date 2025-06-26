@@ -267,3 +267,59 @@ else:
                 height=200
             )
             st.plotly_chart(fig, use_container_width=True)
+
+# ... твоят код за изчисления и графика ...
+st.plotly_chart(fig, use_container_width=True)
+
+html_code = f"""
+<div style="
+    position: relative;
+    width: 600px;
+    height: 120px;
+    border: 2px solid black;
+    background-color: white;
+    margin-top: 20px;
+    font-family: Arial, sans-serif;
+">
+    <!-- h от ляво (центрирано вертикално) -->
+    <div style="
+        position: absolute;
+        top: 50%;
+        left: 10px;
+        transform: translateY(-50%);
+        font-size: 20px;
+        font-weight: normal;
+        writing-mode: vertical-rl;
+        text-orientation: mixed;
+    ">
+        h = {h:.2f} cm
+    </div>
+
+    <!-- Ei по средата (хоризонтално и вертикално) -->
+    <div style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+    ">
+        Ei = {Ei:.2f} MPa
+    </div>
+
+    <!-- Ee в горния десен ъгъл -->
+    <div style="
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        font-size: 20px;
+        font-weight: normal;
+        white-space: nowrap;
+    ">
+        Ee = {Ee:.2f} MPa
+    </div>
+</div>
+"""
+
+st.markdown(html_code, unsafe_allow_html=True)
