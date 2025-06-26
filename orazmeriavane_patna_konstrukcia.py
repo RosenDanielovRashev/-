@@ -281,7 +281,10 @@ else:
                     name="Интерполационна линия"
                 ))
 
-            # Добавяне на правоъгълник и текст с параметрите
+           
+            st.plotly_chart(fig, use_container_width=True)
+
+ # Добавяне на правоъгълник и текст с параметрите
             fig.update_layout(
                 shapes=[
                     dict(
@@ -325,4 +328,3 @@ else:
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
             )
-            st.plotly_chart(fig, use_container_width=True)
