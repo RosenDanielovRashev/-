@@ -310,9 +310,9 @@ else:
                 <!-- Ee отгоре вдясно -->
                 <div style="
                     position: absolute;
-                    top: -70px;
+                    top: 10px;
                     right: 10px;
-                    font-size: 20px;
+                    font-size: 10px;
                     font-weight: normal;
                 ">
                     Ee = {Ee:.2f} MPa
