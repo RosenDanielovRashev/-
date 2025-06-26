@@ -18,8 +18,6 @@ data = load_data()
 
 st.title("Оразмеряване на пътна конструкция")
 
-d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34])
-axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=1)
 
 mode = st.radio("Изберете параметър за отчитане:", ("Ed / Ei", "h / D"))
@@ -87,13 +85,12 @@ for layer_idx in range(1, num_layers + 1):
     Ee = st.number_input(f"Ee (MPa) за пласт {layer_idx}:", min_value=0.1, step=0.1, value=2700.0, key=f"Ee_{layer_idx}")
     Ei = st.number_input(f"Ei (MPa) за пласт {layer_idx}:", min_value=0.1, step=0.1, value=3000.0, key=f"Ei_{layer_idx}")
 
-    st.markdown(f"**Стойност D:** {d_value} cm")
-
     if mode == "Ed / Ei":
+        D = st.number_input(f"D (cm) за пласт {layer_idx}:", min_value=0.1, step=0.1, value=32.04, key=f"D_{layer_idx}")
         h = st.number_input(f"Дебелина h (cm) за пласт {layer_idx}:", min_value=0.1, step=0.1, value=4.0, key=f"h_{layer_idx}")
 
         if st.button(f"Изчисли Ed за пласт {layer_idx}", key=f"btn_Ed_{layer_idx}"):
-            result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
+            result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, D, Ee, Ei)
 
             if result is None:
                 st.warning("❗ Точката е извън обхвата на наличните изолинии.")
@@ -135,10 +132,11 @@ for layer_idx in range(1, num_layers + 1):
                 st.plotly_chart(fig, use_container_width=True)
 
     else:  # mode == "h / D"
+        D = st.number_input(f"D (cm) за пласт {layer_idx}:", min_value=0.1, step=0.1, value=32.04, key=f"D_{layer_idx}")
         Ed = st.number_input(f"Ed (MPa) за пласт {layer_idx}:", min_value=0.1, step=0.1, value=50.0, key=f"Ed_{layer_idx}")
 
         if st.button(f"Изчисли h за пласт {layer_idx}", key=f"btn_h_{layer_idx}"):
-            h_result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
+            h_result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, D, Ee, Ei)
 
             if h_result is None:
                 st.warning("❗ Неуспешно намиране на h — точката е извън обхвата.")
