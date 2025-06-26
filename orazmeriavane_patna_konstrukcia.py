@@ -1,10 +1,11 @@
-import streamlit as st
+import streamlit as st 
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
 st.set_page_config(layout="wide")
 
+# Основен стил за контейнера
 st.markdown(
     """
     <style>
@@ -12,6 +13,30 @@ st.markdown(
         max-width: 1000px;
         padding-left: 2rem;
         padding-right: 2rem;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Стил за картите с пластове
+st.markdown(
+    """
+    <style>
+    .layer-card {
+        border: 2px solid #4CAF50;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 5px;
+        background-color: #f0fff0;
+        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+        width: 250px;
+    }
+    .layer-title {
+        font-weight: bold;
+        font-size: 18px;
+        margin-bottom: 10px;
+        color: #2e7d32;
     }
     </style>
     """,
@@ -240,9 +265,25 @@ elif mode == "h / D":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-# Показване на въведените пластове
+# Показване на въведените пластове графично
 st.markdown("---")
 st.subheader("Въведени пластове")
 
+cols = st.columns(min(4, st.session_state.num_layers))  # максимум 4 карти в ред
+
 for i, layer in enumerate(st.session_state.layers_data):
-    st.write(f"Пласт {i+1}: Ee={layer.get('Ee', '-')}, Ei={layer.get('Ei', '-')}, h={layer.get('h', '-')}, Ed={layer.get('Ed', '-')}, режим: {layer.get('mode', '-')}")
+    col = cols[i % 4]
+    with col:
+        st.markdown(
+            f"""
+            <div class="layer-card">
+                <div class="layer-title">Пласт {i+1}</div>
+                <div>Ee: {layer.get('Ee', '-')}</div>
+                <div>Ei: {layer.get('Ei', '-')}</div>
+                <div>h: {layer.get('h', '-')}</div>
+                <div>Ed: {layer.get('Ed', '-')}</div>
+                <div>Режим: {layer.get('mode', '-')}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
