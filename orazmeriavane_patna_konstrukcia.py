@@ -225,7 +225,7 @@ if mode == "Ed / Ei":
                     <div style="
                         position: absolute;
                         top: 50%;
-                        right: 100px;
+                        right: 400px;
                         transform: translateY(-50%);
                         font-size: 16px;
                         color: black;
