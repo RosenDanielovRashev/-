@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
+st.set_page_config(layout="wide")
+
 @st.cache_data
 def load_data():
     # Заменете пътя с вашия CSV файл
