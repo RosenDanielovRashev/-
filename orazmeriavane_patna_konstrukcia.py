@@ -5,7 +5,6 @@ import plotly.graph_objs as go
 
 st.set_page_config(layout="wide")
 
-# Стил за по-широк контейнер
 st.markdown(
     """
     <style>
@@ -40,23 +39,20 @@ if "layers_data" not in st.session_state:
 
 st.title("Оразмеряване на пътна конструкция с няколко пластове")
 
-# Въвеждане на броя пластове (само при промяна)
-num_layers = st.number_input(
-    "Въведете брой пластове:",
-    min_value=1,
-    step=1,
-    value=st.session_state.num_layers
-)
+# Въвеждане на броя пластове (само при промяна през бутон)
+num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=st.session_state.num_layers)
 if num_layers != st.session_state.num_layers:
     st.session_state.num_layers = num_layers
+    # Актуализираме списъка с данни за пластовете
     if len(st.session_state.layers_data) < num_layers:
         st.session_state.layers_data += [{} for _ in range(num_layers - len(st.session_state.layers_data))]
     elif len(st.session_state.layers_data) > num_layers:
         st.session_state.layers_data = st.session_state.layers_data[:num_layers]
+    # Ако текущият пласт надхвърля новия брой, коригираме
     if st.session_state.current_layer >= num_layers:
         st.session_state.current_layer = num_layers - 1
 
-# Избор на D и осов товар
+# Избор на D и axle load (за всички пластове)
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34])
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
 
@@ -74,12 +70,11 @@ with col3:
 layer_idx = st.session_state.current_layer
 st.subheader(f"Въвеждане на данни за пласт {layer_idx + 1}")
 
-# Зареждаме вече въведените данни за този пласт
+# Вземаме съхранените стойности, ако има такива
 layer_data = st.session_state.layers_data[layer_idx]
 
 Ee = st.number_input("Ee (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ee", 2700.0), key=f"Ee_{layer_idx}")
 Ei = st.number_input("Ei (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ei", 3000.0), key=f"Ei_{layer_idx}")
-h = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
 
 mode = st.radio(
     "Изберете параметър за отчитане:",
@@ -87,7 +82,17 @@ mode = st.radio(
     key=f"mode_{layer_idx}"
 )
 
-# Функция за изчисляване на Ed
+if mode == "Ed / Ei":
+    h = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
+else:
+    h = layer_data.get("h", None)
+    if h is not None:
+        st.write(f"Дебелина h (cm): {h:.2f}")
+    else:
+        st.write("Дебелина h (cm): -")
+
+# Функции compute_Ed и compute_h от твоя код
+
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
     EeEi = Ee / Ei
@@ -116,7 +121,6 @@ def compute_Ed(h, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
-# Функция за изчисляване на h
 def compute_h(Ed, D, Ee, Ei):
     EeEi = Ee / Ei
     EdEi = Ed / Ei
@@ -158,6 +162,7 @@ if mode == "Ed / Ei":
             st.success(f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \nEd = Ei * {EdEi_point:.3f} = {result:.2f} MPa")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
+            # Запазваме резултата в session_state
             st.session_state.layers_data[layer_idx].update({
                 "Ee": Ee,
                 "Ei": Ei,
@@ -167,6 +172,7 @@ if mode == "Ed / Ei":
                 "mode": mode
             })
 
+            # Плот
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
@@ -209,6 +215,7 @@ elif mode == "h / D":
                 "mode": mode
             })
 
+            # Плот
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
@@ -236,6 +243,6 @@ elif mode == "h / D":
 # Показване на въведените пластове
 st.markdown("---")
 st.subheader("Въведени пластове")
+
 for i, layer in enumerate(st.session_state.layers_data):
     st.write(f"Пласт {i+1}: Ee={layer.get('Ee', '-')}, Ei={layer.get('Ei', '-')}, h={layer.get('h', '-')}, Ed={layer.get('Ed', '-')}, режим: {layer.get('mode', '-')}")
-
