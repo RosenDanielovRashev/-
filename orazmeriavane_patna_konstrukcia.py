@@ -35,7 +35,9 @@ data = load_data()
 st.title("Оразмеряване на пътна конструкция")
 
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34])
+
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
+
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=1)
 
 st.subheader("Въведете данни за оразмеряване - Пласт 1")
@@ -180,34 +182,46 @@ if mode == "Ed / Ei":
                 yaxis_title="Ed / Ei",
                 height=700
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="main_plot")
 
-            # Тук добавяме правоъгълника с параметрите под графиката
-            html_box = f"""
-            <div style="
-                border: 2px solid black; 
-                background-color: white; 
-                width: 600px; 
-                height: 120px; 
-                padding: 10px; 
-                display: flex; 
-                justify-content: space-between; 
-                align-items: center;
-                font-family: Arial, sans-serif;
-                margin-top: 20px;
-            ">
-                <div style="font-size: 22px; font-weight: bold; text-align: center; flex: 1; border-right: 1px solid black;">
-                    Ei<br>{Ei:.2f} MPa
+            # Тук слагаме блока с параметрите под графиката
+            html_code = f"""
+            <div style="border: 1.5px solid black; background-color: white; height: 100px; position: relative; margin-top: 20px;">
+                <!-- Ei по средата -->
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 24px;
+                    font-weight: bold;
+                ">
+                    Ei = {Ei:.2f} MPa
                 </div>
-                <div style="font-size: 22px; font-weight: bold; text-align: center; flex: 1; border-right: 1px solid black;">
-                    h<br>{h:.2f} cm
+                <!-- h от ляво (центрирано вертикално) -->
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 10px;
+                    transform: translateY(-50%);
+                    font-size: 20px;
+                    font-weight: normal;
+                ">
+                    h = {h:.2f} cm
                 </div>
-                <div style="font-size: 22px; font-weight: bold; text-align: right; flex: 1; padding-right: 10px;">
-                    Ee<br>{Ee:.2f} MPa
+                <!-- Ee отгоре вдясно -->
+                <div style="
+                    position: absolute;
+                    top: 5px;
+                    right: 10px;
+                    font-size: 20px;
+                    font-weight: normal;
+                ">
+                    Ee = {Ee:.2f} MPa
                 </div>
             </div>
             """
-            st.markdown(html_box, unsafe_allow_html=True)
+            st.markdown(html_code, unsafe_allow_html=True)
 
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
@@ -264,62 +278,45 @@ else:
             fig.update_layout(
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                height=200
+                height=700
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, use_container_width=True, key="main_plot_h")
 
-# ... твоят код за изчисления и графика ...
-st.plotly_chart(fig, use_container_width=True)
-
-html_code = f"""
-<div style="
-    position: relative;
-    width: 600px;
-    height: 120px;
-    border: 2px solid black;
-    background-color: white;
-    margin-top: 20px;
-    font-family: Arial, sans-serif;
-">
-    <!-- h от ляво (центрирано вертикално) -->
-    <div style="
-        position: absolute;
-        top: 50%;
-        left: 10px;
-        transform: translateY(-50%);
-        font-size: 20px;
-        font-weight: normal;
-        writing-mode: vertical-rl;
-        text-orientation: mixed;
-    ">
-        h = {h:.2f} cm
-    </div>
-
-    <!-- Ei по средата (хоризонтално и вертикално) -->
-    <div style="
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 24px;
-        font-weight: bold;
-        text-align: center;
-    ">
-        Ei = {Ei:.2f} MPa
-    </div>
-
-    <!-- Ee в горния десен ъгъл -->
-    <div style="
-        position: absolute;
-        top: 5px;
-        right: 10px;
-        font-size: 20px;
-        font-weight: normal;
-        white-space: nowrap;
-    ">
-        Ee = {Ee:.2f} MPa
-    </div>
-</div>
-"""
-
-st.markdown(html_code, unsafe_allow_html=True)
+            # Блок с параметрите под графиката
+            html_code = f"""
+            <div style="border: 1.5px solid black; background-color: white; height: 100px; position: relative; margin-top: 20px;">
+                <!-- Ei по средата -->
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 24px;
+                    font-weight: bold;
+                ">
+                    Ei = {Ei:.2f} MPa
+                </div>
+                <!-- h от ляво (центрирано вертикално) -->
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 10px;
+                    transform: translateY(-50%);
+                    font-size: 20px;
+                    font-weight: normal;
+                ">
+                    h = {h_result:.2f} cm
+                </div>
+                <!-- Ee отгоре вдясно -->
+                <div style="
+                    position: absolute;
+                    top: 5px;
+                    right: 10px;
+                    font-size: 20px;
+                    font-weight: normal;
+                ">
+                    Ee = {Ee:.2f} MPa
+                </div>
+            </div>
+            """
+            st.markdown(html_code, unsafe_allow_html=True)
