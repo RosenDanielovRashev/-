@@ -274,7 +274,7 @@ for i, layer in enumerate(st.session_state.layers_data):
                 left: 50%;
                 transform: translate(-50%, -50%);
                 font-weight: bold;
-                font-size: 20px;
+                font-size: 18px;
                 color: black;
             ">
                 Ei = {Ei} MPa
@@ -282,7 +282,7 @@ for i, layer in enumerate(st.session_state.layers_data):
             <!-- Ee в горния десен ъгъл -->
             <div style="
                 position: absolute;
-                top: 5px;
+                top: -20px;
                 right: 10px;
                 font-size: 14px;
                 color: darkblue;
@@ -294,7 +294,7 @@ for i, layer in enumerate(st.session_state.layers_data):
             <div style="
                 position: absolute;
                 top: 50%;
-                right: -60px;
+                leftt: 8px;
                 transform: translateY(-50%);
                 font-size: 14px;
                 color: black;
