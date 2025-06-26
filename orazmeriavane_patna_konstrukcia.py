@@ -310,7 +310,7 @@ else:
                 <!-- Ee отгоре вдясно -->
                 <div style="
                     position: absolute;
-                    top: 10px;
+                    top: -70px;
                     right: 10px;
                     font-size: 20px;
                     font-weight: normal;
