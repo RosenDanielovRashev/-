@@ -213,7 +213,7 @@ if mode == "Ed / Ei":
                     <!-- Ee в горния десен ъгъл -->
                     <div style="
                         position: absolute;
-                        top: 10px;
+                        top: -50px;
                         right: 10px;
                         font-size: 14px;
                         color: darkblue;
