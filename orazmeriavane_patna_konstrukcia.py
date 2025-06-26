@@ -285,6 +285,26 @@ else:
             st.success(f"✅ Изчислено: h = {h_result:.2f} cm (h / D = {hD_point:.3f})")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
+ # Тук добавяш текста преди "Пласт 1"
+            st.markdown(
+                """
+                <div style="
+                    background-color:#e0f7fa;
+                    padding: 15px;
+                    border-left: 6px solid #00796b;
+                    margin-bottom: 15px;
+                    font-weight: bold;
+                    font-size: 16px;
+                ">
+                Текст, който се показва само в режим Ed / Ei, преди Пласт 1
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            # Ако имаш някакъв заглавен текст за пласт 1, примерно:
+            st.markdown("### Пласт 1")
+            
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
