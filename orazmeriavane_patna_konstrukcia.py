@@ -215,7 +215,7 @@ if mode == "Ed / Ei":
                         position: absolute;
                         top: -20px;
                         right: 10px;
-                        font-size: 16px;
+                        font-size: 14px;
                         color: darkblue;
                         font-weight: bold;
                     ">
@@ -227,7 +227,7 @@ if mode == "Ed / Ei":
                         top: 50%;
                         left: 8px;
                         transform: translateY(-50%);
-                        font-size: 16px;
+                        font-size: 14px;
                         color: black;
                         font-weight: bold;
                     ">
