@@ -3,9 +3,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
-st.set_page_config(layout="wide")  # активира широк режим
+st.set_page_config(layout="wide")
 
-# задаваш конкретна максимална ширина на контейнера
 st.markdown(
     """
     <style>
@@ -21,7 +20,6 @@ st.markdown(
 
 @st.cache_data
 def load_data():
-    # Заменете пътя с вашия CSV файл
     df = pd.read_csv("combined_data.csv")
     df = df.rename(columns={
         "E1_over_E2": "Ed_over_Ei",
@@ -31,25 +29,19 @@ def load_data():
 
 data = load_data()
 
-# --- Въвеждане на характеристики ---
 st.title("Оразмеряване на пътна конструкция")
 
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34])
-
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
-
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=1)
 
 st.subheader("Въведете данни за оразмеряване - Пласт 1")
-
-# Показваме избраната стойност D за пласт 1 (не като входно поле)
 st.markdown(f"**Стойност D за пласт 1:** {d_value} cm")
 
 Ee = st.number_input("Въведете стойност за Ee (MPa):", min_value=0.1, step=0.1, value=2700.0)
 Ei = st.number_input("Въведете стойност за Ei (MPa):", min_value=0.1, step=0.1, value=3000.0)
 h = st.number_input("Въведете дебелина h (cm):", min_value=0.1, step=0.1, value=4.0)
 
-# Функции за изчисление (от твоя код с номограмата)
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
     EeEi = Ee / Ei
@@ -107,8 +99,6 @@ def compute_h(Ed, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
-
-# Избор на режим за изчисление
 mode = st.radio(
     "Изберете параметър за отчитане:",
     ("Ed / Ei", "h / D")
@@ -182,43 +172,42 @@ if mode == "Ed / Ei":
                 yaxis_title="Ed / Ei",
                 height=700
             )
-            st.plotly_chart(fig, use_container_width=True, key="main_plot")
+            st.plotly_chart(fig, use_container_width=True)
 
-            # Тук слагаме блока с параметрите под графиката
+            # Тук добавяме кода за показване на пласт с форматиран текст в правоъгълник
             html_code = f"""
-            <div style="border: 1.5px solid black; background-color: white; height: 100px; position: relative; margin-top: 20px;">
-                <!-- Ei по средата -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 24px;
-                    font-weight: bold;
-                ">
-                    Ei = {Ei:.2f} MPa
-                </div>
-                <!-- h от ляво (центрирано вертикално) -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 10px;
-                    transform: translateY(-50%);
-                    font-size: 20px;
-                    font-weight: normal;
-                ">
-                    h = {h:.2f} cm
-                </div>
-                <!-- Ee отгоре вдясно -->
-                <div style="
-                    position: absolute;
-                    top: 5px;
-                    right: 10px;
-                    font-size: 20px;
-                    font-weight: normal;
-                ">
-                    Ee = {Ee:.2f} MPa
-                </div>
+            <style>
+            .custom-box {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border: 1.5px solid black;
+                padding: 15px 30px;
+                background-color: white;
+                height: 100px;
+                max-width: 1000px;
+                margin-top: 20px;
+                font-family: Arial, sans-serif;
+            }}
+            .custom-box .left {{
+                font-size: 22px;
+            }}
+            .custom-box .middle {{
+                font-size: 28px;
+                font-weight: bold;
+                text-align: center;
+                flex-grow: 1;
+            }}
+            .custom-box .right {{
+                font-size: 22px;
+                text-align: right;
+            }}
+            </style>
+
+            <div class="custom-box">
+                <div class="left">h = {h:.2f} cm</div>
+                <div class="middle">Ei = {Ei:.2f} MPa</div>
+                <div class="right">Ee = {Ee:.2f} MPa</div>
             </div>
             """
             st.markdown(html_code, unsafe_allow_html=True)
@@ -280,43 +269,42 @@ else:
                 yaxis_title="Ed / Ei",
                 height=700
             )
-            st.plotly_chart(fig, use_container_width=True, key="main_plot_h")
+            st.plotly_chart(fig, use_container_width=True)
 
-            # Блок с параметрите под графиката
+            # Показване на правоъгълник със стойности под графиката
             html_code = f"""
-            <div style="border: 1.5px solid black; background-color: white; height: 100px; position: relative; margin-top: 20px;">
-                <!-- Ei по средата -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-80%, -50%);
-                    font-size: 20px;
-                    font-weight: normal;
-                ">
-                    Ei = {Ei:.2f} MPa
-                </div>
-                <!-- h от ляво (центрирано вертикално) -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 10px;
-                    transform: translateY(-50%);
-                    font-size: 20px;
-                    font-weight: normal;
-                ">
-                    h = {h_result:.2f} cm
-                </div>
-                <!-- Ee отгоре вдясно -->
-                <div style="
-                    position: absolute;
-                    top: 10px;
-                    right: 10px;
-                    font-size: 10px;
-                    font-weight: normal;
-                ">
-                    Ee = {Ee:.2f} MPa
-                </div>
+            <style>
+            .custom-box {{
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                border: 1.5px solid black;
+                padding: 15px 30px;
+                background-color: white;
+                height: 100px;
+                max-width: 1000px;
+                margin-top: 20px;
+                font-family: Arial, sans-serif;
+            }}
+            .custom-box .left {{
+                font-size: 22px;
+            }}
+            .custom-box .middle {{
+                font-size: 28px;
+                font-weight: bold;
+                text-align: center;
+                flex-grow: 1;
+            }}
+            .custom-box .right {{
+                font-size: 22px;
+                text-align: right;
+            }}
+            </style>
+
+            <div class="custom-box">
+                <div class="left">h = {h_result:.2f} cm</div>
+                <div class="middle">Ei = {Ei:.2f} MPa</div>
+                <div class="right">Ee = {Ee:.2f} MPa</div>
             </div>
             """
             st.markdown(html_code, unsafe_allow_html=True)
