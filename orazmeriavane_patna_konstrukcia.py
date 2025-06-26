@@ -174,44 +174,6 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # Тук добавяме кода за показване на пласт с форматиран текст в правоъгълник
-            html_code = f"""
-            <style>
-            .custom-box {{
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                border: 1.5px solid black;
-                padding: 15px 30px;
-                background-color: white;
-                height: 100px;
-                max-width: 1000px;
-                margin-top: 20px;
-                font-family: Arial, sans-serif;
-            }}
-            .custom-box .left {{
-                font-size: 22px;
-            }}
-            .custom-box .middle {{
-                font-size: 28px;
-                font-weight: bold;
-                text-align: center;
-                flex-grow: 1;
-            }}
-            .custom-box .right {{
-                font-size: 22px;
-                text-align: right;
-            }}
-            </style>
-
-            <div class="custom-box">
-                <div class="left">h = {h:.2f} cm</div>
-                <div class="middle">Ei = {Ei:.2f} MPa</div>
-                <div class="right">Ee = {Ee:.2f} MPa</div>
-            </div>
-            """
-            st.markdown(html_code, unsafe_allow_html=True)
-
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
     EeEi = Ee / Ei
@@ -270,41 +232,3 @@ else:
                 height=700
             )
             st.plotly_chart(fig, use_container_width=True)
-
-            # Показване на правоъгълник със стойности под графиката
-            html_code = f"""
-            <style>
-            .custom-box {{
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                border: 1.5px solid black;
-                padding: 15px 30px;
-                background-color: white;
-                height: 100px;
-                max-width: 1000px;
-                margin-top: 20px;
-                font-family: Arial, sans-serif;
-            }}
-            .custom-box .left {{
-                font-size: 22px;
-            }}
-            .custom-box .middle {{
-                font-size: 28px;
-                font-weight: bold;
-                text-align: center;
-                flex-grow: 1;
-            }}
-            .custom-box .right {{
-                font-size: 22px;
-                text-align: right;
-            }}
-            </style>
-
-            <div class="custom-box">
-                <div class="left">h = {h_result:.2f} cm</div>
-                <div class="middle">Ei = {Ei:.2f} MPa</div>
-                <div class="right">Ee = {Ee:.2f} MPa</div>
-            </div>
-            """
-            st.markdown(html_code, unsafe_allow_html=True)
