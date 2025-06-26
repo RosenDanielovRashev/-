@@ -5,7 +5,6 @@ import plotly.graph_objs as go
 
 st.set_page_config(layout="wide")
 
-# Основен стил за контейнера
 st.markdown(
     """
     <style>
@@ -13,30 +12,6 @@ st.markdown(
         max-width: 1000px;
         padding-left: 2rem;
         padding-right: 2rem;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Стил за картите с пластове
-st.markdown(
-    """
-    <style>
-    .layer-card {
-        border: 2px solid #4CAF50;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 10px 5px;
-        background-color: #f0fff0;
-        box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
-        width: 250px;
-    }
-    .layer-title {
-        font-weight: bold;
-        font-size: 18px;
-        margin-bottom: 10px;
-        color: #2e7d32;
     }
     </style>
     """,
@@ -265,25 +240,69 @@ elif mode == "h / D":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-# Показване на въведените пластове графично
+# Показване на въведените пластове като графични правоъгълници
 st.markdown("---")
 st.subheader("Въведени пластове")
 
-cols = st.columns(min(4, st.session_state.num_layers))  # максимум 4 карти в ред
-
 for i, layer in enumerate(st.session_state.layers_data):
-    col = cols[i % 4]
-    with col:
-        st.markdown(
-            f"""
-            <div class="layer-card">
-                <div class="layer-title">Пласт {i+1}</div>
-                <div>Ee: {layer.get('Ee', '-')}</div>
-                <div>Ei: {layer.get('Ei', '-')}</div>
-                <div>h: {layer.get('h', '-')}</div>
-                <div>Ed: {layer.get('Ed', '-')}</div>
-                <div>Режим: {layer.get('mode', '-')}</div>
+    Ee = layer.get('Ee', '-')
+    Ei = layer.get('Ei', '-')
+    h_val = layer.get('h', '-')
+    if isinstance(h_val, float):
+        h_result = h_val
+    else:
+        h_result = 0.0  # Ако няма стойност, показваме 0 или '-'
+
+    st.markdown(f"<b>Пласт {i + 1}</b>", unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div style="
+            position: relative;
+            width: 400px;
+            height: 60px;
+            background-color: #add8e6;
+            border: 2px solid black;
+            border-radius: 6px;
+            margin: 10px auto 30px auto;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+        ">
+            <!-- Ei в средата -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-weight: bold;
+                font-size: 20px;
+                color: black;
+            ">
+                Ei = {Ei} MPa
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+            <!-- Ee в горния десен ъгъл -->
+            <div style="
+                position: absolute;
+                top: 5px;
+                right: 10px;
+                font-size: 14px;
+                color: darkblue;
+                font-weight: bold;
+            ">
+                Ee = {Ee} MPa
+            </div>
+            <!-- h вдясно центрирано вертикално -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                right: -60px;
+                transform: translateY(-50%);
+                font-size: 14px;
+                color: black;
+                font-weight: bold;
+            ">
+                h = {h_result:.2f} cm
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
