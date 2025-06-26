@@ -107,7 +107,6 @@ def compute_h(Ed, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
-
 # Избор на режим за изчисление
 mode = st.radio(
     "Изберете параметър за отчитане:",
@@ -152,7 +151,9 @@ if mode == "Ed / Ei":
             st.success(f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \nEd = Ei * {EdEi_point:.3f} = {result:.2f} MPa")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
+            # Плот с интерполационни линии и точка
             fig = go.Figure()
+
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
                 fig.add_trace(go.Scatter(
@@ -162,6 +163,7 @@ if mode == "Ed / Ei":
                     name=f"Ee / Ei = {value:.2f}",
                     line=dict(width=1)
                 ))
+
             fig.add_trace(go.Scatter(
                 x=[hD_point],
                 y=[EdEi_point],
@@ -169,6 +171,7 @@ if mode == "Ed / Ei":
                 name="Твоята точка",
                 marker=dict(size=8, color='red', symbol='circle')
             ))
+
             if y_low is not None and y_high is not None:
                 fig.add_trace(go.Scatter(
                     x=[hD_point, hD_point],
@@ -177,54 +180,53 @@ if mode == "Ed / Ei":
                     line=dict(color='green', width=2, dash='dot'),
                     name="Интерполационна линия"
                 ))
+
+            # Добавяне на правоъгълник и текст (annotation) с параметрите под графиката
             fig.update_layout(
+                shapes=[
+                    dict(
+                        type="rect",
+                        xref="paper",
+                        yref="paper",
+                        x0=0.75, y0=0.05,
+                        x1=0.98, y1=0.25,
+                        line=dict(color="black", width=2),
+                        fillcolor="white",
+                    ),
+                ],
+                annotations=[
+                    dict(
+                        x=0.76, y=0.22,
+                        xref="paper", yref="paper",
+                        text=f"<b>Ee = {Ee:.2f} MPa</b>",
+                        showarrow=False,
+                        font=dict(size=14),
+                        align="right"
+                    ),
+                    dict(
+                        x=0.86, y=0.13,
+                        xref="paper", yref="paper",
+                        text=f"<b>Ei = {Ei:.2f} MPa</b>",
+                        showarrow=False,
+                        font=dict(size=16),
+                        align="center"
+                    ),
+                    dict(
+                        x=0.76, y=0.09,
+                        xref="paper", yref="paper",
+                        text=f"<b>h = {h:.2f} cm</b>",
+                        showarrow=False,
+                        font=dict(size=14),
+                        align="left"
+                    ),
+                ],
+                margin=dict(t=50, b=50, l=50, r=50),
+                height=700,
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                height=700
             )
+
             st.plotly_chart(fig, use_container_width=True)
-
-            # Показваме правоъгълник с параметрите под графиката
-            html_code = f"""
-            <div style="position: relative; width: 300px; height: 150px; border: 2px solid black; background-color: white; margin: 20px auto;">
-                <!-- h от ляво (центрирано вертикално) -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 10px;
-                    transform: translateY(-50%);
-                    font-size: 20px;
-                    font-weight: normal;
-                ">
-                    h = {h:.2f} cm
-                </div>
-
-                <!-- Ee отгоре вдясно -->
-                <div style="
-                    position: absolute;
-                    top: 5px;
-                    right: 10px;
-                    font-size: 20px;
-                    font-weight: normal;
-                ">
-                    Ee = {Ee:.2f} MPa
-                </div>
-
-                <!-- Ei по средата -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-size: 24px;
-                    font-weight: bold;
-                ">
-                    Ei = {Ei:.2f} MPa
-                </div>
-            </div>
-            """
-
-            st.markdown(html_code, unsafe_allow_html=True)
 
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
@@ -278,9 +280,49 @@ else:
                     line=dict(color='green', width=2, dash='dot'),
                     name="Интерполационна линия"
                 ))
+
+            # Добавяне на правоъгълник и текст с параметрите
             fig.update_layout(
+                shapes=[
+                    dict(
+                        type="rect",
+                        xref="paper",
+                        yref="paper",
+                        x0=0.75, y0=0.05,
+                        x1=0.98, y1=0.25,
+                        line=dict(color="black", width=2),
+                        fillcolor="white",
+                    ),
+                ],
+                annotations=[
+                    dict(
+                        x=0.76, y=0.22,
+                        xref="paper", yref="paper",
+                        text=f"<b>Ee = {Ee:.2f} MPa</b>",
+                        showarrow=False,
+                        font=dict(size=14),
+                        align="right"
+                    ),
+                    dict(
+                        x=0.86, y=0.13,
+                        xref="paper", yref="paper",
+                        text=f"<b>Ei = {Ei:.2f} MPa</b>",
+                        showarrow=False,
+                        font=dict(size=16),
+                        align="center"
+                    ),
+                    dict(
+                        x=0.76, y=0.09,
+                        xref="paper", yref="paper",
+                        text=f"<b>h = {h_result:.2f} cm</b>",
+                        showarrow=False,
+                        font=dict(size=14),
+                        align="left"
+                    ),
+                ],
+                margin=dict(t=50, b=50, l=50, r=50),
+                height=700,
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                height=700
             )
             st.plotly_chart(fig, use_container_width=True)
