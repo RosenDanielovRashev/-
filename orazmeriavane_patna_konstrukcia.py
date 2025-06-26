@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
+import matplotlib.pyplot as plt
+import io
 
 st.set_page_config(layout="wide")  # активира широк режим
 
@@ -184,6 +186,20 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
+            # --- Тук слагаме илюстрацията на пласта ---
+            fig2, ax = plt.subplots(figsize=(4, 1))
+            ax.add_patch(plt.Rectangle((0, 0), 4, 1, color='gray'))
+            ax.set_xlim(0, 4)
+            ax.set_ylim(0, 1)
+            ax.axis('off')
+
+            buf = io.BytesIO()
+            fig2.savefig(buf, format='png', bbox_inches='tight', transparent=True)
+            buf.seek(0)
+
+            st.image(buf, caption="Илюстрация на пласт", use_column_width=False)
+            plt.close(fig2)
+
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
     EeEi = Ee / Ei
@@ -242,20 +258,3 @@ else:
                 height=700
             )
             st.plotly_chart(fig, use_container_width=True)
-
-  # --- Нов код за картинка на пласта ---
-        import matplotlib.pyplot as plt
-        import io
-
-        fig2, ax = plt.subplots(figsize=(4,1))
-        ax.add_patch(plt.Rectangle((0, 0), 4, 1, color='gray'))
-        ax.set_xlim(0, 4)
-        ax.set_ylim(0, 1)
-        ax.axis('off')
-
-        buf = io.BytesIO()
-        fig2.savefig(buf, format='png', bbox_inches='tight', transparent=True)
-        buf.seek(0)
-
-        st.image(buf, caption="Илюстрация на пласт", use_column_width=False)
-        plt.close(fig2)
