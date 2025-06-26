@@ -3,9 +3,8 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
-st.set_page_config(layout="wide")  # активира широк режим
+st.set_page_config(layout="wide")
 
-# задаваш конкретна максимална ширина на контейнера
 st.markdown(
     """
     <style>
@@ -21,7 +20,6 @@ st.markdown(
 
 @st.cache_data
 def load_data():
-    # Заменете пътя с вашия CSV файл
     df = pd.read_csv("combined_data.csv")
     df = df.rename(columns={
         "E1_over_E2": "Ed_over_Ei",
@@ -31,25 +29,20 @@ def load_data():
 
 data = load_data()
 
-# --- Въвеждане на характеристики ---
 st.title("Оразмеряване на пътна конструкция")
 
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34])
-
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
-
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=1)
 
 st.subheader("Въведете данни за оразмеряване - Пласт 1")
 
-# Показваме избраната стойност D за пласт 1 (не като входно поле)
 st.markdown(f"**Стойност D за пласт 1:** {d_value} cm")
 
 Ee = st.number_input("Въведете стойност за Ee (MPa):", min_value=0.1, step=0.1, value=2700.0)
 Ei = st.number_input("Въведете стойност за Ei (MPa):", min_value=0.1, step=0.1, value=3000.0)
 h = st.number_input("Въведете дебелина h (cm):", min_value=0.1, step=0.1, value=4.0)
 
-# Функции за изчисление (от твоя код с номограмата)
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
     EeEi = Ee / Ei
@@ -107,8 +100,6 @@ def compute_h(Ed, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
-
-# Избор на режим за изчисление
 mode = st.radio(
     "Изберете параметър за отчитане:",
     ("Ed / Ei", "h / D")
@@ -184,85 +175,76 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # Добавяне на хоризонтален продълговат правоъгълник под графиката
+            # --- Ново: Надпис пласт ---
+            st.markdown(f"### Пласт 1")
+
+            # --- Ново: Правоъгълник под графиката ---
             st.markdown(
                 f"""
                 <div style="
                     position: relative;
-                    width: 400px;
-                    height: 60px;
+                    width: 350px;
+                    height: 50px;
                     background-color: #add8e6;
                     border: 2px solid black;
                     border-radius: 6px;
-                    margin: 20px auto 40px auto;
+                    margin: 20px 0 40px 50px;
                     padding: 10px;
                     font-family: Arial, sans-serif;
-                    ">
-                    <!-- Ei в средата -->
+                ">
+                    <!-- Ei в центъра -->
                     <div style="
                         position: absolute;
                         top: 50%;
                         left: 50%;
                         transform: translate(-50%, -50%);
                         font-weight: bold;
-                        font-size: 18px;
+                        font-size: 20px;
                         color: black;
+                        white-space: nowrap;
                     ">
                         Ei = {Ei} MPa
                     </div>
+
                     <!-- Ee в горния десен ъгъл -->
                     <div style="
                         position: absolute;
-                        top: -20px;
+                        top: 5px;
                         right: 10px;
                         font-size: 14px;
                         color: darkblue;
                         font-weight: bold;
+                        white-space: nowrap;
                     ">
                         Ee = {Ee} MPa
                     </div>
-                    <!-- h вдясно центрирано вертикално -->
+
+                    <!-- h вдясно извън правоъгълника -->
                     <div style="
                         position: absolute;
                         top: 50%;
-                        left: 8px;
+                        right: -80px;
                         transform: translateY(-50%);
-                        font-size: 14px;
+                        font-size: 16px;
                         color: black;
                         font-weight: bold;
+                        white-space: nowrap;
                     ">
                         h = {h:.2f} cm
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+                """, unsafe_allow_html=True)
 
-else:
-    Ed = st.number_input("Ed (MPa)", value=520.0)
-    EeEi = Ee / Ei
-    EdEi = Ed / Ei
-
-    st.subheader("📊 Въведени параметри:")
-    st.write(pd.DataFrame({
-        "Параметър": ["Ed", "Ee", "Ei", "D", "Ee / Ei", "Ed / Ei"],
-        "Стойност": [
-            Ed,
-            Ee,
-            Ei,
-            d_value,
-            round(EeEi, 3),
-            round(EdEi, 3),
-        ]
-    }))
+elif mode == "h / D":
+    Ed = st.number_input("Въведете стойност за Ed (MPa):", min_value=0.1, step=0.1, value=2000.0)
 
     if st.button("Изчисли h"):
-        h_result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
+        result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
 
-        if h_result is None:
-            st.warning("❗ Неуспешно намиране на h — точката е извън обхвата.")
+        if result is None:
+            st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
-            st.success(f"✅ Изчислено: h = {h_result:.2f} cm (h / D = {hD_point:.3f})")
+            st.success(f"✅ Изчислено: h = {result:.2f} cm")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             fig = go.Figure()
@@ -275,9 +257,10 @@ else:
                     name=f"Ee / Ei = {value:.2f}",
                     line=dict(width=1)
                 ))
+            EdEi_point = Ed / Ei
             fig.add_trace(go.Scatter(
                 x=[hD_point],
-                y=[EdEi],
+                y=[EdEi_point],
                 mode='markers',
                 name="Твоята точка",
                 marker=dict(size=8, color='red', symbol='circle')
@@ -297,21 +280,24 @@ else:
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # Добавяне на правоъгълника под графиката
+            # --- Ново: Надпис пласт ---
+            st.markdown(f"### Пласт 1")
+
+            # --- Ново: Правоъгълник под графиката ---
             st.markdown(
                 f"""
                 <div style="
                     position: relative;
-                    width: 400px;
-                    height: 60px;
+                    width: 350px;
+                    height: 50px;
                     background-color: #add8e6;
                     border: 2px solid black;
                     border-radius: 6px;
-                    margin: 20px auto 40px auto;
+                    margin: 20px 0 40px 50px;
                     padding: 10px;
                     font-family: Arial, sans-serif;
-                    ">
-                    <!-- Ei в средата -->
+                ">
+                    <!-- Ei в центъра -->
                     <div style="
                         position: absolute;
                         top: 50%;
@@ -320,9 +306,11 @@ else:
                         font-weight: bold;
                         font-size: 20px;
                         color: black;
+                        white-space: nowrap;
                     ">
                         Ei = {Ei} MPa
                     </div>
+
                     <!-- Ee в горния десен ъгъл -->
                     <div style="
                         position: absolute;
@@ -331,22 +319,23 @@ else:
                         font-size: 14px;
                         color: darkblue;
                         font-weight: bold;
+                        white-space: nowrap;
                     ">
                         Ee = {Ee} MPa
                     </div>
-                    <!-- h вдясно центрирано вертикално -->
+
+                    <!-- h вдясно извън правоъгълника -->
                     <div style="
                         position: absolute;
                         top: 50%;
-                        right: -60px;
+                        right: -80px;
                         transform: translateY(-50%);
                         font-size: 16px;
                         color: black;
                         font-weight: bold;
+                        white-space: nowrap;
                     ">
-                        h = {h:.2f} cm
+                        h = {result:.2f} cm
                     </div>
                 </div>
-                """,
-                unsafe_allow_html=True
-            )
+                """, unsafe_allow_html=True)
