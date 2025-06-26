@@ -184,6 +184,31 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
+layer_fig = go.Figure()
+
+layer_fig.add_shape(type="rect", x0=0, x1=1, y0=0, y1=h,
+                   line=dict(color="black"), fillcolor="lightblue")
+layer_fig.add_shape(type="rect", x0=0, x1=1, y0=h, y1=h + 2,
+                   line=dict(color="black"), fillcolor="lightgreen")
+layer_fig.add_shape(type="rect", x0=0, x1=1, y0=-2, y1=0,
+                   line=dict(color="black"), fillcolor="lightgray")
+
+layer_fig.add_annotation(x=0.5, y=h + 1, text=f"Ee = {Ee} MPa", showarrow=False)
+layer_fig.add_annotation(x=0.5, y=h / 2, text=f"Ei = {Ei} MPa\nh = {h} cm", showarrow=False)
+layer_fig.add_annotation(x=0.5, y=-1, text=f"Ed = {result:.2f} MPa", showarrow=False)
+
+layer_fig.update_layout(
+    height=300,
+    margin=dict(l=50, r=50, t=20, b=20),
+    xaxis=dict(visible=False),
+    yaxis=dict(visible=False),
+    showlegend=False,
+    title="Схема на пластовата структура"
+)
+
+st.plotly_chart(layer_fig, use_container_width=False)
+
+
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
     EeEi = Ee / Ei
