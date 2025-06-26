@@ -291,7 +291,7 @@ else:
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    font-size: 24px;
+                    font-size: 20px;
                     font-weight: bold;
                 ">
                     Ei = {Ei:.2f} MPa
