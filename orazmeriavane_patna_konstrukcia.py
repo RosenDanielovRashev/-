@@ -175,10 +175,10 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # --- Ново: Надпис пласт ---
+            # --- Надпис пласт ---
             st.markdown(f"### Пласт 1")
 
-            # --- Ново: Правоъгълник под графиката ---
+            # --- Правоъгълник под графиката ---
             st.markdown(
                 f"""
                 <div style="
@@ -280,10 +280,10 @@ elif mode == "h / D":
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # --- Ново: Надпис пласт ---
+            # --- Надпис пласт ---
             st.markdown(f"### Пласт 1")
 
-            # --- Ново: Правоъгълник под графиката ---
+            # --- Правоъгълник под графиката ---
             st.markdown(
                 f"""
                 <div style="
