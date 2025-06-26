@@ -152,26 +152,6 @@ if mode == "Ed / Ei":
             st.success(f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \nEd = Ei * {EdEi_point:.3f} = {result:.2f} MPa")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
- # Тук добавяш текста преди "Пласт 1"
-            st.markdown(
-                """
-                <div style="
-                    background-color:#e0f7fa;
-                    padding: 15px;
-                    border-left: 6px solid #00796b;
-                    margin-bottom: 15px;
-                    font-weight: bold;
-                    font-size: 16px;
-                ">
-                Текст, който се показва само в режим Ed / Ei, преди Пласт 1
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            # Ако имаш някакъв заглавен текст за пласт 1, примерно:
-            st.markdown("### Пласт 1")
-            
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
@@ -204,6 +184,22 @@ if mode == "Ed / Ei":
             )
             st.plotly_chart(fig, use_container_width=True)
 
+            # Текст преди правоъгълника, само в режим Ed / Ei
+            st.markdown(
+                """
+                <div style="
+                    font-weight: bold;
+                    font-size: 18px;
+                    margin-top: 20px;
+                    margin-bottom: 8px;
+                    color: #004d40;
+                ">
+                    Пласт 1
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
             # Добавяне на хоризонтален продълговат правоъгълник под графиката
             st.markdown(
                 f"""
@@ -214,7 +210,7 @@ if mode == "Ed / Ei":
                     background-color: #add8e6;
                     border: 2px solid black;
                     border-radius: 6px;
-                    margin: 20px auto 40px auto;
+                    margin: 0 auto 40px auto;
                     padding: 10px;
                     font-family: Arial, sans-serif;
                     ">
@@ -285,26 +281,6 @@ else:
             st.success(f"✅ Изчислено: h = {h_result:.2f} cm (h / D = {hD_point:.3f})")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
- # Тук добавяш текста преди "Пласт 1"
-            st.markdown(
-                """
-                <div style="
-                    background-color:#e0f7fa;
-                    padding: 15px;
-                    border-left: 6px solid #00796b;
-                    margin-bottom: 15px;
-                    font-weight: bold;
-                    font-size: 16px;
-                ">
-                Текст, който се показва само в режим Ed / Ei, преди Пласт 1
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            # Ако имаш някакъв заглавен текст за пласт 1, примерно:
-            st.markdown("### Пласт 1")
-            
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
                 group_sorted = group.sort_values("h_over_D")
@@ -337,7 +313,7 @@ else:
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # Добавяне на правоъгълника под графиката
+            # Добавяне на правоъгълника под графиката (без текст за пласт, тъй като режимът е друг)
             st.markdown(
                 f"""
                 <div style="
@@ -380,11 +356,11 @@ else:
                         top: 50%;
                         right: -60px;
                         transform: translateY(-50%);
-                        font-size: 16px;
+                        font-size: 14px;
                         color: black;
                         font-weight: bold;
                     ">
-                        h = {h:.2f} cm
+                        h = {h_result:.2f} cm
                     </div>
                 </div>
                 """,
