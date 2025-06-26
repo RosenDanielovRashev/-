@@ -182,32 +182,61 @@ if mode == "Ed / Ei":
                 yaxis_title="Ed / Ei",
                 height=700
             )
-            st.plotly_chart(fig, use_container_width=True)
+            # Покажи номограмата
+            col1, col2 = st.columns([3,1])
+            with col1:
+                st.plotly_chart(fig, use_container_width=True)
 
-            # --- Добавяне на схема под номограмата ---
-            layer_fig = go.Figure()
+            # Добавяме схема с пластове вдясно
+            fig_layer = go.Figure()
 
-            layer_fig.add_shape(type="rect", x0=0, x1=1, y0=0, y1=h,
-                               line=dict(color="black"), fillcolor="lightblue")
-            layer_fig.add_shape(type="rect", x0=0, x1=1, y0=h, y1=h + 2,
-                               line=dict(color="black"), fillcolor="lightgreen")
-            layer_fig.add_shape(type="rect", x0=0, x1=1, y0=-2, y1=0,
-                               line=dict(color="black"), fillcolor="lightgray")
+            # Правоъгълник с ширина 1 и височина h
+            fig_layer.add_shape(type="rect",
+                                x0=0, x1=1,
+                                y0=0, y1=h,
+                                line=dict(color="black", width=2),
+                                fillcolor="lightblue")
 
-            layer_fig.add_annotation(x=0.5, y=h + 1, text=f"Ee = {Ee} MPa", showarrow=False)
-            layer_fig.add_annotation(x=0.5, y=h / 2, text=f"Ei = {Ei} MPa\nh = {h} cm", showarrow=False)
-            layer_fig.add_annotation(x=0.5, y=-1, text=f"Ed = {result:.2f} MPa", showarrow=False)
-
-            layer_fig.update_layout(
-                height=300,
-                margin=dict(l=50, r=50, t=20, b=20),
-                xaxis=dict(visible=False),
-                yaxis=dict(visible=False),
-                showlegend=False,
-                title="Схема на пластовата структура"
+            # Текст Ei вътре в правоъгълника
+            fig_layer.add_annotation(
+                x=0.5, y=h/2,
+                text=f"Ei = {Ei} MPa",
+                showarrow=False,
+                font=dict(size=16, color="black")
             )
 
-            st.plotly_chart(layer_fig, use_container_width=False)
+            # Текст Ee в горния десен ъгъл
+            fig_layer.add_annotation(
+                x=1, y=h,
+                text=f"Ee = {Ee} MPa",
+                showarrow=False,
+                xanchor="left",
+                yanchor="bottom",
+                font=dict(size=14, color="darkblue")
+            )
+
+            # Текст h отдясно на правоъгълника
+            fig_layer.add_annotation(
+                x=1.05, y=h/2,
+                text=f"h = {h} cm",
+                showarrow=False,
+                xanchor="left",
+                yanchor="middle",
+                font=dict(size=14, color="black")
+            )
+
+            fig_layer.update_xaxes(visible=False, range=[-0.5, 1.5])
+            fig_layer.update_yaxes(visible=False, range=[-1, max(6, h + 1)])
+
+            fig_layer.update_layout(
+                width=200,
+                height=700,
+                margin=dict(l=0, r=0, t=30, b=30),
+                title="Първи пласт"
+            )
+            with col2:
+                st.plotly_chart(fig_layer, use_container_width=True)
+
 
 else:
     Ed = st.number_input("Ed (MPa)", value=520.0)
@@ -266,29 +295,57 @@ else:
                 yaxis_title="Ed / Ei",
                 height=700
             )
-            st.plotly_chart(fig, use_container_width=True)
+            # Покажи номограмата
+            col1, col2 = st.columns([3,1])
+            with col1:
+                st.plotly_chart(fig, use_container_width=True)
 
-            # --- Добавяне на схема под номограмата ---
-            layer_fig = go.Figure()
+            # Добавяме схема с пластове вдясно
+            fig_layer = go.Figure()
 
-            layer_fig.add_shape(type="rect", x0=0, x1=1, y0=0, y1=h_result,
-                               line=dict(color="black"), fillcolor="lightblue")
-            layer_fig.add_shape(type="rect", x0=0, x1=1, y0=h_result, y1=h_result + 2,
-                               line=dict(color="black"), fillcolor="lightgreen")
-            layer_fig.add_shape(type="rect", x0=0, x1=1, y0=-2, y1=0,
-                               line=dict(color="black"), fillcolor="lightgray")
+            # Правоъгълник с ширина 1 и височина h_result
+            fig_layer.add_shape(type="rect",
+                                x0=0, x1=1,
+                                y0=0, y1=h_result,
+                                line=dict(color="black", width=2),
+                                fillcolor="lightblue")
 
-            layer_fig.add_annotation(x=0.5, y=h_result + 1, text=f"Ee = {Ee} MPa", showarrow=False)
-            layer_fig.add_annotation(x=0.5, y=h_result / 2, text=f"Ei = {Ei} MPa\nh = {h_result:.2f} cm", showarrow=False)
-            layer_fig.add_annotation(x=0.5, y=-1, text=f"Ed = {Ed} MPa", showarrow=False)
-
-            layer_fig.update_layout(
-                height=300,
-                margin=dict(l=50, r=50, t=20, b=20),
-                xaxis=dict(visible=False),
-                yaxis=dict(visible=False),
-                showlegend=False,
-                title="Схема на пластовата структура"
+            # Текст Ei вътре в правоъгълника
+            fig_layer.add_annotation(
+                x=0.5, y=h_result/2,
+                text=f"Ei = {Ei} MPa",
+                showarrow=False,
+                font=dict(size=16, color="black")
             )
 
-            st.plotly_chart(layer_fig, use_container_width=False)
+            # Текст Ee в горния десен ъгъл
+            fig_layer.add_annotation(
+                x=1, y=h_result,
+                text=f"Ee = {Ee} MPa",
+                showarrow=False,
+                xanchor="left",
+                yanchor="bottom",
+                font=dict(size=14, color="darkblue")
+            )
+
+            # Текст h отдясно на правоъгълника
+            fig_layer.add_annotation(
+                x=1.05, y=h_result/2,
+                text=f"h = {h_result:.2f} cm",
+                showarrow=False,
+                xanchor="left",
+                yanchor="middle",
+                font=dict(size=14, color="black")
+            )
+
+            fig_layer.update_xaxes(visible=False, range=[-0.5, 1.5])
+            fig_layer.update_yaxes(visible=False, range=[-1, max(6, h_result + 1)])
+
+            fig_layer.update_layout(
+                width=200,
+                height=700,
+                margin=dict(l=0, r=0, t=30, b=30),
+                title="Първи пласт"
+            )
+            with col2:
+                st.plotly_chart(fig_layer, use_container_width=True)
