@@ -3,9 +3,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
-st.set_page_config(layout="wide")  # активира широк режим
+st.set_page_config(layout="wide")
 
-# задаваш конкретна максимална ширина на контейнера
+# CSS за максимална ширина
 st.markdown(
     """
     <style>
@@ -21,7 +21,6 @@ st.markdown(
 
 @st.cache_data
 def load_data():
-    # Заменете пътя с вашия CSV файл
     df = pd.read_csv("combined_data.csv")
     df = df.rename(columns={
         "E1_over_E2": "Ed_over_Ei",
@@ -31,62 +30,81 @@ def load_data():
 
 data = load_data()
 
-# --- Въвеждане на брой пластове ---
-num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=1)
-
-# Запазване на текущия пласт в session_state
+# --- Инициализация на session_state ---
+if 'num_layers' not in st.session_state:
+    st.session_state.num_layers = 1
 if 'current_layer' not in st.session_state:
-    st.session_state['current_layer'] = 1
-
-# Запазване на данните за всеки пласт в речник
+    st.session_state.current_layer = 1
 if 'layers_data' not in st.session_state:
-    st.session_state['layers_data'] = {}
-
-layer = st.session_state['current_layer']
+    st.session_state.layers_data = {}
 
 st.title("Оразмеряване на пътна конструкция")
 
-# За всички пластове D и axle_load могат да се ползват глобални настройки или зададени по отделно
-d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34], index=0, key="d_value_global")
-axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115], index=0, key="axle_load_global")
+# Въвеждаме брой пластове (само при първо стартиране)
+if st.session_state.current_layer == 1:
+    st.session_state.num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=1)
 
-st.subheader(f"Въведете данни за оразмеряване - Пласт {layer}")
+# Задаваме текущия пласт
+layer = st.session_state.current_layer
+num_layers = st.session_state.num_layers
 
-# Ако вече имаме данни за този пласт, ги зареждаме, иначе дефолт стойности
-default_layer_data = st.session_state['layers_data'].get(layer, {})
+st.header(f"Пласт {layer} от {num_layers}")
 
-# Показваме избраната стойност D (не като входно поле)
-st.markdown(f"**Стойност D за пласт {layer}:** {d_value} cm")
+# Ако има запазени данни, ги зареждаме, иначе задаваме стойности по подразбиране
+layer_data = st.session_state.layers_data.get(layer, {})
 
-Ee = st.number_input(
-    f"Въведете стойност за Ee (MPa) - Пласт {layer}:",
-    min_value=0.1, step=0.1,
-    value=default_layer_data.get('Ee', 2700.0),
-    key=f"Ee_{layer}"
+d_value = st.selectbox(
+    "Изберете стойност за D (cm):",
+    options=[32.04, 34],
+    index=[32.04, 34].index(layer_data.get('d_value', 32.04))
 )
 
-Ei = st.number_input(
-    f"Въведете стойност за Ei (MPa) - Пласт {layer}:",
-    min_value=0.1, step=0.1,
-    value=default_layer_data.get('Ei', 3000.0),
-    key=f"Ei_{layer}"
+axle_load = st.selectbox(
+    "Изберете стойност за осов товар (kN):",
+    options=[100, 115],
+    index=[100, 115].index(layer_data.get('axle_load', 100))
 )
 
-h = st.number_input(
-    f"Въведете дебелина h (cm) - Пласт {layer}:",
-    min_value=0.1, step=0.1,
-    value=default_layer_data.get('h', 4.0),
-    key=f"h_{layer}"
-)
-
-# Избор на режим за изчисление (запазваме за всеки пласт, ако искаш)
 mode = st.radio(
     "Изберете параметър за отчитане:",
     ("Ed / Ei", "h / D"),
-    index=default_layer_data.get('mode_index', 0),
-    key=f"mode_{layer}"
+    index=0 if layer_data.get('mode', "Ed / Ei") == "Ed / Ei" else 1
 )
 
+if mode == "Ed / Ei":
+    Ee = st.number_input(
+        "Въведете стойност за Ee (MPa):",
+        min_value=0.1, step=0.1,
+        value=layer_data.get('Ee', 2700.0)
+    )
+    Ei = st.number_input(
+        "Въведете стойност за Ei (MPa):",
+        min_value=0.1, step=0.1,
+        value=layer_data.get('Ei', 3000.0)
+    )
+    h = st.number_input(
+        "Въведете дебелина h (cm):",
+        min_value=0.1, step=0.1,
+        value=layer_data.get('h', 4.0)
+    )
+else:  # режим "h / D"
+    Ed = st.number_input(
+        "Ed (MPa):",
+        min_value=0.1, step=0.1,
+        value=layer_data.get('Ed', 520.0)
+    )
+    Ee = st.number_input(
+        "Въведете стойност за Ee (MPa):",
+        min_value=0.1, step=0.1,
+        value=layer_data.get('Ee', 2700.0)
+    )
+    Ei = st.number_input(
+        "Въведете стойност за Ei (MPa):",
+        min_value=0.1, step=0.1,
+        value=layer_data.get('Ei', 3000.0)
+    )
+
+# Функции от твоя код
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
     EeEi = Ee / Ei
@@ -144,192 +162,144 @@ def compute_h(Ed, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
-# Помощна функция за визуализацията на графиката и правоъгълника
-def plot_layer_graph(layer, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso, Ei, Ee, h):
-    fig = go.Figure()
-    for value, group in data.groupby("Ee_over_Ei"):
-        group_sorted = group.sort_values("h_over_D")
-        fig.add_trace(go.Scatter(
-            x=group_sorted["h_over_D"],
-            y=group_sorted["Ed_over_Ei"],
-            mode='lines',
-            name=f"Ee / Ei = {value:.2f}",
-            line=dict(width=1)
-        ))
-    fig.add_trace(go.Scatter(
-        x=[hD_point],
-        y=[EdEi_point],
-        mode='markers',
-        name="Твоята точка",
-        marker=dict(size=8, color='red', symbol='circle')
-    ))
-    if y_low is not None and y_high is not None:
-        fig.add_trace(go.Scatter(
-            x=[hD_point, hD_point],
-            y=[y_low, y_high],
-            mode='lines',
-            line=dict(color='green', width=2, dash='dot'),
-            name="Интерполационна линия"
-        ))
-    fig.update_layout(
-        xaxis_title="h / D",
-        yaxis_title="Ed / Ei",
-        height=700
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown(
-        f"""
-        <div style="
-            font-weight: bold;
-            font-size: 18px;
-            margin-top: 20px;
-            margin-bottom: 8px;
-            color: #004d40;
-        ">
-            Пласт {layer}
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    st.markdown(
-        f"""
-        <div style="
-            position: relative;
-            width: 400px;
-            height: 60px;
-            background-color: #add8e6;
-            border: 2px solid black;
-            border-radius: 6px;
-            margin: 0 auto 40px auto;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-            ">
-            <!-- Ei в средата -->
-            <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-weight: bold;
-                font-size: 18px;
-                color: black;
-            ">
-                Ei = {Ei} MPa
-            </div>
-            <!-- Ee в горния десен ъгъл -->
-            <div style="
-                position: absolute;
-                top: -20px;
-                right: 10px;
-                font-size: 14px;
-                color: darkblue;
-                font-weight: bold;
-            ">
-                Ee = {Ee} MPa
-            </div>
-            <!-- h вдясно центрирано вертикално -->
-            <div style="
-                position: absolute;
-                top: 50%;
-                left: 8px;
-                transform: translateY(-50%);
-                font-size: 14px;
-                color: black;
-                font-weight: bold;
-            ">
-                h = {h:.2f} cm
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-# Изчисленията според режим
-Ed = None
-h_calc = None
-hD_point = None
-y_low = None
-y_high = None
-low_iso = None
-high_iso = None
+# Изчисления и визуализация
+if Ei == 0 or d_value == 0:
+    st.error("Ei и D не могат да бъдат 0.")
+    st.stop()
 
 if mode == "Ed / Ei":
-    Ed, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
-elif mode == "h / D":
-    # Ако има въведена стойност Ed, я ползваме, иначе None
-    Ed_input = st.number_input(f"Въведете Ed (MPa) за пласт {layer}:", min_value=0.1, step=0.1, value=default_layer_data.get('Ed', 5.0), key=f"Ed_{layer}")
-    h_calc, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed_input, d_value, Ee, Ei)
-    Ed = Ed_input
+    EeEi = Ee / Ei
+    st.subheader("📊 Въведени параметри:")
+    st.write(pd.DataFrame({
+        "Параметър": ["Ee", "Ei", "h", "D", "Ee / Ei", "h / D"],
+        "Стойност": [
+            Ee,
+            Ei,
+            h,
+            d_value,
+            round(EeEi, 3),
+            round(h / d_value, 3)
+        ]
+    }))
 
-if Ed is not None:
-    st.success(f"Изчислен Ed за пласт {layer}: {Ed:.2f} MPa")
-elif h_calc is not None:
-    st.success(f"Изчислено h за пласт {layer}: {h_calc:.2f} cm")
+    if st.button("Изчисли Ed"):
+        result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
 
-if st.button("Запази данните", key=f"save_{layer}"):
-    st.session_state['layers_data'][layer] = {
-        "Ee": Ee,
-        "Ei": Ei,
-        "h": h,
-        "mode_index": 0 if mode == "Ed / Ei" else 1,
-        "Ed": Ed,
-        "h_calc": h_calc,
-        "d_value": d_value,
-        "axle_load": axle_load
-    }
-    st.success(f"Данните за пласт {layer} са запазени!")
-
-# Бутон "Напред" долу вдясно
-col1, col2, col3 = st.columns([8, 1, 1])
-with col3:
-    if st.button("Напред", key=f"next_{layer}"):
-        if layer < num_layers:
-            # Автоматично записваме, ако не е запазено
-            if layer not in st.session_state['layers_data']:
-                st.session_state['layers_data'][layer] = {
-                    "Ee": Ee,
-                    "Ei": Ei,
-                    "h": h,
-                    "mode_index": 0 if mode == "Ed / Ei" else 1,
-                    "Ed": Ed,
-                    "h_calc": h_calc,
-                    "d_value": d_value,
-                    "axle_load": axle_load
-                }
-            st.session_state['current_layer'] += 1
-            st.experimental_rerun()
+        if result is None:
+            st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
-            st.success("Оразмеряването на всички пластове приключи!")
+            EdEi_point = result / Ei
+            st.success(f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \nEd = Ei * {EdEi_point:.3f} = {result:.2f} MPa")
+            st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
-# Покажи всички запазени пластове надолу с графики и правоъгълници
-if st.session_state['layers_data']:
-    st.markdown("---")
-    st.header("Вече въведени пластове:")
-    for l in range(1, st.session_state['current_layer'] + 1):
-        d = st.session_state['layers_data'].get(l)
-        if d:
-            Ed_val = d.get('Ed')
-            h_val = d.get('h')
-            Ei_val = d.get('Ei')
-            Ee_val = d.get('Ee')
-            mode_idx = d.get('mode_index', 0)
-            mode_str = "Ed / Ei" if mode_idx == 0 else "h / D"
+            fig = go.Figure()
+            for value, group in data.groupby("Ee_over_Ei"):
+                group_sorted = group.sort_values("h_over_D")
+                fig.add_trace(go.Scatter(
+                    x=group_sorted["h_over_D"],
+                    y=group_sorted["Ed_over_Ei"],
+                    mode='lines',
+                    name=f"Ee / Ei = {value:.2f}",
+                    line=dict(width=1)
+                ))
+            fig.add_trace(go.Scatter(
+                x=[hD_point],
+                y=[EdEi_point],
+                mode='markers',
+                name="Твоята точка",
+                marker=dict(size=8, color='red', symbol='circle')
+            ))
+            if y_low is not None and y_high is not None:
+                fig.add_trace(go.Scatter(
+                    x=[hD_point, hD_point],
+                    y=[y_low, y_high],
+                    mode='lines',
+                    line=dict(color='green', width=2, dash='dot'),
+                    name="Интерполационна линия"
+                ))
+            fig.update_layout(
+                xaxis_title="h / D",
+                yaxis_title="Ed / Ei",
+                height=700
+            )
+            st.plotly_chart(fig, use_container_width=True)
 
-            st.subheader(f"Пласт {l} - {mode_str}")
-            st.markdown(f"- Ee = {Ee_val} MPa")
-            st.markdown(f"- Ei = {Ei_val} MPa")
-            st.markdown(f"- h = {h_val} cm")
-            if Ed_val:
-                st.markdown(f"- Ed = {Ed_val:.2f} MPa")
+            # Правоъгълник с параметри
+            st.markdown(
+                f"""
+                <div style="
+                    position: relative;
+                    width: 400px;
+                    height: 60px;
+                    background-color: #add8e6;
+                    border: 2px solid black;
+                    border-radius: 6px;
+                    margin: 20px auto 40px auto;
+                    padding: 10px;
+                    font-family: Arial, sans-serif;
+                    ">
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        transform: translate(-50%, -50%);
+                        font-weight: bold;
+                        font-size: 18px;
+                        color: black;
+                    ">
+                        Ei = {Ei} MPa
+                    </div>
+                    <div style="
+                        position: absolute;
+                        top: -20px;
+                        right: 10px;
+                        font-size: 14px;
+                        color: darkblue;
+                        font-weight: bold;
+                    ">
+                        Ee = {Ee} MPa
+                    </div>
+                    <div style="
+                        position: absolute;
+                        top: 50%;
+                        left: 8px;
+                        transform: translateY(-50%);
+                        font-size: 14px;
+                        color: black;
+                        font-weight: bold;
+                    ">
+                        h = {h:.2f} cm
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+else:
+    Ed = st.number_input(
+        "Ed (MPa)",
+        min_value=0.1, step=0.1,
+        value=layer_data.get('Ed', 520.0)
+    )
+    EeEi = Ee / Ei
+    EdEi = Ed / Ei
 
-            # Пресмятаме точката за графиката, за да е актуална
-            if mode_idx == 0:
-                _, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h_val, d_value, Ee_val, Ei_val)
-            else:
-                _, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed_val, d_value, Ee_val, Ei_val)
+    st.subheader("📊 Въведени параметри:")
+    st.write(pd.DataFrame({
+        "Параметър": ["Ed", "Ee", "Ei", "D", "Ee / Ei", "Ed / Ei"],
+        "Стойност": [
+            Ed,
+            Ee,
+            Ei,
+            d_value,
+            round(EeEi, 3),
+            round(EdEi, 3),
+        ]
+    }))
 
-            EdEi_point = Ed_val / Ei_val if Ed_val else None
+    if st.button("Изчисли h"):
+        h_result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
 
-            plot_layer_graph(l, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso, Ei_val, Ee_val, h_val)
+        if h_result is None:
+            st.warning("❗ Неуспешно намиране на h — точката е извън обхвата.")
+        else:
+            st.success(f"✅ Изчислено: h = {h_result:.2f} cm (
