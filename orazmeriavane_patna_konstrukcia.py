@@ -3,8 +3,9 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide")  # активира широк режим
 
+# задаваш конкретна максимална ширина на контейнера
 st.markdown(
     """
     <style>
@@ -20,6 +21,7 @@ st.markdown(
 
 @st.cache_data
 def load_data():
+    # Заменете пътя с вашия CSV файл
     df = pd.read_csv("combined_data.csv")
     df = df.rename(columns={
         "E1_over_E2": "Ed_over_Ei",
@@ -29,19 +31,25 @@ def load_data():
 
 data = load_data()
 
+# --- Въвеждане на характеристики ---
 st.title("Оразмеряване на пътна конструкция")
 
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34])
+
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
+
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=1)
 
 st.subheader("Въведете данни за оразмеряване - Пласт 1")
+
+# Показваме избраната стойност D за пласт 1 (не като входно поле)
 st.markdown(f"**Стойност D за пласт 1:** {d_value} cm")
 
 Ee = st.number_input("Въведете стойност за Ee (MPa):", min_value=0.1, step=0.1, value=2700.0)
 Ei = st.number_input("Въведете стойност за Ei (MPa):", min_value=0.1, step=0.1, value=3000.0)
 h = st.number_input("Въведете дебелина h (cm):", min_value=0.1, step=0.1, value=4.0)
 
+# Функции за изчисление (от твоя код с номограмата)
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
     EeEi = Ee / Ei
@@ -99,6 +107,8 @@ def compute_h(Ed, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
+
+# Избор на режим за изчисление
 mode = st.radio(
     "Изберете параметър за отчитане:",
     ("Ed / Ei", "h / D")
