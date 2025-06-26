@@ -250,9 +250,4 @@ else:
             )
             st.plotly_chart(fig, use_container_width=True)
 
-            # Формули
-            st.markdown("---")
-            st.write("### Формули за изчисляване на h:")
-            st.latex(r"h = D \times \frac{h}{D}")
-            st.latex(r"\frac{E_d}{E_i} = \text{интерполирана стойност от номограмата}")
-            st.latex(r"h/D = \frac{h}{D}, \quad Ee/Ei = \frac{E_e}{E_i}")
+        
