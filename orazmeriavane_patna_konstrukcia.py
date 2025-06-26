@@ -87,7 +87,7 @@ else:
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
     EeEi = Ee / Ei
-    tol = 1e-4
+    tol = 1e-3
     iso_levels = sorted(data['Ee_over_Ei'].unique())
 
     for low, high in zip(iso_levels, iso_levels[1:]):
@@ -115,7 +115,7 @@ def compute_Ed(h, D, Ee, Ei):
 def compute_h(Ed, D, Ee, Ei):
     EeEi = Ee / Ei
     EdEi = Ed / Ei
-    tol = 1e-4
+    tol = 1e-3
     iso_levels = sorted(data['Ee_over_Ei'].unique())
 
     for low, high in zip(iso_levels, iso_levels[1:]):
