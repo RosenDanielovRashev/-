@@ -10,7 +10,7 @@ st.markdown(
     """
     <style>
     .block-container {
-        max-width: 1400px;
+        max-width: 1000px;
         padding-left: 2rem;
         padding-right: 2rem;
     }
