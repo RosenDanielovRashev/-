@@ -141,6 +141,24 @@ def compute_h(Ed, D, Ee, Ei):
 
     return None, None, None, None, None, None
 
+def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso):
+    # Линия между двете изолини на фиксирано hD_point
+    fig.add_trace(go.Scatter(
+        x=[hD_point, hD_point],
+        y=[y_low, y_high],
+        mode='lines',
+        line=dict(color='purple', dash='dash'),
+        name=f"Интерполация Ee/Ei: {low_iso:.2f} - {high_iso:.2f}"
+    ))
+    # Точка с резултат
+    fig.add_trace(go.Scatter(
+        x=[hD_point],
+        y=[EdEi_point],
+        mode='markers',
+        marker=dict(color='red', size=12),
+        name='Резултат'
+    ))
+
 if mode == "Ed / Ei":
     if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
@@ -170,13 +188,9 @@ if mode == "Ed / Ei":
                     mode='lines',
                     name=f"Ee/Ei = {value:.2f}"
                 ))
-            fig.add_trace(go.Scatter(
-                x=[hD_point],
-                y=[result / Ei],
-                mode='markers',
-                marker=dict(color='red', size=12),
-                name='Резултат'
-            ))
+
+            add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso)
+
             fig.update_layout(
                 title="Ed / Ei в зависимост от h / D",
                 xaxis_title="h / D",
@@ -212,13 +226,9 @@ elif mode == "h / D":
                     mode='lines',
                     name=f"Ee/Ei = {value:.2f}"
                 ))
-            fig.add_trace(go.Scatter(
-                x=[hD_point],
-                y=[Ed / Ei],
-                mode='markers',
-                marker=dict(color='red', size=12),
-                name='Резултат'
-            ))
+
+            add_interpolation_line(fig, hD_point, Ed / Ei, y_low, y_high, low_iso, high_iso)
+
             fig.update_layout(
                 title="Ed / Ei в зависимост от h / D",
                 xaxis_title="h / D",
