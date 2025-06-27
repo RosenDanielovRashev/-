@@ -156,7 +156,7 @@ def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, hi
         x=[hD_point, hD_point],
         y=[y_low, y_high],
         mode='lines',
-        line=dict(color='purple', dash='dash'),
+        line=dict(color='red', dash='dash'),
         name=f"Интерполация Ee/Ei: {low_iso:.2f} - {high_iso:.2f}"
     ))
     # Точка с резултат
