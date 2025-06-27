@@ -156,7 +156,7 @@ def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, hi
         x=[hD_point, hD_point],
         y=[y_low, y_high],
         mode='lines',
-        line=dict(color='red', dash='dash'),
+        line=dict(color='purple', dash='dash'),
         name=f"Интерполация Ee/Ei: {low_iso:.2f} - {high_iso:.2f}"
     ))
     # Точка с резултат
@@ -247,14 +247,19 @@ elif mode == "h / D":
             st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
-st.subheader("Въведени пластове")
+st.header("Резултати за всички пластове")
 
 for i, layer in enumerate(st.session_state.layers_data):
     Ee = layer.get('Ee', '-')
     Ei = layer.get('Ei', '-')
-    Ed = layer.get('Ed', '-')  # Ново
+    Ed = layer.get('Ed', '-')
+    if isinstance(Ed, (float, int)):
+        Ed_display = round(Ed)
+    else:
+        Ed_display = Ed
+
     h_val = layer.get('h', '-')
-    h_result = h_val if isinstance(h_val, float) else 0.0
+    h_result = h_val if isinstance(h_val, (float, int)) else 0.0
 
     st.markdown(f"<b>Пласт {i + 1}</b>", unsafe_allow_html=True)
     st.markdown(
@@ -302,7 +307,7 @@ for i, layer in enumerate(st.session_state.layers_data):
                 color: green;
                 font-weight: bold;
             ">
-                Ed = {Ed} MPa
+                Ed = {Ed_display} MPa
             </div>
             <!-- h вляво -->
             <div style="
