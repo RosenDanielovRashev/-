@@ -325,5 +325,11 @@ for i, layer in enumerate(st.session_state.layers_data):
         """,
         unsafe_allow_html=True
     )
-if st.button("Отиди на чиста страница"):
-    st.experimental_set_query_params(page="page")
+st.set_page_config(page_title="Основна страница", layout="wide")
+
+st.title("🏠 Основна страница")
+st.write("Това е главната страница на приложението.")
+
+# 👉 Бутон за пренасочване
+if st.button("➡️ Отиди на празна страница"):
+    st.switch_page("pages/empty_page.py")
