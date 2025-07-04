@@ -5,7 +5,6 @@ import plotly.graph_objs as go
 
 st.set_page_config(layout="wide")
 
-# CSS стилове
 st.markdown(
     """
     <style>
@@ -19,7 +18,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Кеширане на данни
 @st.cache_data
 def load_data():
     df = pd.read_csv("combined_data.csv")
@@ -31,7 +29,7 @@ def load_data():
 
 data = load_data()
 
-# Инициализация на сесионно състояние за страница и други променливи
+# Инициализация на session_state променливи
 if "page" not in st.session_state:
     st.session_state.page = "main"
 
@@ -40,9 +38,9 @@ if "num_layers" not in st.session_state:
 if "current_layer" not in st.session_state:
     st.session_state.current_layer = 0
 if "layers_data" not in st.session_state:
-    st.session_state.layers_data = [{} for _ in range(st.session_state.num_layers)]
+    st.session_state.layers_data = [{}]
 
-# --- Основна страница ---
+# --- Главна страница ---
 if st.session_state.page == "main":
 
     st.title("Оразмеряване на пътна конструкция с няколко пластове")
@@ -65,10 +63,12 @@ if st.session_state.page == "main":
         if st.button("⬅️ Предишен пласт"):
             if st.session_state.current_layer > 0:
                 st.session_state.current_layer -= 1
+                st.experimental_rerun()
     with col3:
         if st.button("Следващ пласт ➡️"):
             if st.session_state.current_layer < st.session_state.num_layers - 1:
                 st.session_state.current_layer += 1
+                st.experimental_rerun()
 
     layer_idx = st.session_state.current_layer
     st.subheader(f"Въвеждане на данни за пласт {layer_idx + 1}")
@@ -92,15 +92,6 @@ if st.session_state.page == "main":
         ("Ed / Ei", "h / D"),
         key=f"mode_{layer_idx}"
     )
-
-    if mode == "Ed / Ei":
-        h = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
-    else:
-        h = layer_data.get("h", None)
-        if h is not None:
-            st.write(f"Дебелина h (cm): {h:.2f}")
-        else:
-            st.write("Дебелина h (cm): -")
 
     def compute_Ed(h, D, Ee, Ei):
         hD = h / D
@@ -160,7 +151,6 @@ if st.session_state.page == "main":
         return None, None, None, None, None, None
 
     def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso):
-        # Линия между двете изолини на фиксирано hD_point
         fig.add_trace(go.Scatter(
             x=[hD_point, hD_point],
             y=[y_low, y_high],
@@ -168,7 +158,6 @@ if st.session_state.page == "main":
             line=dict(color='purple', dash='dash'),
             name=f"Интерполация Ee/Ei: {low_iso:.2f} - {high_iso:.2f}"
         ))
-        # Точка с резултат
         fig.add_trace(go.Scatter(
             x=[hD_point],
             y=[EdEi_point],
@@ -178,6 +167,8 @@ if st.session_state.page == "main":
         ))
 
     if mode == "Ed / Ei":
+        h = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
+
         if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
             result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
 
@@ -193,39 +184,33 @@ if st.session_state.page == "main":
                     "Ei": Ei,
                     "h": h,
                     "Ed": result,
-                    "EdEi": EdEi_point,
-                    "mode": mode
+                    "D": d_value
                 })
 
+                # Графика
                 fig = go.Figure()
-                for value, group in data.groupby("Ee_over_Ei"):
-                    group_sorted = group.sort_values("h_over_D")
+                for iso in sorted(data['Ee_over_Ei'].unique()):
+                    df_iso = data[data['Ee_over_Ei'] == iso]
                     fig.add_trace(go.Scatter(
-                        x=group_sorted["h_over_D"],
-                        y=group_sorted["Ed_over_Ei"],
+                        x=df_iso['h_over_D'], y=df_iso['Ed_over_Ei'],
                         mode='lines',
-                        name=f"Ee/Ei = {value:.2f}"
+                        name=f"Ee/Ei = {iso:.3f}"
                     ))
-
                 add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso)
-
-                fig.update_layout(
-                    title="Ed / Ei в зависимост от h / D",
-                    xaxis_title="h / D",
-                    yaxis_title="Ed / Ei",
-                    legend_title="Изолини"
-                )
+                fig.update_layout(title="Изолинии Ed / Ei", xaxis_title="h / D", yaxis_title="Ed / Ei")
                 st.plotly_chart(fig, use_container_width=True)
 
-    elif mode == "h / D":
-        Ed = st.number_input("Ed (MPa):", min_value=0.0, step=0.1, value=layer_data.get("Ed", 500.0), key=f"Ed_{layer_idx}")
+    else:  # mode == "h / D"
+        Ed = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 1000.0), key=f"Ed_{layer_idx}")
+
         if st.button("Изчисли h", key=f"calc_h_{layer_idx}"):
             result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
 
             if result is None:
                 st.warning("❗ Точката е извън обхвата на наличните изолинии.")
             else:
-                st.success(f"✅ Изчислено: h = {result:.2f} cm")
+                EdEi_point = Ed / Ei
+                st.success(f"✅ Изчислено: h / D = {hD_point:.3f}  \nh = {result:.2f} cm")
                 st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
                 st.session_state.layers_data[layer_idx].update({
@@ -233,52 +218,34 @@ if st.session_state.page == "main":
                     "Ei": Ei,
                     "h": result,
                     "Ed": Ed,
-                    "mode": mode
+                    "D": d_value
                 })
 
+                # Графика
                 fig = go.Figure()
-                for value, group in data.groupby("Ee_over_Ei"):
-                    group_sorted = group.sort_values("h_over_D")
+                for iso in sorted(data['Ee_over_Ei'].unique()):
+                    df_iso = data[data['Ee_over_Ei'] == iso]
                     fig.add_trace(go.Scatter(
-                        x=group_sorted["h_over_D"],
-                        y=group_sorted["Ed_over_Ei"],
+                        x=df_iso['h_over_D'], y=df_iso['Ed_over_Ei'],
                         mode='lines',
-                        name=f"Ee/Ei = {value:.2f}"
+                        name=f"Ee/Ei = {iso:.3f}"
                     ))
-
-                EdEi_point = Ed / Ei
                 add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso)
-
-                fig.update_layout(
-                    title="Ed / Ei в зависимост от h / D",
-                    xaxis_title="h / D",
-                    yaxis_title="Ed / Ei",
-                    legend_title="Изолини"
-                )
+                fig.update_layout(title="Изолинии Ed / Ei", xaxis_title="h / D", yaxis_title="Ed / Ei")
                 st.plotly_chart(fig, use_container_width=True)
 
-    # Бутон за навигация към новата страница
-    st.markdown("---")
-    if st.button("➕ Отвори страница: Проверки за срязване"):
+    # Бутон за отваряне на новата страница
+    if st.button("Проверки за срязване"):
         st.session_state.page = "shear"
         st.experimental_rerun()
 
-
 # --- Страница Проверки за срязване ---
 elif st.session_state.page == "shear":
+    st.title("Проверки за срязване")
 
-    st.title("🧩 Проверки за срязване")
+    # Тук добави своя код за проверките
 
-    shear_force = st.number_input("🔹 Въведете срязваща сила (kN):", min_value=0.0, step=0.1)
-    area = st.number_input("🔹 Въведете площ на напречно сечение (cm²):", min_value=0.1, step=0.1)
-
-    if shear_force > 0 and area > 0:
-        # Пресмятане на срязващо напрежение в Pascal (Pa)
-        shear_stress = (shear_force * 1000) / (area / 10000)  
-        st.success(f"✅ Срязващо напрежение: {shear_stress:.2f} Pa")
-    else:
-        st.info("ℹ️ Моля, въведете валидни стойности.")
-
-    if st.button("⬅️ Назад към основната страница"):
+    # Бутон за връщане към основната страница
+    if st.button("Назад към основната страница"):
         st.session_state.page = "main"
         st.experimental_rerun()
