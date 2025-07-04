@@ -1,7 +1,7 @@
 import streamlit as st
 
-st.set_page_config(page_title="Чиста страница", layout="wide")
+st.set_page_config(page_title="empty_page", layout="wide")
 
-st.title("🧼 Чиста страница")
+st.title("empty_page")
 st.write("Това е нова, празна страница.")
 
