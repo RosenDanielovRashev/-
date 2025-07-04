@@ -327,5 +327,4 @@ for i, layer in enumerate(st.session_state.layers_data):
     )
 st.set_page_config(page_title="Основна страница", layout="wide")
 
-if st.button("➡️ Отиди на празна страница"):
-    st.switch_page("empty_page")  # без .py, името на файла
+st.page_link("pages/second.py", label="Към Втората Страница", icon="📄")
