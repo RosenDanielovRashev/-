@@ -332,7 +332,7 @@ for i, layer in enumerate(st.session_state.layers_data):
 # Бутон за преминаване към страницата за срязване
 if st.button("➕ Отвори страница: Проверки за срязване"):
     st.session_state.page = "shear"
-    st.experimental_rerun()
+    st.rerun()
 # === Навигация и съдържание ===
 if st.session_state.page == "shear":
     st.markdown("## 🧩 Проверки за срязване")
@@ -350,4 +350,4 @@ if st.session_state.page == "shear":
     # 🔙 Бутон за връщане
     if st.button("⬅️ Назад към основната страница"):
         st.session_state.page = "main"
-        st.experimental_rerun()
+        st.rerun()
