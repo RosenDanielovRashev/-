@@ -326,4 +326,4 @@ for i, layer in enumerate(st.session_state.layers_data):
         unsafe_allow_html=True
     )
 
-st.page_link("pages/second.py", label="Към Втората Страница", icon="📄")
+st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
