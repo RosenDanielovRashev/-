@@ -353,6 +353,6 @@ elif st.session_state.page == "shear":
         st.info("ℹ️ Моля, въведете валидни стойности.")
 
     # 🔙 Бутон за връщане
-    if st.button("➕ Отвори страница: Проверки за срязване", key=f"open_shear_{i}"):
-    st.session_state.page = "shear"
-    st.rerun()
+     if st.button("➕ Отвори страница: Проверки за срязване", key=f"open_shear_{i}"):
+        st.session_state.page = "shear"
+        st.rerun()
