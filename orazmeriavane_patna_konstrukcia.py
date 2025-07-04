@@ -5,6 +5,10 @@ import plotly.graph_objs as go
 
 st.set_page_config(layout="wide")
 
+# Настройка на навигацията
+if "page" not in st.session_state:
+    st.session_state.page = "main"
+
 st.markdown(
     """
     <style>
@@ -325,3 +329,25 @@ for i, layer in enumerate(st.session_state.layers_data):
         """,
         unsafe_allow_html=True
     )
+# Бутон за преминаване към страницата за срязване
+if st.button("➕ Отвори страница: Проверки за срязване"):
+    st.session_state.page = "shear"
+    st.experimental_rerun()
+# === Навигация и съдържание ===
+if st.session_state.page == "shear":
+    st.markdown("## 🧩 Проверки за срязване")
+    st.markdown("Извършване на проверки за срязване на пътната конструкция.")
+
+    shear_force = st.number_input("Въведете срязваща сила (kN):", min_value=0.0, step=0.1)
+    area = st.number_input("Въведете площ на напречно сечение (cm²):", min_value=0.1, step=0.1)
+
+    if shear_force and area:
+        shear_stress = (shear_force * 1000) / (area / 10000)  # Pa
+        st.success(f"Срязващо напрежение: {shear_stress:.2f} Pa")
+    else:
+        st.info("Въведете валидни стойности за сила и площ.")
+
+    # 🔙 Бутон за връщане
+    if st.button("⬅️ Назад към основната страница"):
+        st.session_state.page = "main"
+        st.experimental_rerun()
