@@ -256,103 +256,83 @@ if st.session_state.page == "main":
     st.header("Резултати за всички пластове")
 
     for i, layer in enumerate(st.session_state.layers_data):
-        Ee = layer.get('Ee', '-')
-        Ei = layer.get('Ei', '-')
-        Ed = layer.get('Ed', '-')
-        if isinstance(Ed, (float, int)):
-            Ed_display = round(Ed)
-        else:
-            Ed_display = Ed
-
-        h_val = layer.get('h', '-')
-        h_result = h_val if isinstance(h_val, (float, int)) else 0.0
-
-        st.markdown(f"<b>Пласт {i + 1}</b>", unsafe_allow_html=True)
-        st.markdown(
-            f"""
-            <div style="
-                position: relative;
-                width: 400px;
-                height: 60px;
-                background-color: #add8e6;
-                border: 2px solid black;
-                border-radius: 6px;
-                margin: 10px auto 30px auto;
-                padding: 10px;
-                font-family: Arial, sans-serif;
-            ">
-                <!-- Ei в центъра -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    font-weight: bold;
-                    font-size: 18px;
-                    color: black;
-                ">
-                    Ei = {Ei} MPa
-                </div>
-                <!-- Ee горе вдясно -->
-                <div style="
-                    position: absolute;
-                    top: -20px;
-                    right: 10px;
-                    font-size: 14px;
-                    color: darkblue;
-                    font-weight: bold;
-                ">
-                    Ee = {Ee} MPa
-                </div>
-                <!-- Ed долу вдясно -->
-                <div style="
-                    position: absolute;
-                    bottom: -20px;
-                    right: 10px;
-                    font-size: 14px;
-                    color: green;
-                    font-weight: bold;
-                ">
-                    Ed = {Ed_display} MPa
-                </div>
-                <!-- h вляво -->
-                <div style="
-                    position: absolute;
-                    top: 50%;
-                    left: 8px;
-                    transform: translateY(-50%);
-                    font-size: 14px;
-                    color: black;
-                    font-weight: bold;
-                ">
-                    h = {h_result:.2f} cm
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-        if st.button("➕ Отвори страница: Проверки за срязване"):
-            st.session_state.page = "shear"
-            st.rerun()
-
-elif st.session_state.page == "shear":
-    st.title("🧩 Проверки за срязване")
-
-    st.markdown("""
-    Въведете стойности за срязваща сила и площ на напречно сечение, за да се изчисли срязващото напрежение.
-    """)
-
-    shear_force = st.number_input("🔹 Въведете срязваща сила (kN):", min_value=0.0, step=0.1)
-    area = st.number_input("🔹 Въведете площ на напречно сечение (cm²):", min_value=0.1, step=0.1)
-
-    if shear_force > 0 and area > 0:
-        # Преобразуваме към Pa: 1 kN = 1000 N, 1 cm² = 0.0001 m²
-        shear_stress = (shear_force * 1000) / (area / 10000)
-        st.success(f"✅ Срязващо напрежение: {shear_stress:.2f} Pa")
+    Ee = layer.get('Ee', '-')
+    Ei = layer.get('Ei', '-')
+    Ed = layer.get('Ed', '-')
+    if isinstance(Ed, (float, int)):
+        Ed_display = round(Ed)
     else:
-        st.info("ℹ️ Моля, въведете валидни стойности.")
+        Ed_display = Ed
 
-    # 🔙 Бутон за връщане
-        if st.button("➕ Отвори страница: Проверки за срязване", key=f"open_shear_{i}"):
-            st.session_state.page = "shear"
-            st.rerun()
+    h_val = layer.get('h', '-')
+    h_result = h_val if isinstance(h_val, (float, int)) else 0.0
+
+    st.markdown(f"<b>Пласт {i + 1}</b>", unsafe_allow_html=True)
+    st.markdown(
+        f"""
+        <div style="
+            position: relative;
+            width: 400px;
+            height: 60px;
+            background-color: #add8e6;
+            border: 2px solid black;
+            border-radius: 6px;
+            margin: 10px auto 30px auto;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+        ">
+            <!-- Ei в центъра -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-weight: bold;
+                font-size: 18px;
+                color: black;
+            ">
+                Ei = {Ei} MPa
+            </div>
+            <!-- Ee горе вдясно -->
+            <div style="
+                position: absolute;
+                top: -20px;
+                right: 10px;
+                font-size: 14px;
+                color: darkblue;
+                font-weight: bold;
+            ">
+                Ee = {Ee} MPa
+            </div>
+            <!-- Ed долу вдясно -->
+            <div style="
+                position: absolute;
+                bottom: -20px;
+                right: 10px;
+                font-size: 14px;
+                color: green;
+                font-weight: bold;
+            ">
+                Ed = {Ed_display} MPa
+            </div>
+            <!-- h вляво -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 8px;
+                transform: translateY(-50%);
+                font-size: 14px;
+                color: black;
+                font-weight: bold;
+            ">
+                h = {h_result:.2f} cm
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
+    # Тук слагаме бутона ВЪТРЕ в цикъла и с уникален key
+    if st.button("➕ Отвори страница: Проверки за срязване", key=f"open_shear_{i}"):
+        st.session_state.page = "shear"
+        st.rerun()
