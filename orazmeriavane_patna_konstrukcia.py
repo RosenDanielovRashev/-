@@ -190,149 +190,165 @@ if st.session_state.page == "main":
                     "Ei": Ei,
                     "h": h,
                     "Ed": result,
-                    "EdEi": EdEi_point,
-                    "mode": mode
+                    "Ed_over_Ei": EdEi_point
                 })
 
+                # Графика
                 fig = go.Figure()
-                for value, group in data.groupby("Ee_over_Ei"):
-                    group_sorted = group.sort_values("h_over_D")
+
+                for iso in sorted(data['Ee_over_Ei'].unique()):
+                    grp = data[data['Ee_over_Ei'] == iso].sort_values('h_over_D')
                     fig.add_trace(go.Scatter(
-                        x=group_sorted["h_over_D"],
-                        y=group_sorted["Ed_over_Ei"],
+                        x=grp['h_over_D'],
+                        y=grp['Ed_over_Ei'],
                         mode='lines',
-                        name=f"Ee/Ei = {value:.2f}"
+                        name=f"Ee/Ei={iso:.2f}"
                     ))
 
                 add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso)
 
                 fig.update_layout(
-                    title="Ed / Ei в зависимост от h / D",
+                    title="Изолинии Ed/Ei спрямо h/D за различни Ee/Ei",
                     xaxis_title="h / D",
                     yaxis_title="Ed / Ei",
-                    legend_title="Изолинии"
+                    width=800,
+                    height=500
                 )
-                st.plotly_chart(fig, use_container_width=True)
 
-    elif mode == "h / D":
-        Ed = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 50.0), key=f"Ed_{layer_idx}")
+                st.plotly_chart(fig)
+
+    else:  # mode == "h / D"
+        Ed = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 1000.0), key=f"Ed_{layer_idx}")
+
         if st.button("Изчисли h", key=f"calc_h_{layer_idx}"):
             result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
+
             if result is None:
                 st.warning("❗ Точката е извън обхвата на наличните изолинии.")
             else:
-                st.success(f"✅ Изчислено: h = {result:.2f} cm  \nh / D = {hD_point:.3f}")
+                st.success(f"✅ Изчислено: h = {result:.2f} cm")
                 st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
                 st.session_state.layers_data[layer_idx].update({
                     "Ee": Ee,
                     "Ei": Ei,
-                    "h": result,
                     "Ed": Ed,
-                    "mode": mode
+                    "h": result,
+                    "Ed_over_Ei": Ed / Ei
                 })
 
+                # Графика
                 fig = go.Figure()
-                for value, group in data.groupby("Ee_over_Ei"):
-                    group_sorted = group.sort_values("h_over_D")
+
+                for iso in sorted(data['Ee_over_Ei'].unique()):
+                    grp = data[data['Ee_over_Ei'] == iso].sort_values('h_over_D')
                     fig.add_trace(go.Scatter(
-                        x=group_sorted["h_over_D"],
-                        y=group_sorted["Ed_over_Ei"],
+                        x=grp['h_over_D'],
+                        y=grp['Ed_over_Ei'],
                         mode='lines',
-                        name=f"Ee/Ei = {value:.2f}"
+                        name=f"Ee/Ei={iso:.2f}"
                     ))
 
                 add_interpolation_line(fig, hD_point, Ed / Ei, y_low, y_high, low_iso, high_iso)
 
                 fig.update_layout(
-                    title="Ed / Ei в зависимост от h / D",
+                    title="Изолинии Ed/Ei спрямо h/D за различни Ee/Ei",
                     xaxis_title="h / D",
                     yaxis_title="Ed / Ei",
-                    legend_title="Изолинии"
+                    width=800,
+                    height=500
                 )
-                st.plotly_chart(fig, use_container_width=True)
+
+                st.plotly_chart(fig)
 
     st.markdown("---")
-    st.header("Резултати за всички пластове")
+    st.header("Резултати за всички пластове:")
 
     for i, layer in enumerate(st.session_state.layers_data):
-    Ee = layer.get('Ee', '-')
-    Ei = layer.get('Ei', '-')
-    Ed = layer.get('Ed', '-')
-    if isinstance(Ed, (float, int)):
-        Ed_display = round(Ed)
-    else:
-        Ed_display = Ed
+        Ee_val = layer.get('Ee', '-')
+        Ei_val = layer.get('Ei', '-')
+        Ed_val = layer.get('Ed', '-')
 
-    h_val = layer.get('h', '-')
-    h_result = h_val if isinstance(h_val, (float, int)) else 0.0
+        if isinstance(Ed_val, (float, int)):
+            Ed_display = round(Ed_val, 2)
+        else:
+            Ed_display = Ed_val
 
-    st.markdown(f"<b>Пласт {i + 1}</b>", unsafe_allow_html=True)
-    st.markdown(
-        f"""
-        <div style="
-            position: relative;
-            width: 400px;
-            height: 60px;
-            background-color: #add8e6;
-            border: 2px solid black;
-            border-radius: 6px;
-            margin: 10px auto 30px auto;
-            padding: 10px;
-            font-family: Arial, sans-serif;
-        ">
-            <!-- Ei в центъра -->
+        h_val = layer.get('h', 0.0)
+        h_result = h_val if isinstance(h_val, (float, int)) else 0.0
+
+        st.markdown(f"<b>Пласт {i + 1}</b>", unsafe_allow_html=True)
+        st.markdown(
+            f"""
             <div style="
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-weight: bold;
-                font-size: 18px;
-                color: black;
+                position: relative;
+                width: 400px;
+                height: 60px;
+                background-color: #add8e6;
+                border: 2px solid black;
+                border-radius: 6px;
+                margin: 10px auto 30px auto;
+                padding: 10px;
+                font-family: Arial, sans-serif;
             ">
-                Ei = {Ei} MPa
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-weight: bold;
+                    font-size: 18px;
+                    color: black;
+                ">
+                    Ei = {Ei_val} MPa
+                </div>
+                <div style="
+                    position: absolute;
+                    top: -20px;
+                    right: 10px;
+                    font-size: 14px;
+                    color: darkblue;
+                    font-weight: bold;
+                ">
+                    Ee = {Ee_val} MPa
+                </div>
+                <div style="
+                    position: absolute;
+                    bottom: -20px;
+                    right: 10px;
+                    font-size: 14px;
+                    color: green;
+                    font-weight: bold;
+                ">
+                    Ed = {Ed_display} MPa
+                </div>
+                <div style="
+                    position: absolute;
+                    top: 50%;
+                    left: 8px;
+                    transform: translateY(-50%);
+                    font-size: 14px;
+                    color: black;
+                    font-weight: bold;
+                ">
+                    h = {h_result:.2f} cm
+                </div>
             </div>
-            <!-- Ee горе вдясно -->
-            <div style="
-                position: absolute;
-                top: -20px;
-                right: 10px;
-                font-size: 14px;
-                color: darkblue;
-                font-weight: bold;
-            ">
-                Ee = {Ee} MPa
-            </div>
-            <!-- Ed долу вдясно -->
-            <div style="
-                position: absolute;
-                bottom: -20px;
-                right: 10px;
-                font-size: 14px;
-                color: green;
-                font-weight: bold;
-            ">
-                Ed = {Ed_display} MPa
-            </div>
-            <!-- h вляво -->
-            <div style="
-                position: absolute;
-                top: 50%;
-                left: 8px;
-                transform: translateY(-50%);
-                font-size: 14px;
-                color: black;
-                font-weight: bold;
-            ">
-                h = {h_result:.2f} cm
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-    
-    # Тук слагаме бутона ВЪТРЕ в цикъла и с уникален key
-    if st.button("➕ Отвори страница: Проверки за срязване", key=f"open_shear_{i}"):
-        st.session_state.page = "shear"
-        st.rerun()
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Бутон за всяка лента с уникален key
+        if st.button("➕ Отвори страница: Проверки за срязване", key=f"open_shear_{i}"):
+            st.session_state.page = "shear"
+            st.session_state.current_layer = i
+            st.experimental_rerun()
+
+
+elif st.session_state.page == "shear":
+    st.title("Проверки за срязване")
+    st.markdown("Тук ще се имплементират проверките за срязване.")
+
+    if st.button("⬅️ Назад към главната страница"):
+        st.session_state.page = "main"
+        st.experimental_rerun()
