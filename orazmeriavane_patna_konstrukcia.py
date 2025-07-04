@@ -325,3 +325,5 @@ for i, layer in enumerate(st.session_state.layers_data):
         """,
         unsafe_allow_html=True
     )
+if st.button("Отиди на чиста страница"):
+    st.experimental_set_query_params(page="page")
