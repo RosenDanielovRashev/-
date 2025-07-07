@@ -214,6 +214,6 @@ elif sigma_saved is not None:
     )
     st.plotly_chart(fig, use_container_width=True)
 
-st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", use_container_width=True)
+st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=400, use_container_width=True)
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
