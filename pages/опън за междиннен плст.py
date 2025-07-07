@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
+st.set_page_config(layout="wide")
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция")
 
 def to_subscript(number):
@@ -24,7 +25,7 @@ if 'layers_data' not in st.session_state or not st.session_state.layers_data:
 
 # Get data from first page
 layers_data = st.session_state.layers_data
-n = st.session_state.num_layers
+n = len(layers_data)
 D = st.session_state.final_D
 axle_load = st.session_state.axle_load
 
@@ -97,7 +98,7 @@ if st.button(f"Изчисли за {selected_layer}"):
     results = calculate_layer(layer_idx)
     st.success(f"Изчисленията за {selected_layer} са запазени!")
 
-# Display results
+# Display results if available
 if layer_idx in st.session_state.layer_results:
     results = st.session_state.layer_results[layer_idx]
     
@@ -187,7 +188,7 @@ if layer_idx in st.session_state.layer_results:
                 'manual_value': manual_value
             }
         
-        # Show check results
+        # Show check results if available
         if f'check_{layer_idx}' in st.session_state.check_results:
             check = st.session_state.check_results[f'check_{layer_idx}']
             status = "✅ Удовлетворена" if check['passed'] else "❌ Неудовлетворена"
@@ -199,3 +200,14 @@ if layer_idx in st.session_state.layer_results:
         
     except Exception as e:
         st.error(f"Грешка при визуализацията: {str(e)}")
+
+# Navigation links
+st.markdown("---")
+st.subheader("Навигация")
+col1, col2 = st.columns(2)
+with col1:
+    if st.button("Обратно към основната страница"):
+        st.switch_page("orazmeriavane_patna_konstrukcia.py")
+with col2:
+    if st.button("Към опън в покритието"):
+        st.switch_page("pages/second.py")
