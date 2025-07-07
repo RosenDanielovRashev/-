@@ -254,14 +254,14 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Добавяме CSS, който ще стилизира number_input
+# CSS за стилизиране на number_input
 st.markdown("""
 <style>
 div[data-baseweb="input"] > input {
     width: 70px !important;
     padding-left: 5px !important;
     padding-right: 5px !important;
-    text-align: left !important;  /* Смяна на подравняването на текста в input */
+    text-align: left !important;  /* Подравняване на текста в input */
 }
 </style>
 """, unsafe_allow_html=True)
@@ -289,11 +289,7 @@ with col2:
         label_visibility="collapsed"
     )
 
-# Допълнително можеш да покажеш текста с ръчно въведената стойност
-if calculated_sigma is not None:
-    st.markdown(f"Ръчно въведена стойност: **{manual_value:.3f}** MPa")
-
-# Добавяне на бутон за проверка
+# Бутон за проверка на условието
 if st.button("Провери дали σR ≤ ръчно въведена стойност"):
     if calculated_sigma is None:
         st.warning("❗ Няма изчислена стойност σR за проверка.")
