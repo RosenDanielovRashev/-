@@ -232,4 +232,14 @@ if p is not None:
 else:
     st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
 
+if p is not None and sigma is not None:
+    sigma_final = 1.15 * p * sigma
+    st.markdown("### Формула за изчисление на крайното напрежение σR:")
+    st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
+    st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
+    st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+else:
+    st.warning("❗ Липсва p или σR от номограмата за изчисление.")
+
+
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
