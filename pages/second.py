@@ -246,8 +246,8 @@ else:
 
 st.markdown(
     """
-    <div style="background-color: #28a745; padding: 10px; border-radius: 5px;">
-        <h3 style="color: white; margin: 50;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
+    <div style="background-color: #d4edda; padding: 10px; border-radius: 5px;">
+        <h3 style="color: #155724; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
     </div>
     """,
     unsafe_allow_html=True
