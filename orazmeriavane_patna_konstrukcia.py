@@ -337,5 +337,15 @@ if st.button("📤 Изпрати към 'Опън в покритието'"):
     st.session_state.final_D = d_value  # Запазваме D
     st.success("✅ Данните са подготвени за втората страница.")
 
+# Данни за третата страница - Опън в междинен пласт
+st.session_state.shared_data = {
+    "n": st.session_state.num_layers,
+    "D": d_value,
+    "h_values": [layer.get("h", 0.0) for layer in st.session_state.layers_data],
+    "E_values": [layer.get("Ei", 0.0) for layer in st.session_state.layers_data],
+    "Ed_values": [layer.get("Ed", 0.0) for layer in st.session_state.layers_data],
+}
+
+
 st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
 st.page_link("pages/опън за междиннен плст.py", label="Към Опън в междиннен плст", icon="📄")
