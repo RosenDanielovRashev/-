@@ -254,11 +254,23 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# Добавяме CSS, който ще стилизира number_input
+st.markdown("""
+<style>
+div[data-baseweb="input"] > input {
+    width: 70px !important;
+    padding-left: 5px !important;
+    padding-right: 5px !important;
+    text-align: left !important;  /* Смяна на подравняването на текста в input */
+}
+</style>
+""", unsafe_allow_html=True)
+
 # Вземаме изчислената σR от номограмата (ако има)
 calculated_sigma = st.session_state.get("final_sigma", None)
 
 # Колони за текст и входно поле на един ред
-col1, col2 = st.columns([2, 1])
+col1, col2 = st.columns([3, 1])
 
 with col1:
     if calculated_sigma is not None:
@@ -274,7 +286,7 @@ with col2:
         value=5.0,
         step=0.1,
         key="manual_sigma_input",
-        label_visibility="collapsed"   # <--- Тук
+        label_visibility="collapsed"
     )
 
 # Допълнително можеш да покажеш текста с ръчно въведената стойност
