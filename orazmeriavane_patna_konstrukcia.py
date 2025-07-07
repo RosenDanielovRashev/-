@@ -50,6 +50,8 @@ if num_layers != st.session_state.num_layers:
 
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34, 33])
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
+# Запазване на осовия товар в session_state
+st.session_state["axle_load"] = axle_load
 
 col1, col2, col3 = st.columns([1, 6, 1])
 with col1:
