@@ -50,6 +50,8 @@ if num_layers != st.session_state.num_layers:
 
 d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34, 33])
 axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
+# Запазване на осовия товар в session_state
+st.session_state["axle_load"] = axle_load
 
 col1, col2, col3 = st.columns([1, 6, 1])
 with col1:
@@ -325,5 +327,14 @@ for i, layer in enumerate(st.session_state.layers_data):
         """,
         unsafe_allow_html=True
     )
+    
+# Запазване на финални данни за втората страница
+if st.button("📤 Изпрати към 'Опън в покритието'"):
+    last_layer = st.session_state.layers_data[-1]  # последният пласт
+    st.session_state.final_Ed = last_layer.get("Ed", None)
+    st.session_state.Ei_list = [layer.get("Ei", 0) for layer in st.session_state.layers_data]
+    st.session_state.hi_list = [layer.get("h", 0) for layer in st.session_state.layers_data]
+    st.session_state.final_D = d_value  # Запазваме D
+    st.success("✅ Данните са подготвени за втората страница.")
 
 st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
