@@ -3,17 +3,26 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
-# Първата част - въвеждане на данни
-st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция")
+st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
 def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
-# Въвеждаме стойности за пластовете
+# Initialize session state
+if 'layer_results' not in st.session_state:
+    st.session_state.layer_results = {}
+if 'manual_sigma_values' not in st.session_state:
+    st.session_state.manual_sigma_values = {}
+if 'check_results' not in st.session_state:
+    st.session_state.check_results = {}
+
+# Input parameters
 n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=4)
 D = st.selectbox("Избери D", options=[32.04, 34.0], index=0)
 
+# Input data for all layers
+st.markdown("### Въведи стойности за всички пластове")
 h_values = []
 E_values = []
 Ed_values = []
@@ -24,31 +33,47 @@ for i in range(n):
         h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
         h_values.append(h)
     with cols[1]:
-        E = st.number_input(f"E{to_subscript(i+1)}", value=1200.0, step=0.1, key=f"E_{i}")
+        default_E = [1200.0, 1000.0, 800.0, 400.0][i] if i < 4 else 400.0
+        E = st.number_input(f"E{to_subscript(i+1)}", value=default_E, step=0.1, key=f"E_{i}")
         E_values.append(E)
     with cols[2]:
         Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=30.0, step=0.1, key=f"Ed_{i}")
         Ed_values.append(Ed)
 
-# Записваме въведените стойности в session_state
-st.session_state.h_values = h_values
-st.session_state.E_values = E_values
-st.session_state.Ed_values = Ed_values
+# Layer selection
+st.markdown("### Избери пласт за проверка")
+selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(2, n)], index=n-3 if n > 2 else 0)
+layer_idx = int(selected_layer.split()[-1]) - 1
 
-# Втората част - изчисления и визуализация
-
-# Изтегляне на данните от session_state
-h_values = st.session_state.get('h_values', [])
-E_values = st.session_state.get('E_values', [])
-Ed_values = st.session_state.get('Ed_values', [])
-
-# Ако няма данни, предупреждаваме потребителя
-if not h_values or not E_values or not Ed_values:
-    st.warning("Моля, въведете данни за пластовете.")
-else:
-    # Поставяме тук логиката за изчисленията и визуализацията (както в оригиналния код)
-    st.write("Извършваме изчисления с въведените данни...")
-    # Добави тук твоите изчисления и визуализация с Plotly
+# Calculation function
+def calculate_layer(layer_index):
+    h_array = np.array(h_values[:layer_index+1])
+    E_array = np.array(E_values[:layer_index+1])
+    current_Ed = Ed_values[layer_index]
+    
+    sum_h_n_1 = h_array[:-1].sum() if layer_index > 0 else 0
+    weighted_sum_n_1 = np.sum(E_array[:-1] * h_array[:-1]) if layer_index > 0 else 0
+    Esr = weighted_sum_n_1 / sum_h_n_1 if sum_h_n_1 != 0 else 0
+    
+    H_n = h_array.sum()
+    H_n_1 = sum_h_n_1
+    
+    results = {
+        'H_n_1_r': round(H_n_1, 3),
+        'H_n_r': round(H_n, 3),
+        'Esr_r': round(Esr, 3),
+        'ratio_r': round(H_n / D, 3) if D != 0 else 0,
+        'En_r': round(E_values[layer_index], 3),
+        'Ed_r': round(current_Ed, 3),
+        'Esr_over_En_r': round(Esr / E_values[layer_index], 3) if E_values[layer_index] != 0 else 0,
+        'En_over_Ed_r': round(E_values[layer_index] / current_Ed, 3) if current_Ed != 0 else 0,
+        'h_values': h_values.copy(),
+        'E_values': E_values.copy(),
+        'n_for_calc': layer_index + 1
+    }
+    
+    st.session_state.layer_results[layer_index] = results
+    return results
 
 # Calculate button
 if st.button(f"Изчисли за пласт {layer_idx+1}"):
