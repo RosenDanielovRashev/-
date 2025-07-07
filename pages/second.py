@@ -271,10 +271,10 @@ calculated_sigma = st.session_state.get("final_sigma", None)
 
 # Полето за ръчно въвеждане на стойност (на нов ред, центрирано ако искаш)
 manual_value = st.number_input(
-    label="# Въведете ръчно отчетена стойност σR [MPa]",
+    label="Въведете ръчно отчетена стойност σR [MPa]",
     min_value=0.0,
     max_value=20.0,
-    value=5.0,
+    value=1.2,
     step=0.1,
     key="manual_sigma_input",
     label_visibility="visible"
