@@ -112,8 +112,8 @@ if layer_idx in st.session_state.layer_results:
 
     # Visualization
     try:
-        df_original = pd.read_csv("danni.csv")
-        df_new = pd.read_csv("Оразмеряване на опън за междиннен плстH_D.csv")
+        df_original = pd.read_csv("danni_1.csv")
+        df_new = pd.read_csv("Оразмеряване на опън за междиннен плстH_D_1.csv")
         df_new.rename(columns={'Esr/Ei': 'sr_Ei'}, inplace=True)
 
         fig = go.Figure()
