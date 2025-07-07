@@ -134,7 +134,8 @@ if layer_idx in st.session_state.layer_results:
                 x=df_level['H/D'], y=df_level['y'],
                 mode='lines', name=f'Ei/Ed = {round(level,3)}',
                 line=dict(width=2)
-            )
+            ))
+
 
         # Маркиране на точката на интерполация
         if layer_idx > 0:
