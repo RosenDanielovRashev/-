@@ -273,7 +273,8 @@ with col2:
         max_value=20.0,
         value=5.0,
         step=0.1,
-        key="manual_sigma_input"
+        key="manual_sigma_input",
+        label_visibility="collapsed"   # <--- Тук
     )
 
 # Допълнително можеш да покажеш текста с ръчно въведената стойност
