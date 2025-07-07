@@ -9,6 +9,7 @@ st.title("Опън в покритието")
 Ed_default = st.session_state.get("final_Ed", 500.0)
 Ei_list_default = st.session_state.get("Ei_list", [])
 hi_list_default = st.session_state.get("hi_list", [])
+D_default = st.session_state.get("final_D", 34.0)
 
 @st.cache_data
 def load_data():
@@ -49,7 +50,7 @@ st.title("Определяне опънното напрежение в долн
 st.markdown("### Въвеждане на параметри на пластове")
 
 # Избор на D от падащо меню
-D = st.selectbox("Диаметър на отпечатъка на колело  D (см)", options=[34.0, 32.04, 33.0])
+D = st.selectbox("Диаметър на отпечатъка на колело  D (см)", options=[34.0, 32.04, 33.0], index=[34.0, 32.04, 33.0].index(D_default) if D_default in [34.0, 32.04, 33.0] else 0)
 
 # Въвеждане на Ed
 Ed = st.number_input("Ed (MPa) – Модул на еластичност под пласта", value=Ed_default)
