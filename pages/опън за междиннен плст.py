@@ -17,32 +17,53 @@ if 'manual_sigma_values' not in st.session_state:
 if 'check_results' not in st.session_state:
     st.session_state.check_results = {}
 
-# Input parameters
-n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=4)
-D = st.selectbox("Избери D", options=[32.04, 34.0], index=0)
+# Check if data from first page exists
+if 'layers_data' not in st.session_state or not st.session_state.layers_data:
+    st.error("Моля, първо въведете данните в първата страница (Оразмеряване на пътна конструкция)")
+    st.stop()
 
-# Input data for all layers
-st.markdown("### Въведи стойности за всички пластове")
+# Get data from first page
+layers_data = st.session_state.layers_data
+n = st.session_state.num_layers
+D = st.session_state.final_D
+axle_load = st.session_state.axle_load
+
+# Extract values from layers_data
 h_values = []
 E_values = []
 Ed_values = []
 
-cols = st.columns(3)
+for i, layer in enumerate(layers_data):
+    h_values.append(layer.get('h', 0.0))
+    E_values.append(layer.get('Ei', 0.0))
+    Ed_values.append(layer.get('Ed', 0.0))
+
+st.info(f"Данните са взети от първата страница: Брой пластове = {n}, D = {D} cm, Осов товар = {axle_load} kN")
+
+# Display layer data
+st.markdown("### Данни за пластовете:")
+cols = st.columns(4)
+cols[0].markdown("**Пласт**")
+cols[1].markdown("**h (cm)**")
+cols[2].markdown("**Ei (MPa)**")
+cols[3].markdown("**Ed (MPa)**")
+
 for i in range(n):
-    with cols[0]:
-        h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
-        h_values.append(h)
-    with cols[1]:
-        default_E = [1200.0, 1000.0, 800.0, 400.0][i] if i < 4 else 400.0
-        E = st.number_input(f"E{to_subscript(i+1)}", value=default_E, step=0.1, key=f"E_{i}")
-        E_values.append(E)
-    with cols[2]:
-        Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=30.0, step=0.1, key=f"Ed_{i}")
-        Ed_values.append(Ed)
+    cols = st.columns(4)
+    cols[0].markdown(f"Пласт {i+1}")
+    cols[1].write(f"{h_values[i]}")
+    cols[2].write(f"{E_values[i]}")
+    cols[3].write(f"{Ed_values[i]}")
 
 # Layer selection
 st.markdown("### Избери пласт за проверка")
-selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(2, n)], index=n-3 if n > 2 else 0)
+if n < 3:
+    st.error("Трябва да имате поне 3 пласта за междинна проверка!")
+    st.stop()
+
+# Options for intermediate layers (from layer 2 to n-1)
+options = [f"Пласт {i+1}" for i in range(1, n-1)]
+selected_layer = st.selectbox("Пласт за проверка", options=options, index=len(options)-1 if options else 0)
 layer_idx = int(selected_layer.split()[-1]) - 1
 
 # Calculation function
@@ -108,7 +129,7 @@ if layer_idx in st.session_state.layer_results:
     st.latex(fr"\frac{{H_n}}{{D}} = \frac{{{results['H_n_r']}}}{{{D}}} = {results['ratio_r']}")
     st.latex(fr"E_{{{layer_idx+1}}} = {results['En_r']}")
     st.latex(fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = {results['Esr_over_En_r']}")
-    st.latex(fr"\frac{{E_{{{layer_idx+1}}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']}}}{{{results['Ed_r']}}} = {results['En_over_Ed_r']}")
+    st.latex(fr"\frac{{E_{{{layer_idx+1}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']}}}{{{results['Ed_r']}}} = {results['En_over_Ed_r']}")
 
     # Visualization
     try:
@@ -220,6 +241,10 @@ if layer_idx in st.session_state.layer_results:
                                 line=dict(color='purple', dash='dash'),
                                 name='Вертикална линия до y=2.5'
                             ))
+                            
+                            # Запазваме стойността за по-късна употреба
+                            sigma_r = round(x_intercept / 2, 3)
+                            st.session_state.final_sigma = sigma_r
 
         # --- Добавяне на невидим trace за втората ос (за да се покаже мащабът)
         fig.add_trace(go.Scatter(
@@ -261,13 +286,10 @@ if layer_idx in st.session_state.layer_results:
         st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
         
         # Проверка дали x_intercept е дефинирана и не е None
-        if ('x_intercept' in locals()) and (x_intercept is not None):
-            sigma_r = round(x_intercept / 2, 3)
+        if 'final_sigma' in st.session_state and st.session_state.final_sigma is not None:
+            sigma_r = st.session_state.final_sigma
             st.markdown(f"**Изчислено σr = {sigma_r}**")
             
-            # Запазваме стойността в session_state
-            st.session_state.final_sigma = sigma_r
-           
             # Секция за ръчно въвеждане
             st.markdown(
                 """
