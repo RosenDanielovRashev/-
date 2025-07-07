@@ -332,6 +332,7 @@ if st.button("📤 Изпрати към 'Опън в покритието'"):
     st.session_state.final_Ed = last_layer.get("Ed", None)
     st.session_state.Ei_list = [layer.get("Ei", 0) for layer in st.session_state.layers_data]
     st.session_state.hi_list = [layer.get("h", 0) for layer in st.session_state.layers_data]
+    st.session_state.final_D = d_value  # Запазваме D
     st.success("✅ Данните са подготвени за втората страница.")
 
 st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
