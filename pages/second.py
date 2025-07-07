@@ -244,7 +244,13 @@ if p is not None and sigma is not None:
 else:
     st.warning("❗ Липсва p или σR от номограмата за изчисление.")
 
-st.markdown("✅ Ръчно отчитане σR спрямо Таблица 9.7")
-
+st.markdown(
+    """
+    <div style="background-color: #28a745; padding: 10px; border-radius: 5px;">
+        <h3 style="color: white; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
