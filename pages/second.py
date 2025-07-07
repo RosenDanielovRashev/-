@@ -232,6 +232,9 @@ if p is not None:
 else:
     st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
 
+# Вземаме sigma от session_state, ако има
+sigma = st.session_state.get("final_sigma", None)
+
 if p is not None and sigma is not None:
     sigma_final = 1.15 * p * sigma
     st.markdown("### Формула за изчисление на крайното напрежение σR:")
