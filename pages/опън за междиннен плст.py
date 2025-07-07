@@ -23,7 +23,7 @@ D = st.selectbox("Избери D", options=[32.04, 34.0], index=0)
 
 # Input data for all layers
 st.markdown("### Въведи стойности за всички пластове")
-h_values = []
+hi_list_full = st.session_state.get("hi_list", [])
 E_values = []
 Ed_values = []
 
