@@ -254,27 +254,31 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Въвеждане на ръчно отчетена стойност (без слайдър)
-manual_value = st.number_input(
-    label="Въведете ръчно отчетена стойност σR [MPa]",
-    min_value=0.0,
-    max_value=20.0,
-    value=5.0,
-    step=0.1
-)
-
 # Вземаме изчислената σR от номограмата (ако има)
 calculated_sigma = st.session_state.get("final_sigma", None)
 
-if calculated_sigma is not None:
-    st.markdown(
-        f"**σR = {calculated_sigma:.3f} ≤ {manual_value:.3f} (ръчно Въведена стойност)**"
-    )
-else:
-    st.markdown(
-        f"**σR (изчислено) не е налично — въведена ръчно стойност: {manual_value:.3f}**"
+# Колони за текст и входно поле на един ред
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    if calculated_sigma is not None:
+        st.markdown(f"**σR = {calculated_sigma:.3f} ≤**")
+    else:
+        st.markdown("**σR (изчислено) не е налично — въведете ръчно стойност:**")
+
+with col2:
+    manual_value = st.number_input(
+        label="",
+        min_value=0.0,
+        max_value=20.0,
+        value=5.0,
+        step=0.1,
+        key="manual_sigma_input"
     )
 
+# Допълнително можеш да покажеш текста с ръчно въведената стойност
+if calculated_sigma is not None:
+    st.markdown(f"Ръчно въведена стойност: **{manual_value:.3f}** MPa")
 
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
