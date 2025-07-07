@@ -246,7 +246,7 @@ else:
 
 st.markdown(
     """
-    <div style="background-color: #d4edda; padding: 10px; border-radius: 5px;">
+    <div style="background-color: #d4edda; padding: 8px; border-radius: 5px;">
         <h3 style="color: #155724; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
     </div>
     """,
