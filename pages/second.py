@@ -244,13 +244,26 @@ if p is not None and sigma is not None:
 else:
     st.warning("❗ Липсва p или σR от номограмата за изчисление.")
 
+# Текст с лек акцент (зелено, но по-лек тон)
 st.markdown(
     """
-    <div style="background-color: #e7f5e6; padding: 8px; border-radius: 5px;">
+    <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
         <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
     </div>
     """,
     unsafe_allow_html=True
 )
+
+# Въвеждане на ръчно въведена стойност чрез слайдър
+manual_sigma_R = st.slider(
+    label="σR ≤ (ръчно Въведена стойност) [MPa]",
+    min_value=0.0,
+    max_value=10.0,
+    value=5.0,
+    step=0.1
+)
+
+st.markdown(f"**Ръчно въведена стойност σR ≤ {manual_sigma_R:.2f} MPa**")
+
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
