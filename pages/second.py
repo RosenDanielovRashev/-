@@ -60,7 +60,11 @@ st.title("Определяне опънното напрежение в долн
 st.markdown("### Въвеждане на параметри на пластове")
 
 # Избор на D от падащо меню
-D = st.selectbox("Диаметър на отпечатъка на колело  D (см)", options=[34.0, 32.04, 33.0], index=[34.0, 32.04, 33.0].index(D_default) if D_default in [34.0, 32.04, 33.0] else 0)
+D = st.selectbox(
+    "Диаметър на отпечатъка на колело  D (см)",
+    options=[34.0, 32.04, 33.0],
+    index=[34.0, 32.04, 33.0].index(D_default) if D_default in [34.0, 32.04, 33.0] else 0
+)
 
 # Въвеждане на Ed
 Ed = st.number_input("Ed (MPa) – Модул на еластичност под пласта", value=Ed_default)
@@ -90,6 +94,12 @@ for i in range(1, n + 1):
     Ei_list.append(Ei)
     hi_list.append(hi)
 
+# Запазваме въведените параметри в session_state
+st.session_state["final_D"] = D
+st.session_state["final_Ed"] = Ed
+st.session_state["Ei_list"] = Ei_list
+st.session_state["hi_list"] = hi_list
+
 # Изчисляване на Esr и H
 numerator = sum(Ei * hi for Ei, hi in zip(Ei_list, hi_list))
 denominator = sum(hi_list)
@@ -111,9 +121,31 @@ denominator_str = " + ".join([f"{hi}" for hi in hi_list])
 st.latex(fr"Esr = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \text{{ MPa}}")
 st.latex(fr"H = {denominator_str} = {H:.2f} \text{{ см}}")
 
+# Вземаме евентуално запазени резултати
+sigma_saved = st.session_state.get("final_sigma", None)
+hD_saved = st.session_state.get("final_hD", None)
+y_low_saved = st.session_state.get("final_y_low", None)
+y_high_saved = st.session_state.get("final_y_high", None)
+low_saved = st.session_state.get("final_low", None)
+high_saved = st.session_state.get("final_high", None)
+
 if st.button("Изчисли σR"):
     sigma, hD, y_low, y_high, low, high = compute_sigma_R(H, D, Esr, Ed)
     
+    if sigma is not None:
+        # Запазваме резултатите в session_state
+        st.session_state["final_sigma"] = sigma
+        st.session_state["final_hD"] = hD
+        st.session_state["final_y_low"] = y_low
+        st.session_state["final_y_high"] = y_high
+        st.session_state["final_low"] = low
+        st.session_state["final_high"] = high
+    else:
+        # Премахваме старите резултати, ако няма нови валидни
+        for key in ["final_sigma", "final_hD", "final_y_low", "final_y_high", "final_low", "final_high"]:
+            if key in st.session_state:
+                del st.session_state[key]
+
     st.markdown("## 📋 Резултати от изчисленията")
 
     if sigma is None:
@@ -148,5 +180,38 @@ if st.button("Изчисли σR"):
             height=700
         )
         st.plotly_chart(fig, use_container_width=True)
+
+# Ако има запазени резултати, показваме ги веднага
+elif sigma_saved is not None:
+    st.markdown("## 📋 Запазени резултати от предишното изчисление")
+    st.markdown(f"""
+    **Изчислено (запазено):**
+    - $Esr / Ed = {Esr:.2f} / {Ed:.2f} = {Esr / Ed:.3f}$
+    - $H / D = {H:.2f} / {D:.2f} = {H / D:.3f}$
+    """)
+    st.success(f"✅ σR = {sigma_saved:.3f}")
+    st.info(f"Интерполация между изолинии: Esr/Ed = {low_saved:.2f} и {high_saved:.2f}")
+
+    fig = go.Figure()
+    for val, group in data.groupby("Esr_over_Ed"):
+        fig.add_trace(go.Scatter(
+            x=group["H_over_D"],
+            y=group["sigma_R"],
+            mode='lines',
+            name=f"Esr/Ed = {val:.1f}"
+        ))
+    fig.add_trace(go.Scatter(
+        x=[hD_saved], y=[sigma_saved],
+        mode='markers',
+        marker=dict(size=8, color='red'),
+        name="Твоята точка"
+    ))
+    fig.update_layout(
+        title="Номограма: σR срещу H/D",
+        xaxis_title="H / D",
+        yaxis_title="σR",
+        height=700
+    )
+    st.plotly_chart(fig, use_container_width=True)
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
