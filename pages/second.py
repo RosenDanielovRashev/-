@@ -5,6 +5,11 @@ import plotly.graph_objs as go
 
 st.title("Опън в покритието")
 
+# Опит за зареждане на данни от първата страница
+Ed_default = st.session_state.get("final_Ed", 500.0)
+Ei_list_default = st.session_state.get("Ei_list", [])
+hi_list_default = st.session_state.get("hi_list", [])
+
 @st.cache_data
 def load_data():
     return pd.read_csv("sigma_data.csv")
@@ -47,10 +52,11 @@ st.markdown("### Въвеждане на параметри на пластов�
 D = st.selectbox("Диаметър на отпечатъка на колело  D (см)", options=[34.0, 32.04, 33.0])
 
 # Въвеждане на Ed
-Ed = st.number_input("Ed (MPa) – Модул на еластичност под пласта", value=500.0)
+Ed = st.number_input("Ed (MPa) – Модул на еластичност под пласта", value=Ed_default)
 
 # Брой пластове
-n = st.number_input("Брой пластове", min_value=1, max_value=10, step=1, value=1)
+default_n = len(Ei_list_default)
+n = st.number_input("Брой пластове", min_value=1, max_value=10, step=1, value=default_n or 1)
 
 Ei_list = []
 hi_list = []
@@ -59,9 +65,17 @@ st.markdown("#### Въвеждане на Eᵢ и hᵢ за всеки плас�
 for i in range(1, n + 1):
     col1, col2 = st.columns(2)
     with col1:
-        Ei = st.number_input(f"E{i} (MPa)", key=f"Ei_{i}", value=1000.0)
+        Ei = st.number_input(
+            f"E{i} (MPa)",
+            key=f"Ei_{i}",
+            value=Ei_list_default[i - 1] if i - 1 < len(Ei_list_default) else 1000.0
+        )
     with col2:
-        hi = st.number_input(f"h{i} (см)", key=f"hi_{i}", value=10.0)
+        hi = st.number_input(
+            f"h{i} (см)",
+            key=f"hi_{i}",
+            value=hi_list_default[i - 1] if i - 1 < len(hi_list_default) else 10.0
+        )
     Ei_list.append(Ei)
     hi_list.append(hi)
 
