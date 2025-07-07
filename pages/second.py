@@ -5,11 +5,21 @@ import plotly.graph_objs as go
 
 st.title("Опън в покритието")
 
-# Опит за зареждане на данни от първата страница
+# Зареждаме стойности от първата страница, ако има
 Ed_default = st.session_state.get("final_Ed", 500.0)
-Ei_list_default = st.session_state.get("Ei_list", [])
-hi_list_default = st.session_state.get("hi_list", [])
 D_default = st.session_state.get("final_D", 34.0)
+
+# Вземаме пълните списъци, ако има такива
+Ei_list_full = st.session_state.get("Ei_list", [])
+hi_list_full = st.session_state.get("hi_list", [])
+
+# Ограничаваме само до първите 2 пласта
+Ei_list_default = Ei_list_full[:2]
+hi_list_default = hi_list_full[:2]
+
+# Показваме информация ако има повече от 2
+if len(Ei_list_full) > 2:
+    st.info("ℹ️ Използват се само първите два пласта от въведените на предишната страница.")
 
 @st.cache_data
 def load_data():
