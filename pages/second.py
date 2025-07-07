@@ -232,6 +232,4 @@ if p is not None:
 else:
     st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.
 
-st.session_state["p"] = p
-
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
