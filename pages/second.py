@@ -244,7 +244,7 @@ if p is not None and sigma is not None:
 else:
     st.warning("❗ Липсва p или σR от номограмата за изчисление.")
 
-# Текст с лек акцент (зелено, но по-лек тон)
+# Лек акцент за заглавие
 st.markdown(
     """
     <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
@@ -254,16 +254,27 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Въвеждане на ръчно въведена стойност чрез слайдър
-manual_sigma_R = st.slider(
-    label="σR ≤ (ръчно Въведена стойност) [MPa]",
+# Въвеждане на ръчно отчетена стойност (без слайдър)
+manual_value = st.number_input(
+    label="Въведете ръчно отчетена стойност σR [MPa]",
     min_value=0.0,
-    max_value=10.0,
+    max_value=20.0,
     value=5.0,
     step=0.1
 )
 
-st.markdown(f"**Ръчно въведена стойност σR ≤ {manual_sigma_R:.2f} MPa**")
+# Вземаме изчислената σR от номограмата (ако има)
+calculated_sigma = st.session_state.get("final_sigma", None)
+
+if calculated_sigma is not None:
+    st.markdown(
+        f"**σR = {calculated_sigma:.3f} ≤ {manual_value:.3f} (ръчно Въведена стойност)**"
+    )
+else:
+    st.markdown(
+        f"**σR (изчислено) не е налично — въведена ръчно стойност: {manual_value:.3f}**"
+    )
+
 
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
