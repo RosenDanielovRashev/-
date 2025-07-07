@@ -25,6 +25,12 @@ st.markdown(
         font-family: Arial, sans-serif;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
+    .warning-box {
+        background-color: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 10px;
+        margin: 10px 0;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -47,7 +53,7 @@ if "num_layers" not in st.session_state:
 if "current_layer" not in st.session_state:
     st.session_state.current_layer = 0
 if "layers_data" not in st.session_state:
-    st.session_state.layers_data = [{}]
+    st.session_state.layers_data = [{"Ee": 2700.0, "Ei": 3000.0}]
 if "axle_load" not in st.session_state:
     st.session_state.axle_load = 100
 if "final_D" not in st.session_state:
@@ -60,7 +66,10 @@ num_layers = st.number_input("Въведете брой пластове:", min_
 if num_layers != st.session_state.num_layers:
     st.session_state.num_layers = num_layers
     if len(st.session_state.layers_data) < num_layers:
-        st.session_state.layers_data += [{} for _ in range(num_layers - len(st.session_state.layers_data))]
+        for i in range(len(st.session_state.layers_data), num_layers):
+            # За пластовете над първия, Ee се взима от Ed на предишния пласт
+            prev_ed = st.session_state.layers_data[i-1].get("Ed", 2700.0)
+            st.session_state.layers_data.append({"Ee": prev_ed, "Ei": 3000.0})
     elif len(st.session_state.layers_data) > num_layers:
         st.session_state.layers_data = st.session_state.layers_data[:num_layers]
     if st.session_state.current_layer >= num_layers:
@@ -100,8 +109,26 @@ st.markdown("""
 # Въвеждане на параметри за пласта
 layer_data = st.session_state.layers_data[layer_idx]
 
-Ee = st.number_input("Ee (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ee", 2700.0), key=f"Ee_{layer_idx}")
+# Автоматично определяне на Ee за пластове над първия
+if layer_idx > 0:
+    prev_layer = st.session_state.layers_data[layer_idx - 1]
+    if "Ed" in prev_layer:
+        # Автоматично задаване на Ee от Ed на предишния пласт
+        layer_data["Ee"] = prev_layer["Ed"]
+        st.info(f"ℹ️ Ee е автоматично зададен от Ed на предишния пласт: {prev_layer['Ed']:.2f} MPa")
+    else:
+        st.warning("⚠️ Предишният пласт все още не е изчислен. Моля, изчислете предишния пласт първо.")
+
+# Показване на Ee (само за четене за пластове над първия)
+if layer_idx == 0:
+    Ee = st.number_input("Ee (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ee", 2700.0), key=f"Ee_{layer_idx}")
+    layer_data["Ee"] = Ee
+else:
+    Ee = layer_data.get("Ee", 2700.0)
+    st.write(f"**Ee (автоматично от предишен пласт):** {Ee:.2f} MPa")
+
 Ei = st.number_input("Ei (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ei", 3000.0), key=f"Ei_{layer_idx}")
+layer_data["Ei"] = Ei
 
 mode = st.radio(
     "Изберете параметър за отчитане:",
@@ -198,7 +225,7 @@ if mode == "Ed / Ei":
             st.success(f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \nEd = Ei * {EdEi_point:.3f} = {result:.2f} MPa")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
-            st.session_state.layers_data[layer_idx].update({
+            layer_data.update({
                 "Ee": Ee,
                 "Ei": Ei,
                 "h": h,
@@ -206,6 +233,12 @@ if mode == "Ed / Ei":
                 "EdEi": EdEi_point,
                 "mode": mode
             })
+
+            # Ако има следващ пласт, обновяваме неговото Ee
+            if layer_idx < st.session_state.num_layers - 1:
+                next_layer = st.session_state.layers_data[layer_idx + 1]
+                next_layer["Ee"] = result
+                st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {result:.2f} MPa")
 
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
@@ -237,13 +270,19 @@ elif mode == "h / D":
             st.success(f"✅ Изчислено: h = {result:.2f} cm  \nh / D = {hD_point:.3f}")
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
-            st.session_state.layers_data[layer_idx].update({
+            layer_data.update({
                 "Ee": Ee,
                 "Ei": Ei,
                 "h": result,
                 "Ed": Ed,
                 "mode": mode
             })
+
+            # Ако има следващ пласт, обновяваме неговото Ee
+            if layer_idx < st.session_state.num_layers - 1:
+                next_layer = st.session_state.layers_data[layer_idx + 1]
+                next_layer["Ee"] = Ed
+                st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {Ed:.2f} MPa")
 
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
@@ -271,13 +310,13 @@ st.header("Резултати за всички пластове")
 
 all_data_ready = True
 for i, layer in enumerate(st.session_state.layers_data):
-    Ee = layer.get('Ee', '-')
-    Ei = layer.get('Ei', '-')
-    Ed = layer.get('Ed', '-')
+    Ee_val = layer.get('Ee', '-')
+    Ei_val = layer.get('Ei', '-')
+    Ed_val = layer.get('Ed', '-')
     h_val = layer.get('h', '-')
     
     # Проверка за пълнота на данните
-    if any(val == '-' for val in [Ee, Ei, Ed, h_val]):
+    if any(val == '-' for val in [Ee_val, Ei_val, Ed_val, h_val]):
         all_data_ready = False
     
     # HTML за визуализация на пласта
@@ -285,15 +324,15 @@ for i, layer in enumerate(st.session_state.layers_data):
     <div class="layer-card">
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                     font-weight: bold; font-size: 18px; color: #006064;">
-            Ei = {Ei} MPa
+            Ei = {Ei_val if Ei_val == '-' else f'{Ei_val:.2f}'} MPa
         </div>
         <div style="position: absolute; top: -20px; right: 10px; font-size: 14px; 
                     color: #00838f; font-weight: bold;">
-            Ee = {Ee} MPa
+            Ee = {Ee_val if Ee_val == '-' else f'{Ee_val:.2f}'} MPa
         </div>
         <div style="position: absolute; bottom: -20px; right: 10px; font-size: 14px; 
                     color: #2e7d32; font-weight: bold;">
-            Ed = {Ed if Ed == '-' else round(Ed)} MPa
+            Ed = {Ed_val if Ed_val == '-' else f'{round(Ed_val)}'} MPa
         </div>
         <div style="position: absolute; top: 50%; left: 8px; transform: translateY(-50%); 
                     font-size: 14px; color: #d84315; font-weight: bold;">
