@@ -325,5 +325,13 @@ for i, layer in enumerate(st.session_state.layers_data):
         """,
         unsafe_allow_html=True
     )
+    
+# Запазване на финални данни за втората страница
+if st.button("📤 Изпрати към 'Опън в покритието'"):
+    last_layer = st.session_state.layers_data[-1]  # последният пласт
+    st.session_state.final_Ed = last_layer.get("Ed", None)
+    st.session_state.Ei_list = [layer.get("Ei", 0) for layer in st.session_state.layers_data]
+    st.session_state.hi_list = [layer.get("h", 0) for layer in st.session_state.layers_data]
+    st.success("✅ Данните са подготвени за втората страница.")
 
 st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
