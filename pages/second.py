@@ -293,5 +293,15 @@ with col2:
 if calculated_sigma is not None:
     st.markdown(f"Ръчно въведена стойност: **{manual_value:.3f}** MPa")
 
+# Добавяне на бутон за проверка
+if st.button("Провери дали σR ≤ ръчно въведена стойност"):
+    if calculated_sigma is None:
+        st.warning("❗ Няма изчислена стойност σR за проверка.")
+    else:
+        if calculated_sigma <= manual_value:
+            st.success(f"✅ Проверката е удовлетворена: {calculated_sigma:.3f} ≤ {manual_value:.3f}")
+        else:
+            st.error(f"❌ Проверката НЕ е удовлетворена: {calculated_sigma:.3f} > {manual_value:.3f}")
+
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
