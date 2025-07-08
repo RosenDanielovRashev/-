@@ -9,6 +9,7 @@ def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
+
 # Initialize session state
 if 'layer_results' not in st.session_state:
     st.session_state.layer_results = {}
