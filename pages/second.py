@@ -108,7 +108,7 @@ if len(st.session_state.final_Ed_list) <= n_layers:
     st.info(f"Имате {n_layers} въведени пласта, но final_Ed_list съдържа само {len(st.session_state.final_Ed_list)} стойности")
     st.stop()
 
-Ed = st.session_state.final_Ed_list[n_layers]  # Вземаме Ed на следващия пласт (ако имаме 2 пласта, вземаме 3-тия)
+Ed = st.session_state.final_Ed_list[n_layers-1]  # Вземаме Ed на следващия пласт (ако имаме 2 пласта, вземаме 3-тия)
 
 # Показване на информация за Ed
 st.markdown(f"""
