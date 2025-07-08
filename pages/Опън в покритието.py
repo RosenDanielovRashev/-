@@ -239,82 +239,92 @@ elif sigma_saved is not None:
 
 st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
 
-# Вземане на осов товар от първата страница
-axle_load = st.session_state.get("axle_load", 100)
-
-# Определяне на p според осовия товар
-if axle_load == 100:
-    p = 0.620
-elif axle_load == 115:
-    p = 0.633
-else:
-    p = None
-st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
-if p is not None:
-    st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
-else:
-    st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
-
-# Вземаме sigma от session_state, ако има
-sigma = st.session_state.get("final_sigma", None)
-
-# Променлива за крайното σR
-sigma_final = None
-
-if p is not None and sigma is not None:
-    sigma_final = 1.15 * p * sigma
-    st.markdown("### Формула за изчисление на крайното напрежение σR:")
-    st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
-    st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
-    st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+# Проверка дали x_intercept е дефинирана и не е None
+if ('x_intercept' in locals()) and (x_intercept is not None):
+    sigma_r = round(x_intercept / 2, 3)
+    st.markdown(f"**Изчислено σr = {sigma_r}**")
     
-    # Запазваме крайната стойност за проверката
-    st.session_state["final_sigma_R"] = sigma_final
-else:
-    st.warning("❗ Липсва p или σR от номограмата за изчисление.")
+    # Запазваме стойността в session_state
+    st.session_state.final_sigma = sigma_r
 
-# Лек акцент за заглавие
-st.markdown(
-    """
-    <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
-        <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+    # Вземане на осов товар от първата страница
+    axle_load = st.session_state.get("axle_load", 100)
+    
+    # Определяне на p според осовия товар
+    if axle_load == 100:
+        p = 0.620
+    elif axle_load == 115:
+        p = 0.633
+    else:
+        p = None
+    st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
+    if p is not None:
+        st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
+    else:
+        st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
+        
+    # Вземаме sigma от session_state, ако има
+    sigma = st.session_state.get("final_sigma", None)
 
-# CSS за стилизиране на number_input
-st.markdown("""
-<style>
-div[data-baseweb="input"] > input {
-    width: 70px !important;
-    padding-left: 5px !important;
-    padding-right: 5px !important;
-    text-align: left !important;  /* Подравняване на текста в input */
-}
-</style>
-""", unsafe_allow_html=True)
+    # Променлива за крайното σR
+    sigma_final = None
+    
+    if p is not None and sigma is not None:
+        sigma_final = 1.15 * p * sigma
+        st.markdown("### Формула за изчисление на крайното напрежение σR:")
+        st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
+        st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
+        st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+        
+        # Запазваме крайната стойност за проверката
+        st.session_state["final_sigma_R"] = sigma_final
+    else:
+        st.warning("❗ Липсва p или σR от номограмата за изчисление.")
 
-# Полето за ръчно въвеждане на стойност
-manual_value = st.number_input(
-    label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
-    min_value=0.0,
-    max_value=20.0,
-    value=1.2,
-    step=0.1,
-    key="manual_sigma_input",
-    label_visibility="visible"
-)
 
-# Бутон за проверка на условието (АКТУАЛИЗИРАН)
-if st.button("Провери условието (след коефициенти)"):
-    # Взимаме крайното σR (след умножение с коефициентите)
+
+    # Секция за ръчно въвеждане
+    st.markdown(
+        """
+        <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
+            <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    # Инициализираме ръчната стойност за този пласт, ако не съществува
+    if f'manual_sigma_{layer_idx}' not in st.session_state.manual_sigma_values:
+        st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = sigma_r
+
+    # Поле за ръчно въвеждане
+    manual_value = st.number_input(
+        label="Въведете ръчно отчетена стойност σR [MPa]",
+        min_value=0.0,
+        max_value=20.0,
+        value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r),
+        step=0.1,
+        key=f"manual_sigma_input_{layer_idx}",
+        label_visibility="visible"
+    )
+    
+    # Запазваме ръчно въведената стойност
+    st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
+    
+    # Проверка на условието (без бутон, автоматично при промяна)
     sigma_to_compare = st.session_state.get("final_sigma_R", None)
     
-    if sigma_to_compare is None:
-        st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
-    else:
-        if sigma_to_compare <= manual_value:
+    if sigma_to_compare is not None:
+        # Проверяваме дали вече имаме резултат за този пласт
+        if f'check_result_{layer_idx}' not in st.session_state.check_results:
+            st.session_state.check_results[f'check_result_{layer_idx}'] = None
+        
+        # Проверка на условието
+        check_passed = sigma_to_compare <= manual_value
+        st.session_state.check_results[f'check_result_{layer_idx}'] = check_passed
+        
+        # Показваме резултата
+        if check_passed:
             st.success(
                 f"✅ Проверката е удовлетворена: "
                 f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
@@ -324,5 +334,8 @@ if st.button("Провери условието (след коефициенти
                 f"❌ Проверката НЕ е удовлетворена: "
                 f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
             )
-
+    else:
+        st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
+else:
+    st.markdown("**σr = -** (Няма изчислена стойност)")
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
