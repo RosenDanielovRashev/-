@@ -351,22 +351,24 @@ if layer_idx in st.session_state.layer_results:
             # Запазваме ръчно въведената стойност
             st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
             
-            # Бутон за проверка
-            if st.button(f"Провери дали σR ≤ ръчно въведена стойност за пласт {layer_idx+1}"):
-                check_passed = sigma_r <= manual_value
-                st.session_state.check_results[f'check_{layer_idx}'] = {
-                    'passed': check_passed,
-                    'sigma_r': sigma_r,
-                    'manual_value': manual_value
-                }
-            
-            # Показваме резултата от проверката, ако има такъв
-            if f'check_{layer_idx}' in st.session_state.check_results:
-                check = st.session_state.check_results[f'check_{layer_idx}']
-                if check['passed']:
-                    st.success(f"✅ Проверката е удовлетворена: {check['sigma_r']:.3f} ≤ {check['manual_value']:.3f}")
+            # Бутон за проверка на условието (АКТУАЛИЗИРАН)
+            if st.button("Провери условието (след коефициенти)"):
+                # Взимаме крайното σR (след умножение с коефициентите)
+                sigma_to_compare = st.session_state.get("final_sigma_R", None)
+                
+                if sigma_to_compare is None:
+                    st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
                 else:
-                    st.error(f"❌ Проверката НЕ е удовлетворена: {check['sigma_r']:.3f} > {check['manual_value']:.3f}")
+                    if sigma_to_compare <= manual_value:
+                        st.success(
+                            f"✅ Проверката е удовлетворена: "
+                            f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
+                        )
+                    else:
+                        st.error(
+                            f"❌ Проверката НЕ е удовлетворена: "
+                            f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
+                        )
         else:
             st.markdown("**σr = -** (Няма изчислена стойност)")
 
