@@ -143,10 +143,20 @@ if layer_idx in st.session_state.layer_results:
                     sr_Ei_values = np.array(sorted(df_new['sr_Ei'].unique()))  # Сортираме стойностите на Esr/Ei
                     target_sr_Ei = results['Esr_over_En_r']  # Стойността на Esr/Ei за избрания слой
                     target_Hn_D = results['ratio_r']  # Стойността на Hn/D за избрания слой
-
+                
+                    # Проверяваме дали target_sr_Ei е извън обхвата на sr_Ei_values
+                    min_sr_Ei = sr_Ei_values.min()
+                    max_sr_Ei = sr_Ei_values.max()
+                
+                    # Ако target_sr_Ei е извън обхвата, го ограничаваме до минималната или максималната стойност
+                    if target_sr_Ei < min_sr_Ei:
+                        target_sr_Ei = min_sr_Ei
+                    elif target_sr_Ei > max_sr_Ei:
+                        target_sr_Ei = max_sr_Ei
+                
                     # Използваме bisect_left за намиране на подходящия индекс за интерполация
                     index = bisect_left(sr_Ei_values, target_sr_Ei)
-
+                
                     y_at_ratio = None
                     if index < len(sr_Ei_values) and sr_Ei_values[index] == target_sr_Ei:
                         # Стойността на target_sr_Ei е точно в списъка, просто интерполираме Hn/D и y
@@ -156,16 +166,24 @@ if layer_idx in st.session_state.layer_results:
                         # Линейна интерполация между два съседни елемента, ако точката е между тях
                         lower_sr_Ei = sr_Ei_values[index - 1]
                         upper_sr_Ei = sr_Ei_values[index]
-
+                
                         df_lower = df_new[df_new['sr_Ei'] == lower_sr_Ei].sort_values(by='H/D')
                         df_upper = df_new[df_new['sr_Ei'] == upper_sr_Ei].sort_values(by='H/D')
-
+                
                         y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
                         y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
-
+                
                         # Линейна интерполация между две стойности
                         y_at_ratio = y_lower + (y_upper - y_lower) * (target_sr_Ei - lower_sr_Ei) / (upper_sr_Ei - lower_sr_Ei)
-
+                    else:
+                        # Ако не може да бъде интерполирано, извън обхвата е, така че трябва да използваме стойностите на изолиниите
+                        if target_sr_Ei <= min_sr_Ei:
+                            df_target = df_new[df_new['sr_Ei'] == min_sr_Ei].sort_values(by='H/D')
+                            y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                        elif target_sr_Ei >= max_sr_Ei:
+                            df_target = df_new[df_new['sr_Ei'] == max_sr_Ei].sort_values(by='H/D')
+                            y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                
                     if y_at_ratio is not None:
                         # Червена точка на графиката
                         fig.add_trace(go.Scatter(
@@ -173,14 +191,14 @@ if layer_idx in st.session_state.layer_results:
                             mode='markers', marker=dict(color='red', size=10),
                             name='Точка на интерполация'
                         ))
-
+                
                         # Синя вертикална линия
                         fig.add_trace(go.Scatter(
                             x=[target_Hn_D, target_Hn_D], y=[0, y_at_ratio],
                             mode='lines', line=dict(color='blue', dash='dash'),
                             name='Вертикална линия'
                         ))
-
+                        
                 # Пресечна точка (оранжева)
                 Ei_Ed_target = results['En_over_Ed_r']
                 if 'Ei/Ed' in df_original.columns:
