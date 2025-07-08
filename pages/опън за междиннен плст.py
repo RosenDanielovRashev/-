@@ -138,61 +138,85 @@ if layer_idx in st.session_state.layer_results:
                     mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
                     line=dict(width=2)
                 ))
+             
                 # Интерполация и намиране на точката
                 if layer_idx > 0:
                     sr_Ei_values = np.array(sorted(df_new['sr_Ei'].unique()))
                     target_sr_Ei = results['Esr_over_En_r']
                     target_Hn_D = results['ratio_r']
                     
-                    # Намиране на най-близките стойности
+                    # Проверяваме дали target_sr_Ei е извън обхвата на sr_Ei_values
+                    min_sr_Ei = sr_Ei_values.min()
+                    max_sr_Ei = sr_Ei_values.max()
+                    
+                    # Ако target_sr_Ei е извън обхвата, го ограничаваме до минималната или максималната стойност
+                    if target_sr_Ei < min_sr_Ei:
+                        target_sr_Ei = min_sr_Ei
+                    elif target_sr_Ei > max_sr_Ei:
+                        target_sr_Ei = max_sr_Ei
+                    
+                    # Намиране на най-близките изолинии
                     idx = bisect_left(sr_Ei_values, target_sr_Ei)
-                    lower_idx = max(0, idx - 1)
-                    upper_idx = min(len(sr_Ei_values) - 1, idx)
                     
-                    # Избор на 2 или 3 най-близки изолинии
-                    if upper_idx - lower_idx < 1:
-                        upper_idx = lower_idx + 1
-                    if upper_idx - lower_idx == 1:
-                        neighbor_indices = [lower_idx, upper_idx]
-                    else:
-                        neighbor_indices = [lower_idx, idx, upper_idx]
+                    # Избираме 3 най-близки изолинии за по-добра точност
+                    neighbor_indices = []
+                    if idx > 0:
+                        neighbor_indices.append(idx-1)
+                    neighbor_indices.append(idx)
+                    if idx < len(sr_Ei_values)-1:
+                        neighbor_indices.append(idx+1)
                     
-                    y_values = []
+                    # Събираме y-стойностите за всички близки изолинии
+                    y_candidates = []
                     for neighbor_idx in neighbor_indices:
                         sr_val = sr_Ei_values[neighbor_idx]
                         df_neighbor = df_new[df_new['sr_Ei'] == sr_val].sort_values(by='H/D')
                         if not df_neighbor.empty:
+                            # Интерполация по H/D за текущата изолиния
                             y_val = np.interp(target_Hn_D, df_neighbor['H/D'], df_neighbor['y'])
-                            y_values.append((sr_val, y_val))
+                            y_candidates.append((abs(sr_val - target_sr_Ei), y_val))
                     
-                    # Сортиране по разстояние до целевата стойност
-                    y_values.sort(key=lambda x: abs(x[0] - target_sr_Ei))
+                    # Сортираме кандидатите по разстояние до целевата sr_Ei стойност
+                    y_candidates.sort(key=lambda x: x[0])
                     
-                    # Вземане на най-близките 2 стойности за линейна интерполация
-                    if len(y_values) >= 2:
-                        (sr1, y1), (sr2, y2) = y_values[:2]
-                        y_at_ratio = y1 + (y2 - y1) * (target_sr_Ei - sr1) / (sr2 - sr1) if sr2 != sr1 else y1
-                    elif y_values:
-                        y_at_ratio = y_values[0][1]
+                    # Вземаме най-близките две стойности за интерполация
+                    if len(y_candidates) >= 2:
+                        # Вземаме най-близките две
+                        dist1, y1 = y_candidates[0]
+                        dist2, y2 = y_candidates[1]
+                        
+                        # Ако разстоянията са еднакви, използваме проста средна стойност
+                        if dist1 == dist2:
+                            y_at_ratio = (y1 + y2) / 2
+                        else:
+                            # Претеглена интерполация
+                            total_dist = dist1 + dist2
+                            weight1 = dist2 / total_dist  # По-близката точка има по-голяма тежест
+                            weight2 = dist1 / total_dist
+                            y_at_ratio = weight1 * y1 + weight2 * y2
+                    elif y_candidates:
+                        # Ако има само една стойност, използваме нея
+                        y_at_ratio = y_candidates[0][1]
                     else:
                         st.error("Не са намерени данни за интерполация!")
                         y_at_ratio = None
+                    
                     if y_at_ratio is not None:
+                        # Червена точка на графиката
+                        fig.add_trace(go.Scatter(
+                            x=[target_Hn_D], 
+                            y=[y_at_ratio],
+                            mode='markers', 
+                            marker=dict(color='red', size=12, symbol='diamond'),
+                            name=f'σt = {y_at_ratio:.2f}'
+                        ))
                         
-                        # Визуализация на червената точка
-                        if y_at_ratio is not None:
-                            fig.add_trace(go.Scatter(
-                                x=[target_Hn_D], 
-                                y=[y_at_ratio],
-                                mode='markers',
-                                marker=dict(color='red', size=12),
-                                name=f'σt = {y_at_ratio:.2f}'
-                            ))
-                
                         # Синя вертикална линия
                         fig.add_trace(go.Scatter(
-                            x=[target_Hn_D, target_Hn_D], y=[0, y_at_ratio],
-                            mode='lines', line=dict(color='blue', dash='dash'),
+                            x=[target_Hn_D, target_Hn_D], 
+                            y=[0, y_at_ratio],
+                            mode='lines', 
+                            line=dict(color='blue', dash='dash', width=2),
                             name='Вертикална линия'
                         ))
 
