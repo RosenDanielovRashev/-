@@ -294,27 +294,27 @@ div[data-baseweb="input"] > input {
 }
 </style>
 """, unsafe_allow_html=True)
+tuk
+# Инициализиране на ръчната стойност в session_state (ако не съществува)
+if 'manual_sigma_value' not in st.session_state:
+    st.session_state.manual_sigma_value = 1.2  # Стойност по подразбиране
 
-# Полето за ръчно въвеждане на стойност - запазваме въведената стойност в session_state
-if "manual_sigma_value" not in st.session_state:
-    st.session_state.manual_sigma_value = 1.2  # Default value
-
+# Полето за ръчно въвеждане на стойност - директно свързано със session_state
 manual_value = st.number_input(
     label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
     min_value=0.0,
     max_value=20.0,
-    value=st.session_state.manual_sigma_value,
+    value=st.session_state.manual_sigma_value,  # Взема стойност от session_state
     step=0.1,
     key="manual_sigma_input",
     label_visibility="visible"
 )
 
-# Запазваме новата стойност в session_state при промяна
+# Запазване на новата стойност в session_state
 st.session_state.manual_sigma_value = manual_value
 
-# Бутон за проверка на условието (АКТУАЛИЗИРАН)
+# Бутон за проверка (остава същия)
 if st.button("Провери дали σR ≤ ръчно въведена стойност за пласт"):
-    # Взимаме крайното σR (след умножение с коефициентите)
     sigma_to_compare = st.session_state.get("final_sigma_R", None)
     
     if sigma_to_compare is None:
@@ -330,5 +330,4 @@ if st.button("Провери дали σR ≤ ръчно въведена сто
                 f"❌ Проверката НЕ е удовлетворена: "
                 f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
             )
-
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
