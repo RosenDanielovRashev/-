@@ -241,7 +241,7 @@ st.image("Допустими опънни напрежения.png", caption="Д
 
 # Проверка дали x_intercept е дефинирана и не е None
 if ('x_intercept' in locals()) and (x_intercept is not None):
-    sigma_r = round(x_intercept / 2, 3)
+    sigma_saved = round(x_intercept / 2, 3)
     st.markdown(f"**Изчислено σr = {sigma_r}**")
     
     # Запазваме стойността в session_state
