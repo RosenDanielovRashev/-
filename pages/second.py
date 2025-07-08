@@ -307,7 +307,7 @@ manual_value = st.number_input(
 )
 
 # Бутон за проверка на условието (АКТУАЛИЗИРАН)
-if st.button(f"Провери дали σR ≤ ръчно въведена стойност за пласт {layer_idx + 1}"):
+if st.button(f"Провери дали σR ≤ ръчно въведена стойност за пласт {layer_idx+1}"):
     # Взимаме крайното σR (след умножение с коефициентите)
     sigma_to_compare = st.session_state.get("final_sigma_R", None)
     
