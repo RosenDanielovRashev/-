@@ -518,6 +518,6 @@ st.markdown("---")
 st.subheader("Навигация към другите модули:")
 col1, col2 = st.columns(2)
 with col1:
-    st.page_link("pages/second.py", label="Опън в покритието", icon="📄", use_container_width=True)
+    st.page_link("pages/Опън в покритието", label="Опън в покритието", icon="📄", use_container_width=True)
 with col2:
     st.page_link("pages/опън за междиннен плст.py", label="Опън в междинен пласт", icon="📄", use_container_width=True)
