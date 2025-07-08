@@ -198,7 +198,7 @@ if layer_idx in st.session_state.layer_results:
                             mode='lines', line=dict(color='blue', dash='dash'),
                             name='Вертикална линия'
                         ))
-                        
+
                 # Пресечна точка (оранжева)
                 Ei_Ed_target = results['En_over_Ed_r']
                 if 'Ei/Ed' in df_original.columns:
