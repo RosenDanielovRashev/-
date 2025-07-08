@@ -66,9 +66,6 @@ D = st.selectbox(
     index=[34.0, 32.04, 33.0].index(D_default) if D_default in [34.0, 32.04, 33.0] else 0
 )
 
-# Въвеждане на Ed
-Ed = st.number_input("Ed (MPa) – Модул на еластичност под пласта", value=Ed_default)
-
 # Брой пластове
 default_n = len(Ei_list_default)
 n = st.number_input("Брой пластове", min_value=1, max_value=10, step=1, value=default_n or 1)
@@ -93,6 +90,10 @@ for i in range(1, n + 1):
         )
     Ei_list.append(Ei)
     hi_list.append(hi)
+
+# Въвеждане на Ed (ПРЕМЕСТЕНО СЛЕД ПЛАСТОВЕТЕ)
+st.markdown("---")
+Ed = st.number_input("Ed (MPa) – Модул на еластичност под пласта", value=Ed_default)
 
 # Запазваме въведените параметри в session_state
 st.session_state["final_D"] = D
@@ -235,12 +236,18 @@ else:
 # Вземаме sigma от session_state, ако има
 sigma = st.session_state.get("final_sigma", None)
 
+# Променлива за крайното σR
+sigma_final = None
+
 if p is not None and sigma is not None:
     sigma_final = 1.15 * p * sigma
     st.markdown("### Формула за изчисление на крайното напрежение σR:")
     st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
     st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
     st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+    
+    # Запазваме крайната стойност за проверката
+    st.session_state["final_sigma_R"] = sigma_final
 else:
     st.warning("❗ Липсва p или σR от номограмата за изчисление.")
 
@@ -266,12 +273,9 @@ div[data-baseweb="input"] > input {
 </style>
 """, unsafe_allow_html=True)
 
-# Вземаме изчислената σR от номограмата (ако има)
-calculated_sigma = st.session_state.get("final_sigma", None)
-
-# Полето за ръчно въвеждане на стойност (на нов ред, центрирано ако искаш)
+# Полето за ръчно въвеждане на стойност
 manual_value = st.number_input(
-    label="Въведете ръчно отчетена стойност σR [MPa]",
+    label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
     min_value=0.0,
     max_value=20.0,
     value=1.2,
@@ -280,14 +284,23 @@ manual_value = st.number_input(
     label_visibility="visible"
 )
 
-# Бутон за проверка на условието
-if st.button("Провери дали σR ≤ ръчно въведена стойност"):
-    if calculated_sigma is None:
-        st.warning("❗ Няма изчислена стойност σR за проверка.")
+# Бутон за проверка на условието (АКТУАЛИЗИРАН)
+if st.button("Провери условието (след коефициенти)"):
+    # Взимаме крайното σR (след умножение с коефициентите)
+    sigma_to_compare = st.session_state.get("final_sigma_R", None)
+    
+    if sigma_to_compare is None:
+        st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
     else:
-        if calculated_sigma <= manual_value:
-            st.success(f"✅ Проверката е удовлетворена: {calculated_sigma:.3f} ≤ {manual_value:.3f}")
+        if sigma_to_compare <= manual_value:
+            st.success(
+                f"✅ Проверката е удовлетворена: "
+                f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
+            )
         else:
-            st.error(f"❌ Проверката НЕ е удовлетворена: {calculated_sigma:.3f} > {manual_value:.3f}")
+            st.error(
+                f"❌ Проверката НЕ е удовлетворена: "
+                f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
+            )
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
