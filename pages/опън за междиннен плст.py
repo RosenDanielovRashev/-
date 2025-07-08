@@ -207,7 +207,7 @@ if layer_idx in st.session_state.layer_results:
                             x=[target_Hn_D], 
                             y=[y_at_ratio],
                             mode='markers', 
-                            marker=dict(color='red', size=12, symbol='diamond'),
+                            marker=dict(color='red', size=12, symbol='circle'),
                             name=f'σt = {y_at_ratio:.2f}'
                         ))
                         
