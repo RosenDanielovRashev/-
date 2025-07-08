@@ -503,7 +503,7 @@ if all_data_ready:
             st.session_state.axle_load_value = st.session_state.axle_load
             
             st.success("✅ Всички данни са подготвени за втората страница.")
-            st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
+            st.page_link("pages/Опън в покритието.py", label="Към Опън в покритието", icon="📄")
     with cols[1]:
         if st.button("📤 Изпрати към 'Опън в междинен пласт'", type="primary", use_container_width=True, key="to_intermediate"):
             st.session_state.layers_data_all = st.session_state.layers_data
@@ -518,6 +518,6 @@ st.markdown("---")
 st.subheader("Навигация към другите модули:")
 col1, col2 = st.columns(2)
 with col1:
-    st.page_link("pages/Опън в покритието", label="Опън в покритието", icon="📄", use_container_width=True)
+    st.page_link("pages/Опън в покритието.py", label="Опън в покритието", icon="📄", use_container_width=True)
 with col2:
     st.page_link("pages/опън за междиннен плст.py", label="Опън в междинен пласт", icon="📄", use_container_width=True)
