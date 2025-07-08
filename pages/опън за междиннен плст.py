@@ -303,6 +303,22 @@ if layer_idx in st.session_state.layer_results:
             else:
                 st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
 
+            # Променлива за крайното σR
+            sigma_final = None
+            
+            if p is not None and sigma is not None:
+                sigma_final = 1.15 * p * sigma
+                st.markdown("### Формула за изчисление на крайното напрежение σR:")
+                st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
+                st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
+                st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+                
+                # Запазваме крайната стойност за проверката
+                st.session_state["final_sigma_R"] = sigma_final
+            else:
+                st.warning("❗ Липсва p или σR от номограмата за изчисление.")
+
+
     
             # Секция за ръчно въвеждане
             st.markdown(
