@@ -295,14 +295,14 @@ div[data-baseweb="input"] > input {
 </style>
 """, unsafe_allow_html=True)
 
-# Полето за ръчно въвеждане на стойност
+# Поле за ръчно въвеждане
 manual_value = st.number_input(
-    label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
+    label="Въведете ръчно отчетена стойност σR [MPa]",
     min_value=0.0,
     max_value=20.0,
-    value=1.2,
+    value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r),
     step=0.1,
-    key="manual_sigma_input",
+    key=f"manual_sigma_input_{layer_idx}",
     label_visibility="visible"
 )
 # Запазваме ръчно въведената стойност
