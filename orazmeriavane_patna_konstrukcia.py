@@ -1,7 +1,7 @@
 import streamlit as st 
-import pandas as pd
-import numpy as np
-import plotly.graph_objs as go
+import pandas as pd 
+import numpy as np 
+import plotly.graph_objs as go 
 
 st.set_page_config(layout="wide")
 
@@ -56,7 +56,7 @@ if "layers_data" not in st.session_state:
     st.session_state.layers_data = [{"Ee": 2700.0, "Ei": 3000.0}]
 if "axle_load" not in st.session_state:
     st.session_state.axle_load = 100
-if "final_D" not in st.session_state:
+if "final_D" not in st.session_state:  # Инициализиране на final_D
     st.session_state.final_D = 32.04
 
 st.title("Оразмеряване на пътна конструкция с няколко пластове")
@@ -75,11 +75,23 @@ if num_layers != st.session_state.num_layers:
     if st.session_state.current_layer >= num_layers:
         st.session_state.current_layer = num_layers - 1
 
-# Избор на параметри
-d_value = st.selectbox("Изберете стойност за D (cm):", options=[32.04, 34, 33])
-axle_load = st.selectbox("Изберете стойност за осов товар (kN):", options=[100, 115])
+# Избор на параметри - използване на session_state за запазване на стойността на D
+d_options = [32.04, 34, 33]
+current_d_index = d_options.index(st.session_state.final_D) if st.session_state.final_D in d_options else 0
+
+d_value = st.selectbox(
+    "Изберете стойност за D (cm):", 
+    options=d_options,
+    index=current_d_index
+)
+st.session_state.final_D = d_value  # Запазване на избраната стойност
+
+axle_load = st.selectbox(
+    "Изберете стойност за осов товар (kN):", 
+    options=[100, 115],
+    index=0 if st.session_state.axle_load == 100 else 1
+)
 st.session_state.axle_load = axle_load
-st.session_state.final_D = d_value
 
 # Навигация между пластовете
 col1, col2, col3 = st.columns([1, 6, 1])
@@ -215,6 +227,38 @@ def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, hi
 # Обработка на изчисленията
 if mode == "Ed / Ei":
     h = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
+    
+    # Проверка за вече изчислени данни и показване на резултатите
+    if "Ed" in layer_data and "hD_point" in layer_data:
+        st.success(f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \nEd = {layer_data['Ed']:.2f} MPa")
+        st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
+        
+        fig = go.Figure()
+        for value, group in data.groupby("Ee_over_Ei"):
+            group_sorted = group.sort_values("h_over_D")
+            fig.add_trace(go.Scatter(
+                x=group_sorted["h_over_D"],
+                y=group_sorted["Ed_over_Ei"],
+                mode='lines',
+                name=f"Ee/Ei = {value:.2f}"
+            ))
+        
+        add_interpolation_line(fig, 
+                              layer_data['hD_point'], 
+                              layer_data['Ed']/layer_data['Ei'],
+                              layer_data['y_low'],
+                              layer_data['y_high'],
+                              layer_data['low_iso'],
+                              layer_data['high_iso'])
+        
+        fig.update_layout(
+            title="Ed / Ei в зависимост от h / D",
+            xaxis_title="h / D",
+            yaxis_title="Ed / Ei",
+            legend_title="Изолинии"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
     if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
 
@@ -230,7 +274,12 @@ if mode == "Ed / Ei":
                 "Ei": Ei,
                 "h": h,
                 "Ed": result,
-                "EdEi": EdEi_point,
+                "hD_point": hD_point,
+                "EdEi_point": EdEi_point,
+                "y_low": y_low,
+                "y_high": y_high,
+                "low_iso": low_iso,
+                "high_iso": high_iso,
                 "mode": mode
             })
 
@@ -262,6 +311,38 @@ if mode == "Ed / Ei":
 
 elif mode == "h / D":
     Ed = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 50.0), key=f"Ed_{layer_idx}")
+    
+    # Проверка за вече изчислени данни и показване на резултатите
+    if "h" in layer_data and "hD_point" in layer_data:
+        st.success(f"✅ Вече изчислено: h = {layer_data['h']:.2f} cm  \nh / D = {layer_data['hD_point']:.3f}")
+        st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
+        
+        fig = go.Figure()
+        for value, group in data.groupby("Ee_over_Ei"):
+            group_sorted = group.sort_values("h_over_D")
+            fig.add_trace(go.Scatter(
+                x=group_sorted["h_over_D"],
+                y=group_sorted["Ed_over_Ei"],
+                mode='lines',
+                name=f"Ee/Ei = {value:.2f}"
+            ))
+        
+        add_interpolation_line(fig, 
+                              layer_data['hD_point'], 
+                              layer_data['Ed']/layer_data['Ei'],
+                              layer_data['y_low'],
+                              layer_data['y_high'],
+                              layer_data['low_iso'],
+                              layer_data['high_iso'])
+        
+        fig.update_layout(
+            title="Ed / Ei в зависимост от h / D",
+            xaxis_title="h / D",
+            yaxis_title="Ed / Ei",
+            legend_title="Изолинии"
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
     if st.button("Изчисли h", key=f"calc_h_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
         if result is None:
@@ -275,6 +356,11 @@ elif mode == "h / D":
                 "Ei": Ei,
                 "h": result,
                 "Ed": Ed,
+                "hD_point": hD_point,
+                "y_low": y_low,
+                "y_high": y_high,
+                "low_iso": low_iso,
+                "high_iso": high_iso,
                 "mode": mode
             })
 
