@@ -59,6 +59,19 @@ if "axle_load" not in st.session_state:
 if "final_D" not in st.session_state:  # Инициализиране на final_D
     st.session_state.final_D = 32.04
 
+# Функция за нулиране на изчисленията от текущия пласт нататък
+def reset_calculations_from_layer(layer_idx):
+    for i in range(layer_idx, st.session_state.num_layers):
+        layer = st.session_state.layers_data[i]
+        keys_to_remove = ['Ed', 'h', 'hD_point', 'EdEi_point', 'y_low', 'y_high', 'low_iso', 'high_iso']
+        for key in keys_to_remove:
+            if key in layer:
+                del layer[key]
+        # За пластовете след текущия, Ee се взема от предишния пласт
+        if i > 0 and i != layer_idx:
+            prev_ed = st.session_state.layers_data[i-1].get("Ed", 2700.0)
+            layer["Ee"] = prev_ed
+
 st.title("Оразмеряване на пътна конструкция с няколко пластове")
 
 # Избор на брой пластове
@@ -126,21 +139,29 @@ if layer_idx > 0:
     prev_layer = st.session_state.layers_data[layer_idx - 1]
     if "Ed" in prev_layer:
         # Автоматично задаване на Ee от Ed на предишния пласт
-        layer_data["Ee"] = prev_layer["Ed"]
+        # Ако стойността на Ee не съвпада, я обновяваме и нулираме изчисленията от този пласт нататък
+        if prev_layer["Ed"] != layer_data.get("Ee"):
+            layer_data["Ee"] = prev_layer["Ed"]
+            reset_calculations_from_layer(layer_idx)
         st.info(f"ℹ️ Ee е автоматично зададен от Ed на предишния пласт: {prev_layer['Ed']:.2f} MPa")
     else:
         st.warning("⚠️ Предишният пласт все още не е изчислен. Моля, изчислете предишния пласт първо.")
 
-# Показване на Ee (само за четене за пластове над първия)
+# Показване на Ee (само за четене за пластове над първия) и въвеждане за първия пласт
 if layer_idx == 0:
-    Ee = st.number_input("Ee (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ee", 2700.0), key=f"Ee_{layer_idx}")
-    layer_data["Ee"] = Ee
+    Ee_input = st.number_input("Ee (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ee", 2700.0), key=f"Ee_{layer_idx}")
+    if Ee_input != layer_data.get("Ee"):
+        layer_data["Ee"] = Ee_input
+        reset_calculations_from_layer(0)  # Нулиране на всички пластове
 else:
     Ee = layer_data.get("Ee", 2700.0)
     st.write(f"**Ee (автоматично от предишен пласт):** {Ee:.2f} MPa")
 
-Ei = st.number_input("Ei (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ei", 3000.0), key=f"Ei_{layer_idx}")
-layer_data["Ei"] = Ei
+# Въвеждане на Ei с проверка за промяна
+Ei_input = st.number_input("Ei (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ei", 3000.0), key=f"Ei_{layer_idx}")
+if Ei_input != layer_data.get("Ei"):
+    layer_data["Ei"] = Ei_input
+    reset_calculations_from_layer(layer_idx)
 
 mode = st.radio(
     "Изберете параметър за отчитане:",
@@ -226,7 +247,11 @@ def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, hi
 
 # Обработка на изчисленията
 if mode == "Ed / Ei":
-    h = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
+    # Въвеждане на h с проверка за промяна
+    h_input = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
+    if h_input != layer_data.get("h"):
+        layer_data["h"] = h_input
+        reset_calculations_from_layer(layer_idx)
     
     # Проверка за вече изчислени данни и показване на резултатите
     if "Ed" in layer_data and "hD_point" in layer_data:
@@ -265,25 +290,25 @@ if mode == "Ed / Ei":
         st.plotly_chart(fig, use_container_width=True)
     
     if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
-        result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h, d_value, Ee, Ei)
+        result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h_input, d_value, layer_data["Ee"], layer_data["Ei"])
 
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
-            EdEi_point = result / Ei
+            EdEi_point = result / layer_data["Ei"]
             # Промяна 1: Добавяне на Ee/Ei и h/D
             st.success(
                 f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \n"
                 f"Ed = Ei * {EdEi_point:.3f} = {round(result)} MPa  \n"  # Промяна 2: Закръгляне до цяло число
-                f"Ee/Ei = {Ee/Ei:.3f}  \n"
+                f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
                 f"h/D = {hD_point:.3f}"
             )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             layer_data.update({
-                "Ee": Ee,
-                "Ei": Ei,
-                "h": h,
+                "Ee": layer_data["Ee"],
+                "Ei": layer_data["Ei"],
+                "h": h_input,
                 "Ed": result,
                 "hD_point": hD_point,
                 "EdEi_point": EdEi_point,
@@ -321,7 +346,11 @@ if mode == "Ed / Ei":
             st.plotly_chart(fig, use_container_width=True)
 
 elif mode == "h / D":
-    Ed = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 50.0), key=f"Ed_{layer_idx}")
+    # Въвеждане на Ed с проверка за промяна
+    Ed_input = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 50.0), key=f"Ed_{layer_idx}")
+    if Ed_input != layer_data.get("Ed"):
+        layer_data["Ed"] = Ed_input
+        reset_calculations_from_layer(layer_idx)
     
     # Проверка за вече изчислени данни и показване на резултатите
     if "h" in layer_data and "hD_point" in layer_data:
@@ -361,7 +390,7 @@ elif mode == "h / D":
         st.plotly_chart(fig, use_container_width=True)
     
     if st.button("Изчисли h", key=f"calc_h_{layer_idx}"):
-        result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed, d_value, Ee, Ei)
+        result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed_input, d_value, layer_data["Ee"], layer_data["Ei"])
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
@@ -369,16 +398,16 @@ elif mode == "h / D":
             st.success(
                 f"✅ Изчислено: h = {result:.2f} cm  \n"
                 f"h/D = {hD_point:.3f}  \n"
-                f"Ed/Ei = {Ed/Ei:.3f}  \n"
-                f"Ee/Ei = {Ee/Ei:.3f}"
+                f"Ed/Ei = {Ed_input/layer_data['Ei']:.3f}  \n"
+                f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
             )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             layer_data.update({
-                "Ee": Ee,
-                "Ei": Ei,
+                "Ee": layer_data["Ee"],
+                "Ei": layer_data["Ei"],
                 "h": result,
-                "Ed": Ed,
+                "Ed": Ed_input,
                 "hD_point": hD_point,
                 "y_low": y_low,
                 "y_high": y_high,
@@ -390,8 +419,8 @@ elif mode == "h / D":
             # Ако има следващ пласт, обновяваме неговото Ee
             if layer_idx < st.session_state.num_layers - 1:
                 next_layer = st.session_state.layers_data[layer_idx + 1]
-                next_layer["Ee"] = Ed
-                st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {Ed:.2f} MPa")
+                next_layer["Ee"] = Ed_input
+                st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {Ed_input:.2f} MPa")
 
             fig = go.Figure()
             for value, group in data.groupby("Ee_over_Ei"):
@@ -403,7 +432,7 @@ elif mode == "h / D":
                     name=f"Ee/Ei = {value:.2f}"
                 ))
 
-            add_interpolation_line(fig, hD_point, Ed / Ei, y_low, y_high, low_iso, high_iso)
+            add_interpolation_line(fig, hD_point, Ed_input / layer_data["Ei"], y_low, y_high, low_iso, high_iso)
 
             fig.update_layout(
                 title="Ed / Ei в зависимост от h / D",
@@ -429,6 +458,9 @@ for i, layer in enumerate(st.session_state.layers_data):
     if any(val == '-' for val in [Ee_val, Ei_val, Ed_val, h_val]):
         all_data_ready = False
     
+    # Индикатор за статус
+    status = "✅" if "Ed" in layer else "❌"
+    
     # HTML за визуализация на пласта
     st.markdown(f"""
     <div class="layer-card">
@@ -451,6 +483,9 @@ for i, layer in enumerate(st.session_state.layers_data):
         <div style="position: absolute; top: -20px; left: 10px; font-size: 14px; 
                     color: #5d4037; font-weight: bold;">
             Пласт {i+1}
+        </div>
+        <div style="position: absolute; top: 5px; right: 5px; font-size: 20px;">
+            {status}
         </div>
     </div>
     """, unsafe_allow_html=True)
