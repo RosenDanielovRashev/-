@@ -91,7 +91,7 @@ for i in range(1, n + 1):
     hi_list.append(hi)
 # Вземане на Ed от първата страница
 st.markdown("---")
-Ed = st.session_state.get("final_Ed_list[1]", None)
+Ed = st.session_state.get("Ed_list[1]", None)
 
 if Ed is None:
     st.error("⚠️ Липсва стойност за Ed от първата страница!")
