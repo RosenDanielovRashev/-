@@ -233,7 +233,6 @@ if mode == "Ed / Ei":
         # Промяна 1: Добавяне на Ee/Ei и h/D
         st.success(
             f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \n"
-            f"Ed = {round(layer_data['Ed'])} MPa  \n"  # Промяна 2: Закръгляне до цяло число
             f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
             f"h/D = {layer_data['hD_point']:.3f}"
         )
