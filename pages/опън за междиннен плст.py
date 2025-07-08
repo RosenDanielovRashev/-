@@ -302,6 +302,9 @@ if layer_idx in st.session_state.layer_results:
                 st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
             else:
                 st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
+                
+            # Вземаме sigma от session_state, ако има
+            sigma = st.session_state.get("final_sigma", None)
 
             # Променлива за крайното σR
             sigma_final = None
