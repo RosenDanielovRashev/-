@@ -141,59 +141,62 @@ if layer_idx in st.session_state.layer_results:
 
                 # Интерполация и намиране на точката
                 if layer_idx > 0:
-                    sr_Ei_values = np.array(sorted(df_new['sr_Ei'].unique()))
-                    target_sr_Ei = results['Esr_over_En_r']
-                    target_Hn_D = results['ratio_r']
-                    
-                    # Намиране на двете най-близки изолинии
-                    idx = bisect_left(sr_Ei_values, target_sr_Ei)
-                    lower_idx = max(0, idx - 1)
-                    upper_idx = min(len(sr_Ei_values) - 1, idx)
-                    
-                    # Избираме само двете най-близки изолинии
-                    isolines = []
-                    if idx == 0:
-                        isolines = [sr_Ei_values[0], sr_Ei_values[1]] if len(sr_Ei_values) > 1 else [sr_Ei_values[0]]
-                    elif idx == len(sr_Ei_values):
-                        isolines = [sr_Ei_values[-2], sr_Ei_values[-1]] if len(sr_Ei_values) > 1 else [sr_Ei_values[-1]]
+                    sr_Ei_values = np.array(sorted(df_new['sr_Ei'].unique()))  # Сортираме стойностите на Esr/Ei
+                    target_sr_Ei = results['Esr_over_En_r']  # Стойността на Esr/Ei за избрания слой
+                    target_Hn_D = results['ratio_r']  # Стойността на Hn/D за избрания слой
+                
+                    # Проверяваме дали target_sr_Ei е извън обхвата на sr_Ei_values
+                    min_sr_Ei = sr_Ei_values.min()
+                    max_sr_Ei = sr_Ei_values.max()
+                
+                    # Ако target_sr_Ei е извън обхвата, го ограничаваме до минималната или максималната стойност
+                    if target_sr_Ei < min_sr_Ei:
+                        target_sr_Ei = min_sr_Ei
+                    elif target_sr_Ei > max_sr_Ei:
+                        target_sr_Ei = max_sr_Ei
+                
+                    # Използваме bisect_left за намиране на подходящия индекс за интерполация
+                    index = bisect_left(sr_Ei_values, target_sr_Ei)
+                
+                    y_at_ratio = None
+                    if index < len(sr_Ei_values) and sr_Ei_values[index] == target_sr_Ei:
+                        # Стойността на target_sr_Ei е точно в списъка, просто интерполираме Hn/D и y
+                        df_target = df_new[df_new['sr_Ei'] == target_sr_Ei].sort_values(by='H/D')
+                        y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                    elif index > 0 and index < len(sr_Ei_values):
+                        # Линейна интерполация между два съседни елемента, ако точката е между тях
+                        lower_sr_Ei = sr_Ei_values[index - 1]
+                        upper_sr_Ei = sr_Ei_values[index]
+                
+                        df_lower = df_new[df_new['sr_Ei'] == lower_sr_Ei].sort_values(by='H/D')
+                        df_upper = df_new[df_new['sr_Ei'] == upper_sr_Ei].sort_values(by='H/D')
+                
+                        y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
+                        y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
+                
+                        # Линейна интерполация между две стойности
+                        y_at_ratio = y_lower + (y_upper - y_lower) * (target_sr_Ei - lower_sr_Ei) / (upper_sr_Ei - lower_sr_Ei)
                     else:
-                        isolines = [sr_Ei_values[idx-1], sr_Ei_values[idx]]
-                    
-                    y_values = []
-                    for isoline in isolines:
-                        df_iso = df_new[df_new['sr_Ei'] == isoline].sort_values(by='H/D')
-                        if not df_iso.empty:
-                            # Интерполация по H/D за конкретната изолиния
-                            y_val = np.interp(target_Hn_D, df_iso['H/D'], df_iso['y'])
-                            y_values.append(y_val)
-                    
-                    # Интерполация между изолиниите
-                    if len(y_values) == 2:
-                        # Линейна интерполация между двете изолинии
-                        weight = (target_sr_Ei - isolines[0]) / (isolines[1] - isolines[0])
-                        y_at_ratio = y_values[0] + weight * (y_values[1] - y_values[0])
-                    elif y_values:
-                        y_at_ratio = y_values[0]
-                    else:
-                        st.error("Не са намерени данни за интерполация!")
-                        y_at_ratio = None
-                    
+                        # Ако не може да бъде интерполирано, извън обхвата е, така че трябва да използваме стойностите на изолиниите
+                        if target_sr_Ei <= min_sr_Ei:
+                            df_target = df_new[df_new['sr_Ei'] == min_sr_Ei].sort_values(by='H/D')
+                            y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                        elif target_sr_Ei >= max_sr_Ei:
+                            df_target = df_new[df_new['sr_Ei'] == max_sr_Ei].sort_values(by='H/D')
+                            y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                
                     if y_at_ratio is not None:
-                        # Червена точка на графиката (кръгла)
+                        # Червена точка на графиката
                         fig.add_trace(go.Scatter(
-                            x=[target_Hn_D], 
-                            y=[y_at_ratio],
-                            mode='markers', 
-                            marker=dict(color='red', size=8),
-                            name=f'σt = {y_at_ratio:.3f}'
+                            x=[target_Hn_D], y=[y_at_ratio],
+                            mode='markers', marker=dict(color='red', size=10),
+                            name='Точка на интерполация'
                         ))
-                        
+                
                         # Синя вертикална линия
                         fig.add_trace(go.Scatter(
-                            x=[target_Hn_D, target_Hn_D], 
-                            y=[0, y_at_ratio],
-                            mode='lines', 
-                            line=dict(color='blue', dash='dash', width=1.5),
+                            x=[target_Hn_D, target_Hn_D], y=[0, y_at_ratio],
+                            mode='lines', line=dict(color='blue', dash='dash'),
                             name='Вертикална линия'
                         ))
                 
