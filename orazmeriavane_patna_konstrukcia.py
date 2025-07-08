@@ -230,7 +230,13 @@ if mode == "Ed / Ei":
     
     # Проверка за вече изчислени данни и показване на резултатите
     if "Ed" in layer_data and "hD_point" in layer_data:
-        st.success(f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \nEd = {layer_data['Ed']:.2f} MPa")
+        # Промяна 1: Добавяне на Ee/Ei и h/D
+        st.success(
+            f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \n"
+            f"Ed = {round(layer_data['Ed'])} MPa  \n"  # Промяна 2: Закръгляне до цяло число
+            f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
+            f"h/D = {layer_data['hD_point']:.3f}"
+        )
         st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
         
         fig = go.Figure()
@@ -266,7 +272,13 @@ if mode == "Ed / Ei":
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
             EdEi_point = result / Ei
-            st.success(f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \nEd = Ei * {EdEi_point:.3f} = {result:.2f} MPa")
+            # Промяна 1: Добавяне на Ee/Ei и h/D
+            st.success(
+                f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \n"
+                f"Ed = Ei * {EdEi_point:.3f} = {round(result)} MPa  \n"  # Промяна 2: Закръгляне до цяло число
+                f"Ee/Ei = {Ee/Ei:.3f}  \n"
+                f"h/D = {hD_point:.3f}"
+            )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             layer_data.update({
@@ -314,7 +326,13 @@ elif mode == "h / D":
     
     # Проверка за вече изчислени данни и показване на резултатите
     if "h" in layer_data and "hD_point" in layer_data:
-        st.success(f"✅ Вече изчислено: h = {layer_data['h']:.2f} cm  \nh / D = {layer_data['hD_point']:.3f}")
+        # Промяна 1: Добавяне на Ee/Ei и Ed/Ei
+        st.success(
+            f"✅ Вече изчислено: h = {layer_data['h']:.2f} cm  \n"
+            f"h/D = {layer_data['hD_point']:.3f}  \n"
+            f"Ed/Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \n"
+            f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
+        )
         st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
         
         fig = go.Figure()
@@ -348,7 +366,13 @@ elif mode == "h / D":
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
-            st.success(f"✅ Изчислено: h = {result:.2f} cm  \nh / D = {hD_point:.3f}")
+            # Промяна 1: Добавяне на Ee/Ei и Ed/Ei
+            st.success(
+                f"✅ Изчислено: h = {result:.2f} cm  \n"
+                f"h/D = {hD_point:.3f}  \n"
+                f"Ed/Ei = {Ed/Ei:.3f}  \n"
+                f"Ee/Ei = {Ee/Ei:.3f}"
+            )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             layer_data.update({
@@ -396,9 +420,10 @@ st.header("Резултати за всички пластове")
 
 all_data_ready = True
 for i, layer in enumerate(st.session_state.layers_data):
-    Ee_val = layer.get('Ee', '-')
-    Ei_val = layer.get('Ei', '-')
-    Ed_val = layer.get('Ed', '-')
+    # Промяна 2: Закръгляне на всички числови стойности
+    Ee_val = round(layer['Ee']) if 'Ee' in layer else '-'
+    Ei_val = round(layer['Ei']) if 'Ei' in layer else '-'
+    Ed_val = round(layer['Ed']) if 'Ed' in layer else '-'
     h_val = layer.get('h', '-')
     
     # Проверка за пълнота на данните
@@ -410,15 +435,15 @@ for i, layer in enumerate(st.session_state.layers_data):
     <div class="layer-card">
         <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
                     font-weight: bold; font-size: 18px; color: #006064;">
-            Ei = {Ei_val if Ei_val == '-' else f'{Ei_val:.2f}'} MPa
+            Ei = {Ei_val} MPa
         </div>
         <div style="position: absolute; top: -20px; right: 10px; font-size: 14px; 
                     color: #00838f; font-weight: bold;">
-            Ee = {Ee_val if Ee_val == '-' else f'{Ee_val:.2f}'} MPa
+            Ee = {Ee_val} MPa
         </div>
         <div style="position: absolute; bottom: -20px; right: 10px; font-size: 14px; 
                     color: #2e7d32; font-weight: bold;">
-            Ed = {Ed_val if Ed_val == '-' else f'{round(Ed_val)}'} MPa
+            Ed = {Ed_val} MPa
         </div>
         <div style="position: absolute; top: 50%; left: 8px; transform: translateY(-50%); 
                     font-size: 14px; color: #d84315; font-weight: bold;">
