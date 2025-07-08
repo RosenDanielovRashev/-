@@ -230,7 +230,7 @@ if mode == "Ed / Ei":
     
     # Проверка за вече изчислени данни и показване на резултатите
     if "Ed" in layer_data and "hD_point" in layer_data:
-        st.success(f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \nEd = {layer_data['Ed']:.2f} MPa")
+        st.success(f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \nEd = {layer_data['Ed']:.2f} MPa (h / D = {hD_value:.3f}, Ee / Ei = {EeEi_value:.3f})")
         st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
         
         fig = go.Figure()
