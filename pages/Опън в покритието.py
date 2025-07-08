@@ -295,16 +295,22 @@ div[data-baseweb="input"] > input {
 </style>
 """, unsafe_allow_html=True)
 
-# Полето за ръчно въвеждане на стойност
+# Полето за ръчно въвеждане на стойност - запазваме въведената стойност в session_state
+if "manual_sigma_value" not in st.session_state:
+    st.session_state.manual_sigma_value = 1.2  # Default value
+
 manual_value = st.number_input(
     label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
     min_value=0.0,
     max_value=20.0,
-    value=1.2,
+    value=st.session_state.manual_sigma_value,
     step=0.1,
     key="manual_sigma_input",
     label_visibility="visible"
 )
+
+# Запазваме новата стойност в session_state при промяна
+st.session_state.manual_sigma_value = manual_value
 
 # Бутон за проверка на условието (АКТУАЛИЗИРАН)
 if st.button("Провери дали σR ≤ ръчно въведена стойност за пласт"):
