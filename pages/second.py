@@ -295,24 +295,22 @@ div[data-baseweb="input"] > input {
 </style>
 """, unsafe_allow_html=True)
 
-# Поле за ръчно въвеждане
+# Полето за ръчно въвеждане на стойност
 manual_value = st.number_input(
-    label="Въведете ръчно отчетена стойност σR [MPa]",
+    label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
     min_value=0.0,
     max_value=20.0,
-    value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r),
+    value=1.2,
     step=0.1,
-    key=f"manual_sigma_input_{layer_idx}",
+    key="manual_sigma_input",
     label_visibility="visible"
 )
-# Запазваме ръчно въведената стойност
-st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
-            
+
 # Бутон за проверка на условието (АКТУАЛИЗИРАН)
-if st.button(f"Провери дали σR ≤ ръчно въведена стойност за пласт {layer_idx+1}"):
+if st.button("Провери условието (след коефициенти)"):
     # Взимаме крайното σR (след умножение с коефициентите)
     sigma_to_compare = st.session_state.get("final_sigma_R", None)
-                
+    
     if sigma_to_compare is None:
         st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
     else:
