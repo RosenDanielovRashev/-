@@ -138,74 +138,53 @@ if layer_idx in st.session_state.layer_results:
                     mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
                     line=dict(width=2)
                 ))
-                
+
                 # Интерполация и намиране на точката
                 if layer_idx > 0:
                     sr_Ei_values = np.array(sorted(df_new['sr_Ei'].unique()))
                     target_sr_Ei = results['Esr_over_En_r']
                     target_Hn_D = results['ratio_r']
                     
-                    # Намиране на най-близките изолинии
+                    # Намиране на двете най-близки изолинии
                     idx = bisect_left(sr_Ei_values, target_sr_Ei)
                     lower_idx = max(0, idx - 1)
                     upper_idx = min(len(sr_Ei_values) - 1, idx)
                     
-                    # Избираме 2 най-близки изолинии
-                    neighbor_indices = sorted({lower_idx, idx, upper_idx})
-                    
-                    # Събираме точки от близките изолинии
-                    points = []
-                    for neighbor_idx in neighbor_indices:
-                        sr_val = sr_Ei_values[neighbor_idx]
-                        df_neighbor = df_new[df_new['sr_Ei'] == sr_val].sort_values(by='H/D')
-                        
-                        # Добавяме всички точки от изолинията
-                        for _, row in df_neighbor.iterrows():
-                            points.append((sr_val, row['H/D'], row['y']))
-                    
-                    # Създаваме DataFrame от точките
-                    df_points = pd.DataFrame(points, columns=['sr_Ei', 'H/D', 'y'])
-                    
-                    # Филтрираме точките близки до вертикалната линия (H/D)
-                    tolerance = 0.01  # Допустимо отклонение
-                    nearby_points = df_points[
-                        (df_points['H/D'] >= target_Hn_D - tolerance) &
-                        (df_points['H/D'] <= target_Hn_D + tolerance)
-                    ]
-                    
-                    if not nearby_points.empty:
-                        # Групираме по стойност на sr_Ei и намираме средната y стойност
-                        grouped = nearby_points.groupby('sr_Ei')['y'].mean().reset_index()
-                        
-                        # Интерполираме y стойността за целевото sr_Ei
-                        if len(grouped) > 1:
-                            y_at_ratio = np.interp(
-                                target_sr_Ei, 
-                                grouped['sr_Ei'], 
-                                grouped['y']
-                            )
-                        else:
-                            # Ако имаме само една точка, използваме директно нейната y стойност
-                            y_at_ratio = grouped['y'].values[0]
+                    # Избираме само двете най-близки изолинии
+                    isolines = []
+                    if idx == 0:
+                        isolines = [sr_Ei_values[0], sr_Ei_values[1]] if len(sr_Ei_values) > 1 else [sr_Ei_values[0]]
+                    elif idx == len(sr_Ei_values):
+                        isolines = [sr_Ei_values[-2], sr_Ei_values[-1]] if len(sr_Ei_values) > 1 else [sr_Ei_values[-1]]
                     else:
-                        # Ако няма близки точки, използваме интерполация по всички точки
-                        if len(df_points) > 1:
-                            y_at_ratio = np.interp(
-                                target_sr_Ei, 
-                                df_points['sr_Ei'], 
-                                df_points['y']
-                            )
-                        else:
-                            st.error("Не са намерени данни за интерполация!")
-                            y_at_ratio = None
+                        isolines = [sr_Ei_values[idx-1], sr_Ei_values[idx]]
+                    
+                    y_values = []
+                    for isoline in isolines:
+                        df_iso = df_new[df_new['sr_Ei'] == isoline].sort_values(by='H/D')
+                        if not df_iso.empty:
+                            # Интерполация по H/D за конкретната изолиния
+                            y_val = np.interp(target_Hn_D, df_iso['H/D'], df_iso['y'])
+                            y_values.append(y_val)
+                    
+                    # Интерполация между изолиниите
+                    if len(y_values) == 2:
+                        # Линейна интерполация между двете изолинии
+                        weight = (target_sr_Ei - isolines[0]) / (isolines[1] - isolines[0])
+                        y_at_ratio = y_values[0] + weight * (y_values[1] - y_values[0])
+                    elif y_values:
+                        y_at_ratio = y_values[0]
+                    else:
+                        st.error("Не са намерени данни за интерполация!")
+                        y_at_ratio = None
                     
                     if y_at_ratio is not None:
-                        # Червена точка на графиката
+                        # Червена точка на графиката (кръгла)
                         fig.add_trace(go.Scatter(
                             x=[target_Hn_D], 
                             y=[y_at_ratio],
                             mode='markers', 
-                            marker=dict(color='red', size=10, symbol='circle'),
+                            marker=dict(color='red', size=8),
                             name=f'σt = {y_at_ratio:.3f}'
                         ))
                         
@@ -214,10 +193,10 @@ if layer_idx in st.session_state.layer_results:
                             x=[target_Hn_D, target_Hn_D], 
                             y=[0, y_at_ratio],
                             mode='lines', 
-                            line=dict(color='blue', dash='dash', width=2),
+                            line=dict(color='blue', dash='dash', width=1.5),
                             name='Вертикална линия'
                         ))
-                        
+                
   
                 # Пресечна точка (оранжева)
                 Ei_Ed_target = results['En_over_Ed_r']
