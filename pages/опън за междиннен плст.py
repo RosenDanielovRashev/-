@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+from bisect import bisect_left
 
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
@@ -137,44 +138,48 @@ if layer_idx in st.session_state.layer_results:
                     mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
                     line=dict(width=2)
                 ))
+                # Интерполация и намиране на точката
+                if layer_idx > 0:
+                    sr_Ei_values = np.array(sorted(df_new['sr_Ei'].unique()))  # Сортираме стойностите на Esr/Ei
+                    target_sr_Ei = results['Esr_over_En_r']  # Стойността на Esr/Ei за избрания слой
+                    target_Hn_D = results['ratio_r']  # Стойността на Hn/D за избрания слой
 
-        # Interpolation and marking points
-        if layer_idx > 0:
-            sr_Ei_values = sorted(df_new['sr_Ei'].unique())
-            target_sr_Ei = results['Esr_over_En_r']
-            target_Hn_D = results['ratio_r']
+                    # Използваме bisect_left за намиране на подходящия индекс за интерполация
+                    index = bisect_left(sr_Ei_values, target_sr_Ei)
 
-            y_at_ratio = None
-            if min(sr_Ei_values) <= target_sr_Ei <= max(sr_Ei_values):
-                if target_sr_Ei in sr_Ei_values:
-                    df_target = df_new[df_new['sr_Ei'] == target_sr_Ei].sort_values(by='H/D')
-                    y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
-                else:
-                    for i in range(len(sr_Ei_values)-1):
-                        if sr_Ei_values[i] < target_sr_Ei < sr_Ei_values[i+1]:
-                            df_lower = df_new[df_new['sr_Ei'] == sr_Ei_values[i]].sort_values(by='H/D')
-                            df_upper = df_new[df_new['sr_Ei'] == sr_Ei_values[i+1]].sort_values(by='H/D')
-                            
-                            y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
-                            y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
-                            
-                            y_at_ratio = y_lower + (y_upper - y_lower) * (target_sr_Ei - sr_Ei_values[i]) / (sr_Ei_values[i+1] - sr_Ei_values[i])
-                            break
+                    y_at_ratio = None
+                    if index < len(sr_Ei_values) and sr_Ei_values[index] == target_sr_Ei:
+                        # Стойността на target_sr_Ei е точно в списъка, просто интерполираме Hn/D и y
+                        df_target = df_new[df_new['sr_Ei'] == target_sr_Ei].sort_values(by='H/D')
+                        y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                    elif index > 0 and index < len(sr_Ei_values):
+                        # Линейна интерполация между два съседни елемента, ако точката е между тях
+                        lower_sr_Ei = sr_Ei_values[index - 1]
+                        upper_sr_Ei = sr_Ei_values[index]
 
-            if y_at_ratio is not None:
-                # Вертикална линия (синя)
-                fig.add_trace(go.Scatter(
-                    x=[target_Hn_D, target_Hn_D], y=[0, y_at_ratio],
-                    mode='lines', line=dict(color='blue', dash='dash'),
-                    name='Вертикална линия'
-                ))
+                        df_lower = df_new[df_new['sr_Ei'] == lower_sr_Ei].sort_values(by='H/D')
+                        df_upper = df_new[df_new['sr_Ei'] == upper_sr_Ei].sort_values(by='H/D')
 
-                # Червена точка
-                fig.add_trace(go.Scatter(
-                    x=[target_Hn_D], y=[y_at_ratio],
-                    mode='markers', marker=dict(color='red', size=10),
-                    name='Точка на интерполация'
-                ))
+                        y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
+                        y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
+
+                        # Линейна интерполация между две стойности
+                        y_at_ratio = y_lower + (y_upper - y_lower) * (target_sr_Ei - lower_sr_Ei) / (upper_sr_Ei - lower_sr_Ei)
+
+                    if y_at_ratio is not None:
+                        # Червена точка на графиката
+                        fig.add_trace(go.Scatter(
+                            x=[target_Hn_D], y=[y_at_ratio],
+                            mode='markers', marker=dict(color='red', size=10),
+                            name='Точка на интерполация'
+                        ))
+
+                        # Синя вертикална линия
+                        fig.add_trace(go.Scatter(
+                            x=[target_Hn_D, target_Hn_D], y=[0, y_at_ratio],
+                            mode='lines', line=dict(color='blue', dash='dash'),
+                            name='Вертикална линия'
+                        ))
 
                 # Пресечна точка (оранжева)
                 Ei_Ed_target = results['En_over_Ed_r']
