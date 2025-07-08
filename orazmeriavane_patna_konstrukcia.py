@@ -492,24 +492,26 @@ for i, layer in enumerate(st.session_state.layers_data):
 
 # Бутон за преминаване към следваща страница
 if all_data_ready:
-    if st.button("📤 Изпрати към 'Опън в покритието'", type="primary"):
-        last_layer = st.session_state.layers_data[-1]
-        st.session_state.final_Ed = last_layer["Ed"]
-        st.session_state.Ei_list = [layer["Ei"] for layer in st.session_state.layers_data]
-        st.session_state.hi_list = [layer["h"] for layer in st.session_state.layers_data]
-        st.success("✅ Данните са подготвени за втората страница.")
-        st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
+    cols = st.columns(2)
+    with cols[0]:
+        if st.button("📤 Изпрати към 'Опън в покритието'", type="primary", use_container_width=True):
+            # Запазваме всички Ed стойности за всички пластове
+            st.session_state.final_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
+            st.session_state.Ei_list = [layer["Ei"] for layer in st.session_state.layers_data]
+            st.session_state.hi_list = [layer["h"] for layer in st.session_state.layers_data]
+            st.session_state.final_D_value = st.session_state.final_D
+            st.session_state.axle_load_value = st.session_state.axle_load
+            
+            st.success("✅ Всички данни са подготвени за втората страница.")
+            st.page_link("pages/second.py", label="Към Опън в покритието", icon="📄")
+    with cols[1]:
+        if st.button("📤 Изпрати към 'Опън в междинен пласт'", type="primary", use_container_width=True, key="to_intermediate"):
+            st.session_state.layers_data_all = st.session_state.layers_data
+            st.session_state.final_D_all = st.session_state.final_D
+            st.success("✅ Данните са запазени за междинния пласт!")
+            st.page_link("pages/опън за междиннен плст.py", label="Към Опън в междинен пласт", icon="📄")
 else:
     st.warning("ℹ️ Моля, попълнете данните за всички пластове преди да продължите")
-    
-# Добавяне на бутон за преминаване към междинния пласт
-if all_data_ready:
-    if st.button("📤 Изпрати към 'Опън в междинен пласт'", type="primary", key="to_intermediate"):
-        # Запазване на данните в session state
-        st.session_state.layers_data_all = st.session_state.layers_data
-        st.session_state.final_D_all = st.session_state.final_D
-        st.success("✅ Данните са запазени за междинния пласт!")
-        st.page_link("pages/опън за междиннен плст.py", label="Към Опън в междинен пласт", icon="📄")
 
 # Запазване на Ed за следващия пласт (земно основание)
 if all_data_ready:
