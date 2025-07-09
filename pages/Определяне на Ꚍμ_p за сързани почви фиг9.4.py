@@ -32,7 +32,7 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fi
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    E_values = st.session_state.fig9_4_Ed_list
+    E_values = st.session_state.fig9_4_Ed_list  # Променено на Ed_list
     D_value = st.session_state.fig9_4_D
     
     # Създаване на опции за D с приоритет на стойността от сесията
@@ -51,6 +51,7 @@ if session_data_available:
         with cols[0]:
             st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
         with cols[1]:
+            # Променено на Ed
             st.number_input(f"Ed{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
 
 # Ръчно въвеждане ако няма данни в сесията
@@ -69,16 +70,17 @@ else:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
             h_values.append(h)
         with cols[1]:
+            # Променено на Ed
             E = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
             E_values.append(E)
+
+# Променено на Ed
+Ed = st.number_input("Ed", value=30, step=1)
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
 layer_idx = int(selected_layer.split()[-1]) - 1
-
-# Вземане на Ed за избрания пласт
-Ed_layer = E_values[layer_idx]  # Ключова промяна: използваме Ed с индекс на пласта
 
 # ===================================================================
 # Изчисляване на H и Esr за избрания пласт
@@ -95,7 +97,7 @@ h_terms = " + ".join([f"h_{to_subscript(i+1)}" for i in range(layer_idx+1)])
 st.latex(r"H = " + h_terms)
 st.write(f"H = {H:.3f}")
 
-st.latex(r"Esr = \frac{\sum_{i=1}^n (Ed_i \cdot h_i)}{\sum_{i=1}^n h_i}")
+st.latex(r"Esr = \frac{\sum_{i=1}^n (Ed_i \cdot h_i)}{\sum_{i=1}^n h_i}")  # Променено на Ed_i
 numerator = " + ".join([f"{E_values[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])
 denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
 formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr:.3f}"
@@ -104,16 +106,16 @@ st.latex(formula_with_values)
 ratio = H / D if D != 0 else 0
 st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
 
-# Променена формула с индекс на Ed
-st.latex(rf"\frac{{Esr}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{Esr:.3f}}}{{{Ed_layer}}} = {Esr / Ed_layer:.3f}")
-Esr_over_Ed = Esr / Ed_layer if Ed_layer != 0 else 0
+# Променено на Ed
+st.latex(r"\frac{Esr}{Ed} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Ed}" + "} = " + f"{Esr / Ed:.3f}")
+Esr_over_Ed = Esr / Ed if Ed != 0 else 0  # Променено име
 
 # Зареждане на данни
 df_fi = pd.read_csv("fi.csv")
 df_esr_eo = pd.read_csv("Esr_Eo.csv")
 
-df_fi.rename(columns={df_fi.columns[3]: 'fi'}, inplace=True)
-df_esr_eo.rename(columns={df_esr_eo.columns[3]: 'Esr_Eo'}, inplace=True)
+df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
+df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
 
 fig = go.Figure()
 
@@ -129,7 +131,7 @@ for fi_val in unique_fi:
         line=dict(width=2)
     ))
 
-# Изолинии Esr/Ed (променени етикети)
+# Изолинии Esr/Eo (сега Esr/Ed)
 unique_esr_eo = sorted(df_esr_eo['Esr_Eo'].unique())
 for val in unique_esr_eo:
     df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
@@ -137,9 +139,9 @@ for val in unique_esr_eo:
         x=df_level['H/D'],
         y=df_level['y'],
         mode='lines',
-        name=f'Esr/Ed_{{{layer_idx+1}}} = {val}',  # Променен етикет с индекс
+        name=f'Esr/Ed = {val}',  # Променен етикет
         line=dict(width=2)
-    )
+    ))
 
 # Функция за интерполация на точка по H/D
 def get_point_on_curve(df, x_target):
@@ -227,14 +229,14 @@ if point_on_esr_ed is not None:
         y=[point_on_esr_ed[1]],
         mode='markers',
         marker=dict(color='red', size=10),
-        name=f'Точка (Esr/Ed_{{{layer_idx+1}}})'
+        name='Червена точка (Esr/Ed)'
     ))
     fig.add_trace(go.Scatter(
         x=[ratio, ratio],
         y=[0, point_on_esr_ed[1]],
         mode='lines',
         line=dict(color='red', dash='dash'),
-        name='Вертикална линия H/D'
+        name='Вертикална линия H/D → Esr/Ed'
     ))
 
     # Добавяне на оранжева точка чрез интерполация по fi
@@ -266,7 +268,7 @@ if point_on_esr_ed is not None:
 
 # Настройка на графиката
 fig.update_layout(
-    title=f"Графика за пласт {layer_idx+1} (Ed_{layer_idx+1}={Ed_layer})",  # Променено заглавие
+    title=f"Графика на изолинии и точки за пласт {layer_idx+1}",
     xaxis_title="H/D",
     yaxis_title="y",
     legend_title="Легенда",
@@ -290,21 +292,22 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.update_layout(
+    title=f'Графика на изолинии за пласт {layer_idx+1}',
     xaxis=dict(
         title='H/D',
         showgrid=True,
         zeroline=False,
-        range=[xaxis_min, xaxis_max],
+        range=[xaxis_min, xaxis_max],  # фиксиран диапазон на основната ос
     ),
     xaxis2=dict(
         overlaying='x',
         side='top',
-        range=[xaxis_min, xaxis_max],
+        range=[xaxis_min, xaxis_max],  # същия диапазон, за да са еднакви дължините
         showgrid=False,
         zeroline=False,
         ticks="outside",
-        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
-        ticktext=[f"{(0.20 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),  # примерно 11 tick-а
+        ticktext=[f"{(0.20 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],  # мащабирани стойности
         title='φ',
         fixedrange=True,
         showticklabels=True,
