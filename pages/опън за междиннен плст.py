@@ -3,12 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
-st.set_page_config(
-    layout="centered",
-    page_title="Опънно напрежение в междинен пласт",
-    initial_sidebar_width=400
-)
-
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
 def to_subscript(number):
