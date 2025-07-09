@@ -293,7 +293,7 @@ if layer_idx in st.session_state.layer_results:
 
         st.plotly_chart(fig, use_container_width=True)
 
-        st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
+        st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=600)
         
         # Проверка дали x_intercept е дефинирана и не е None
         if ('x_intercept' in locals()) and (x_intercept is not None):
