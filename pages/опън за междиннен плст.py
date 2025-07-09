@@ -3,6 +3,22 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
+st.markdown("""
+    <style>
+        .streamlit-expanderHeader {
+            font-size: 18px !important;
+        }
+        .block-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        .css-1lcbmi9 {
+            max-width: 1000px !important;
+            margin: 0 auto !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
 def to_subscript(number):
