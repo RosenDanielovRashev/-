@@ -53,7 +53,7 @@ if "num_layers" not in st.session_state:
 if "current_layer" not in st.session_state:
     st.session_state.current_layer = 0
 if "layers_data" not in st.session_state:
-    st.session_state.layers_data = [{"Ee": 2700.0, "Ei": 3000.0}]
+    st.session_state.layers_data = [{"Ee": 2700.0, "Ei": 3000.0, "mode": "Ed / Ei"}]
 if "axle_load" not in st.session_state:
     st.session_state.axle_load = 100
 if "final_D" not in st.session_state:
@@ -79,7 +79,7 @@ if num_layers != st.session_state.num_layers:
     if len(st.session_state.layers_data) < num_layers:
         for i in range(len(st.session_state.layers_data), num_layers):
             prev_ed = st.session_state.layers_data[i-1].get("Ed", 2700.0)
-            st.session_state.layers_data.append({"Ee": prev_ed, "Ei": 3000.0})
+            st.session_state.layers_data.append({"Ee": prev_ed, "Ei": 3000.0, "mode": "Ed / Ei"})
     elif len(st.session_state.layers_data) > num_layers:
         st.session_state.layers_data = st.session_state.layers_data[:num_layers]
     if st.session_state.current_layer >= num_layers:
@@ -155,11 +155,18 @@ if Ei_input != layer_data.get("Ei"):
     layer_data["Ei"] = Ei_input
     reset_calculations_from_layer(layer_idx)
 
+# Определяне на режим с проверка за промяна
 mode = st.radio(
     "Изберете параметър за отчитане:",
     ("Ed / Ei", "h / D"),
-    key=f"mode_{layer_idx}"
+    key=f"mode_{layer_idx}",
+    index=0 if layer_data.get("mode", "Ed / Ei") == "Ed / Ei" else 1
 )
+
+# Проверка за промяна на режима
+if "mode" in layer_data and layer_data["mode"] != mode:
+    reset_calculations_from_layer(layer_idx)
+    layer_data["mode"] = mode
 
 def compute_Ed(h, D, Ee, Ei):
     hD = h / D
@@ -248,33 +255,6 @@ if mode == "Ed / Ei":
             f"h/D = {layer_data['hD_point']:.3f}"
         )
         st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
-        
-        fig = go.Figure()
-        for value, group in data.groupby("Ee_over_Ei"):
-            group_sorted = group.sort_values("h_over_D")
-            fig.add_trace(go.Scatter(
-                x=group_sorted["h_over_D"],
-                y=group_sorted["Ed_over_Ei"],
-                mode='lines',
-                name=f"Ee/Ei = {value:.2f}"
-            ))
-        
-        add_interpolation_line(fig, 
-                              layer_data['hD_point'], 
-                              layer_data['Ed']/layer_data['Ei'],
-                              layer_data['y_low'],
-                              layer_data['y_high'],
-                              layer_data['low_iso'],
-                              layer_data['high_iso'])
-        
-        fig.update_layout(
-            title="Ed / Ei в зависимост от h / D",
-            xaxis_title="h / D",
-            yaxis_title="Ed / Ei",
-            legend_title="Изолинии"
-        )
-        # Уникален ключ за графиката
-        st.plotly_chart(fig, use_container_width=True, key=f"existing_plot_Ed_{layer_idx}")
     
     if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h_input, d_value, layer_data["Ee"], layer_data["Ei"])
@@ -310,27 +290,6 @@ if mode == "Ed / Ei":
                 next_layer["Ee"] = result
                 st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {result:.2f} MPa")
 
-            fig = go.Figure()
-            for value, group in data.groupby("Ee_over_Ei"):
-                group_sorted = group.sort_values("h_over_D")
-                fig.add_trace(go.Scatter(
-                    x=group_sorted["h_over_D"],
-                    y=group_sorted["Ed_over_Ei"],
-                    mode='lines',
-                    name=f"Ee/Ei = {value:.2f}"
-                ))
-
-            add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, high_iso)
-
-            fig.update_layout(
-                title="Ed / Ei в зависимост от h / D",
-                xaxis_title="h / D",
-                yaxis_title="Ed / Ei",
-                legend_title="Изолинии"
-            )
-            # Уникален ключ за новата графика
-            st.plotly_chart(fig, use_container_width=True, key=f"new_plot_Ed_{layer_idx}")
-
 elif mode == "h / D":
     Ed_input = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 50.0), key=f"Ed_{layer_idx}")
     if Ed_input != layer_data.get("Ed"):
@@ -345,33 +304,6 @@ elif mode == "h / D":
             f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
         )
         st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
-        
-        fig = go.Figure()
-        for value, group in data.groupby("Ee_over_Ei"):
-            group_sorted = group.sort_values("h_over_D")
-            fig.add_trace(go.Scatter(
-                x=group_sorted["h_over_D"],
-                y=group_sorted["Ed_over_Ei"],
-                mode='lines',
-                name=f"Ee/Ei = {value:.2f}"
-            ))
-        
-        add_interpolation_line(fig, 
-                              layer_data['hD_point'], 
-                              layer_data['Ed']/layer_data['Ei'],
-                              layer_data['y_low'],
-                              layer_data['y_high'],
-                              layer_data['low_iso'],
-                              layer_data['high_iso'])
-        
-        fig.update_layout(
-            title="Ed / Ei в зависимост от h / D",
-            xaxis_title="h / D",
-            yaxis_title="Ed / Ei",
-            legend_title="Изолинии"
-        )
-        # Уникален ключ за графиката
-        st.plotly_chart(fig, use_container_width=True, key=f"existing_plot_h_{layer_idx}")
     
     if st.button("Изчисли h", key=f"calc_h_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed_input, d_value, layer_data["Ee"], layer_data["Ei"])
@@ -404,26 +336,38 @@ elif mode == "h / D":
                 next_layer["Ee"] = Ed_input
                 st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {Ed_input:.2f} MPa")
 
-            fig = go.Figure()
-            for value, group in data.groupby("Ee_over_Ei"):
-                group_sorted = group.sort_values("h_over_D")
-                fig.add_trace(go.Scatter(
-                    x=group_sorted["h_over_D"],
-                    y=group_sorted["Ed_over_Ei"],
-                    mode='lines',
-                    name=f"Ee/Ei = {value:.2f}"
-                ))
-
-            add_interpolation_line(fig, hD_point, Ed_input / layer_data["Ei"], y_low, y_high, low_iso, high_iso)
-
-            fig.update_layout(
-                title="Ed / Ei в зависимост от h / D",
-                xaxis_title="h / D",
-                yaxis_title="Ed / Ei",
-                legend_title="Изолинии"
-            )
-            # Уникален ключ за новата графика
-            st.plotly_chart(fig, use_container_width=True, key=f"new_plot_h_{layer_idx}")
+# Визуализация на графиката (общо за двата режима)
+if "hD_point" in layer_data and "Ed" in layer_data and "Ei" in layer_data:
+    fig = go.Figure()
+    for value, group in data.groupby("Ee_over_Ei"):
+        group_sorted = group.sort_values("h_over_D")
+        fig.add_trace(go.Scatter(
+            x=group_sorted["h_over_D"],
+            y=group_sorted["Ed_over_Ei"],
+            mode='lines',
+            name=f"Ee/Ei = {value:.2f}"
+        ))
+    
+    hD_point = layer_data['hD_point']
+    EdEi_point = layer_data['Ed'] / layer_data['Ei']
+    
+    # Проверка за наличност на интерполационни данни
+    if all(key in layer_data for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
+        add_interpolation_line(fig, 
+                              hD_point, 
+                              EdEi_point,
+                              layer_data['y_low'],
+                              layer_data['y_high'],
+                              layer_data['low_iso'],
+                              layer_data['high_iso'])
+    
+    fig.update_layout(
+        title="Ed / Ei в зависимост от h / D",
+        xaxis_title="h / D",
+        yaxis_title="Ed / Ei",
+        legend_title="Изолинии"
+    )
+    st.plotly_chart(fig, use_container_width=True, key=f"plot_{layer_idx}")
 
 # Визуализация на резултатите
 st.markdown("---")
