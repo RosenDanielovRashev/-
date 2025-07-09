@@ -276,7 +276,7 @@ if mode == "Ed / Ei":
             
             st.success(
                 f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \n"
-                f"Изчислено Ed = Ei * c = {layer_data['Ei']} * {EdEi_point:.3f} = ({round(result)} MPa)\n"
+                f"Изчислено Ed = Ei * c = {layer_data['Ei']} * {EdEi_point:.3f} = {round(result)} MPa  \n"
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
                 f"h/D = {layer_data['h']:.1f}/{d_value} = {hD_point:.3f}"
             )
