@@ -3,6 +3,22 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
+st.markdown("""
+    <style>
+        .streamlit-expanderHeader {
+            font-size: 18px !important;
+        }
+        .block-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .css-1lcbmi9 {
+            max-width: 800px !important;
+            margin: 0 auto !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 st.title("Определяне на Ꚍμ/p за сързани почви фиг9.4 maxH/D=2")
 
 def to_subscript(number):
