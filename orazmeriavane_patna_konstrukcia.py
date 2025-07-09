@@ -442,6 +442,7 @@ if all_data_ready:
         
         # Нов бутон под първия
         if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.4)'", type="primary", use_container_width=True, key="to_fig9_4"):
+            st.session_state.fig9_4_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_4_h = [layer["h"] for layer in st.session_state.layers_data]
             st.session_state.fig9_4_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
             st.session_state.fig9_4_D = st.session_state.final_D
