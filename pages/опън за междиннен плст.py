@@ -3,6 +3,25 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
+# Конфигурация на страницата трябва да е ПЪРВАТА команда
+st.set_page_config(
+    layout="centered",
+    page_title="Опънно напрежение в междинен пласт",
+    initial_sidebar_width=200
+)
+
+# Стилове
+st.markdown(
+    """
+    <style>
+        .stApp > .block-container {
+            max-width: 500px;
+            padding: 2rem;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
@@ -10,7 +29,7 @@ def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
-# Initialize session state
+# Инициализация на състоянието
 if 'layer_results' not in st.session_state:
     st.session_state.layer_results = {}
 if 'manual_sigma_values' not in st.session_state:
@@ -18,7 +37,7 @@ if 'manual_sigma_values' not in st.session_state:
 if 'check_results' not in st.session_state:
     st.session_state.check_results = {}
 
-# Проверка за данни от główny файл
+# Проверка за данни
 use_auto_data = False
 if 'layers_data_all' in st.session_state and 'final_D_all' in st.session_state:
     layers_data = st.session_state.layers_data_all
@@ -29,7 +48,7 @@ if 'layers_data_all' in st.session_state and 'final_D_all' in st.session_state:
     Ed_values_auto = [layer.get('Ed', 30.0) for layer in layers_data]
     use_auto_data = True
 
-# Input parameters
+# Входни параметри
 if use_auto_data:
     n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=n_auto)
     D = st.selectbox("Избери D", options=[32.04, 34.0], index=0 if D_auto == 32.04 else 1)
@@ -37,19 +56,29 @@ else:
     n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=4)
     D = st.selectbox("Избери D", options=[32.04, 34.0], index=0)
 
-# Input data for all layers
-st.markdown("### Въведи стойности за всички пластове")
+# Ключова корекция: Създаване на колоните ВЪН от цикъла
+cols = st.columns(3)
+
+# Заглавия на колоните
+with cols[0]:
+    st.write("**Дебелина на пласт h (cm)**")
+with cols[1]:
+    st.write("**Модул на еластичност E (MPa)**")
+with cols[2]:
+    st.write("**Модул на деформация Ed (MPa)**")
+
 h_values = []
 E_values = []
 Ed_values = []
 
-cols = st.columns(3)
+# Въвеждане на данни за всеки пласт
 for i in range(n):
-    # Автоматично попълване ако има данни
+    # Стойности по подразбиране
     h_default = h_values_auto[i] if use_auto_data and i < len(h_values_auto) else 4.0
-    E_default = E_values_auto[i] if use_auto_data and i < len(E_values_auto) else [1200.0, 1000.0, 800.0, 400.0][i] if i < 4 else 400.0
+    E_default = E_values_auto[i] if use_auto_data and i < len(E_values_auto) else 400.0
     Ed_default = Ed_values_auto[i] if use_auto_data and i < len(Ed_values_auto) else 30.0
     
+    # Въвеждане в създадените колони
     with cols[0]:
         h = st.number_input(f"h{to_subscript(i+1)}", value=h_default, step=0.1, key=f"h_{i}")
         h_values.append(h)
@@ -60,6 +89,8 @@ for i in range(n):
         Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=round(Ed_default), step=1, key=f"Ed_{i}")
         Ed_values.append(Ed)
 
+# Останалото съдържание остава същото...
+# [Тук продължава останалата част от кода без промяна]
 # Layer selection
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(2, n)], index=n-3 if n > 2 else 0)
