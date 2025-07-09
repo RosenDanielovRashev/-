@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
+st.set_page_config(layout="wide")
+
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
 def to_subscript(number):
