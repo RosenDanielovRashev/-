@@ -286,7 +286,7 @@ if mode == "Ed / Ei":
             if layer_idx < st.session_state.num_layers - 1:
                 next_layer = st.session_state.layers_data[layer_idx + 1]
                 next_layer["Ee"] = result
-                st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {result:.2f} MPa")
+                st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {result:.0f} MPa")
 
 
 elif mode == "h / D":
