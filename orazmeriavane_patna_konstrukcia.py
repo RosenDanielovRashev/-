@@ -295,14 +295,7 @@ elif mode == "h / D":
         layer_data["Ed"] = Ed_input
         reset_calculations_from_layer(layer_idx)
     
-    if "h" in layer_data and "hD_point" in layer_data:
-        st.success(
-            f"✅ Вече изчислено: h = {layer_data['h']:.2f} cm\n"
-            f"h/D = {layer_data['hD_point']:.3f}\n"
-            f"Ed/Ei = {layer_data['Ed']/layer_data['Ei']:.3f}\n"
-            f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
-        )
-        st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
+    # Премахнато показване на резултати преди натискане на бутона
     
     if st.button("Изчисли h", key=f"calc_h_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed_input, d_value, layer_data["Ee"], layer_data["Ei"])
@@ -323,6 +316,7 @@ elif mode == "h / D":
                 "mode": mode
             })
             
+            # Показване на резултатите само след натискане на бутона
             st.success(
                 f"✅ Изчислено: h = {result:.2f} cm\n"
                 f"h/D = {hD_point:.3f}\n"
