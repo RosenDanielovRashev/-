@@ -143,7 +143,7 @@ if layer_idx > 0:
         if prev_layer["Ed"] != layer_data.get("Ee"):
             layer_data["Ee"] = prev_layer["Ed"]
             reset_calculations_from_layer(layer_idx)
-        st.info(f"ℹ️ Ee е автоматично зададен от Ed на предишния пласт: {prev_layer['Ed']:.2f} MPa")
+        st.info(f"ℹ️ Ee е автоматично зададен от Ed на предишния пласт: {round(prev_layer['Ed'])} MPa")
     else:
         st.warning("⚠️ Предишният пласт все още не е изчислен. Моля, изчислете предишния пласт първо.")
 
