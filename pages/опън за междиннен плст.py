@@ -56,7 +56,7 @@ for i in range(n):
         E = st.number_input(f"E{to_subscript(i+1)}", value=E_default, step=0.1, key=f"E_{i}")
         E_values.append(E)
     with cols[2]:
-        Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=Ed_default, step=0.1, key=f"Ed_{i}")
+        Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=round(Ed_default), step=1, key=f"Ed_{i}")
         Ed_values.append(Ed)
 
 # Layer selection
