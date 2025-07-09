@@ -9,11 +9,11 @@ st.markdown("""
             font-size: 18px !important;
         }
         .block-container {
-            max-width: 1000px;
+            max-width: 800px;
             margin: 0 auto;
         }
         .css-1lcbmi9 {
-            max-width: 1000px !important;
+            max-width: 800px !important;
             margin: 0 auto !important;
         }
     </style>
