@@ -26,13 +26,13 @@ def to_subscript(number):
     return str(number).translate(subscripts)
 
 # Проверка за данни в session_state
-session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_Ed_list', 'fig9_4_D'])
+session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_Ei', 'fig9_4_D'])
 
 # Автоматично зареждане на данни от сесията ако са налични
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    E_values = st.session_state.fig9_4_Ed_list  # Променено на Ed_list
+    E_values = st.session_state.fig9_4_Ei
     D_value = st.session_state.fig9_4_D
     
     # Създаване на опции за D с приоритет на стойността от сесията
@@ -51,8 +51,7 @@ if session_data_available:
         with cols[0]:
             st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
         with cols[1]:
-            # Променено на Ed
-            st.number_input(f"Ed{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
+            st.number_input(f"E{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
 
 # Ръчно въвеждане ако няма данни в сесията
 else:
@@ -70,18 +69,18 @@ else:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
             h_values.append(h)
         with cols[1]:
-            # Променено на Ed
-            E = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
+            E = st.number_input(f"E{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
             E_values.append(E)
+
+# Общи параметри (винаги се въвеждат ръчно)
+Eo = st.number_input("Eo", value=30, step=1)
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
 layer_idx = int(selected_layer.split()[-1]) - 1
 
-# Взимаме Ed за конкретния избран пласт
-Ed_selected = E_values[layer_idx]
-
+# Остатъкът от кода остава непроменен (както е в оригиналния фрагмент)
 # ===================================================================
 # Изчисляване на H и Esr за избрания пласт
 h_array = np.array(h_values[:layer_idx+1])
@@ -97,7 +96,7 @@ h_terms = " + ".join([f"h_{to_subscript(i+1)}" for i in range(layer_idx+1)])
 st.latex(r"H = " + h_terms)
 st.write(f"H = {H:.3f}")
 
-st.latex(r"Esr = \frac{\sum_{i=1}^n (Ed_i \cdot h_i)}{\sum_{i=1}^n h_i}")  # Променено на Ed_i
+st.latex(r"Esr = \frac{\sum_{i=1}^n (E_i \cdot h_i)}{\sum_{i=1}^n h_i}")
 numerator = " + ".join([f"{E_values[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])
 denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
 formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr:.3f}"
@@ -106,9 +105,8 @@ st.latex(formula_with_values)
 ratio = H / D if D != 0 else 0
 st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
 
-# Използваме Ed на избрания пласт (Ed_selected вместо общо Ed)
-st.latex(r"\frac{Esr}{Ed_{" + str(layer_idx+1) + r"}} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Ed_selected}" + "} = " + f"{Esr / Ed_selected:.3f}")
-Esr_over_Ed = Esr / Ed_selected if Ed_selected != 0 else 0  # Променено име
+st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
+Esr_over_Eo = Esr / Eo if Eo != 0 else 0
 
 # Зареждане на данни
 df_fi = pd.read_csv("fi.csv")
@@ -131,7 +129,7 @@ for fi_val in unique_fi:
         line=dict(width=2)
     ))
 
-# Изолинии Esr/Eo (сега Esr/Ed)
+# Изолинии Esr/Eo
 unique_esr_eo = sorted(df_esr_eo['Esr_Eo'].unique())
 for val in unique_esr_eo:
     df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
@@ -139,7 +137,7 @@ for val in unique_esr_eo:
         x=df_level['H/D'],
         y=df_level['y'],
         mode='lines',
-        name=f'Esr/Ed = {val}',  # Променен етикет
+        name=f'Esr/Eo = {val}',
         line=dict(width=2)
     ))
 
@@ -156,10 +154,10 @@ def get_point_on_curve(df, x_target):
             return np.array([x_target, y_interp])
     return None
 
-# Интерполация за червената точка между Esr/Ed изолинии
+# Интерполация за червената точка между Esr/Eo изолинии
 unique_esr_eo_sorted = sorted(df_esr_eo['Esr_Eo'].unique())
-lower_vals = [v for v in unique_esr_eo_sorted if v <= Esr_over_Ed]
-upper_vals = [v for v in unique_esr_eo_sorted if v >= Esr_over_Ed]
+lower_vals = [v for v in unique_esr_eo_sorted if v <= Esr_over_Eo]
+upper_vals = [v for v in unique_esr_eo_sorted if v >= Esr_over_Eo]
 
 if lower_vals and upper_vals:
     v1 = lower_vals[-1]
@@ -167,7 +165,7 @@ if lower_vals and upper_vals:
     
     if v1 == v2:
         df_interp = df_esr_eo[df_esr_eo['Esr_Eo'] == v1]
-        point_on_esr_ed = get_point_on_curve(df_interp, ratio)
+        point_on_esr_eo = get_point_on_curve(df_interp, ratio)
     else:
         df1 = df_esr_eo[df_esr_eo['Esr_Eo'] == v1].sort_values(by='H/D')
         df2 = df_esr_eo[df_esr_eo['Esr_Eo'] == v2].sort_values(by='H/D')
@@ -175,13 +173,13 @@ if lower_vals and upper_vals:
         p2 = get_point_on_curve(df2, ratio)
 
         if p1 is not None and p2 is not None:
-            t = (Esr_over_Ed - v1) / (v2 - v1)
+            t = (Esr_over_Eo - v1) / (v2 - v1)
             y_interp = p1[1] + t * (p2[1] - p1[1])
-            point_on_esr_ed = np.array([ratio, y_interp])
+            point_on_esr_eo = np.array([ratio, y_interp])
         else:
-            point_on_esr_ed = None
+            point_on_esr_eo = None
 else:
-    point_on_esr_ed = None
+    point_on_esr_eo = None
 
 # Функция за интерполация по y за дадена fi изолиния
 def interp_x_at_y(df_curve, y_target):
@@ -223,24 +221,24 @@ def interp_x_for_fi_interp(df, fi_target, y_target):
     return None
 
 # Добавяне на червена точка и вертикална червена линия
-if point_on_esr_ed is not None:
+if point_on_esr_eo is not None:
     fig.add_trace(go.Scatter(
-        x=[point_on_esr_ed[0]],
-        y=[point_on_esr_ed[1]],
+        x=[point_on_esr_eo[0]],
+        y=[point_on_esr_eo[1]],
         mode='markers',
         marker=dict(color='red', size=10),
-        name='Червена точка (Esr/Ed)'
+        name='Червена точка (Esr/Eo)'
     ))
     fig.add_trace(go.Scatter(
         x=[ratio, ratio],
-        y=[0, point_on_esr_ed[1]],
+        y=[0, point_on_esr_eo[1]],
         mode='lines',
         line=dict(color='red', dash='dash'),
-        name='Вертикална линия H/D → Esr/Ed'
+        name='Вертикална линия H/D → Esr/Eo'
     ))
 
     # Добавяне на оранжева точка чрез интерполация по fi
-    y_red = point_on_esr_ed[1]
+    y_red = point_on_esr_eo[1]
     x_orange = interp_x_for_fi_interp(df_fi, Fi_input, y_red)
 
     if x_orange is not None:
@@ -252,7 +250,7 @@ if point_on_esr_ed is not None:
             name='Оранжева точка'
         ))
         fig.add_trace(go.Scatter(
-            x=[point_on_esr_ed[0], x_orange],
+            x=[point_on_esr_eo[0], x_orange],
             y=[y_red, y_red],
             mode='lines',
             line=dict(color='orange', dash='dash'),
