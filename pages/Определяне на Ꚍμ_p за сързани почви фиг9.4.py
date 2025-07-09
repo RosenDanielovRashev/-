@@ -74,13 +74,13 @@ else:
             E = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
             E_values.append(E)
 
-# Променено на Ed
-Ed = st.number_input("Ed", value=30, step=1)
-
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
 layer_idx = int(selected_layer.split()[-1]) - 1
+
+# Взимаме Ed за конкретния избран пласт
+Ed_selected = E_values[layer_idx]
 
 # ===================================================================
 # Изчисляване на H и Esr за избрания пласт
@@ -106,9 +106,9 @@ st.latex(formula_with_values)
 ratio = H / D if D != 0 else 0
 st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
 
-# Променено на Ed
-st.latex(r"\frac{Esr}{Ed} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Ed}" + "} = " + f"{Esr / Ed:.3f}")
-Esr_over_Ed = Esr / Ed if Ed != 0 else 0  # Променено име
+# Използваме Ed на избрания пласт (Ed_selected вместо общо Ed)
+st.latex(r"\frac{Esr}{Ed_{" + str(layer_idx+1) + r"}} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Ed_selected}" + "} = " + f"{Esr / Ed_selected:.3f}")
+Esr_over_Ed = Esr / Ed_selected if Ed_selected != 0 else 0  # Променено име
 
 # Зареждане на данни
 df_fi = pd.read_csv("fi.csv")
