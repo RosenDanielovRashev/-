@@ -112,8 +112,8 @@ Esr_over_Ed = Esr / Ed_layer if Ed_layer != 0 else 0
 df_fi = pd.read_csv("fi.csv")
 df_esr_eo = pd.read_csv("Esr_Eo.csv")
 
-df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
-df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
+df_fi.rename(columns={df_fi.columns[3]: 'fi'}, inplace=True)
+df_esr_eo.rename(columns={df_esr_eo.columns[3]: 'Esr_Eo'}, inplace=True)
 
 fig = go.Figure()
 
