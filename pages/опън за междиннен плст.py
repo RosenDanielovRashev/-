@@ -3,18 +3,20 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
+# Движи конфигурацията на страницата НАЙ-ОТГОРЕ
+st.set_page_config(
+    layout="centered",
+    page_title="Опънно напрежение в междинен пласт",
+    initial_sidebar_width=200
+)
+
+# След това добави стиловете
 st.markdown(
     """
     <style>
         .stApp > .block-container {
-            max-width: 400px;
+            max-width: 500px;
             padding: 2rem;
-        }
-        .st-emotion-cache-16txtl3 {
-            padding: 2rem 1rem;
-        }
-        section[data-testid="stSidebar"] {
-            width: 200px !important;
         }
     </style>
     """,
