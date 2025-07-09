@@ -7,7 +7,7 @@ st.markdown(
     """
     <style>
         .stApp > .block-container {
-            max-width: 200px;
+            max-width: 400px;
             padding: 2rem;
         }
         .st-emotion-cache-16txtl3 {
