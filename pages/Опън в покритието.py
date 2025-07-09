@@ -5,27 +5,14 @@ import plotly.graph_objs as go
 
 st.title("Опън в покритието")
 
-# Зареждаме стойности от първата страница, ако има
-D_default = st.session_state.get("final_D", 34.0)
-
-# Вземаме пълните списъци, ако има такива
-Ei_list_full = st.session_state.get("Ei_list", [])
-hi_list_full = st.session_state.get("hi_list", [])
-
-# Ограничаваме само до първите 2 пласта
-Ei_list_default = Ei_list_full[:2]
-hi_list_default = hi_list_full[:2]
-
-# Показваме информация ако има повече от 2
-if len(Ei_list_full) > 2:
-    st.info("ℹ️ Използват се само първите два пласта от въведените на предишната страница.")
-
+# Зареждане на данните
 @st.cache_data
 def load_data():
     return pd.read_csv("sigma_data.csv")
 
 data = load_data()
 
+# Функция за изчисляване на σR
 def compute_sigma_R(H, D, Esr, Ed):
     hD = H / D
     Esr_Ed = Esr / Ed
@@ -54,21 +41,34 @@ def compute_sigma_R(H, D, Esr, Ed):
 
     return None, None, None, None, None, None
 
-st.title("Определяне опънното напрежение в долния плсаст на покритието фиг.9.2")
+# Заглавна част
+st.title("Определяне опънното напрежение в долния пласт на покритието фиг.9.2")
 
+# Въвеждане на параметри
 st.markdown("### Въвеждане на параметри на пластове")
 
-# Избор на D от падащо меню
+# Зареждане на стойности от session_state или задаване на дефолтни
+D_default = st.session_state.get("final_D", 34.0)
+Ei_list_full = st.session_state.get("Ei_list", [])
+hi_list_full = st.session_state.get("hi_list", [])
+Ei_list_default = Ei_list_full[:2] if len(Ei_list_full) >= 2 else [1000.0, 1000.0]
+hi_list_default = hi_list_full[:2] if len(hi_list_full) >= 2 else [10.0, 10.0]
+
+if len(Ei_list_full) > 2:
+    st.info("ℹ️ Използват се само първите два пласта от въведените на предишната страница.")
+
+# Избор на диаметър
 D = st.selectbox(
-    "Диаметър на отпечатъка на колело  D (см)",
+    "Диаметър на отпечатъка на колело D (см)",
     options=[34.0, 32.04, 33.0],
     index=[34.0, 32.04, 33.0].index(D_default) if D_default in [34.0, 32.04, 33.0] else 0
 )
 
-# Брой пластове
-default_n = len(Ei_list_default)
-n = st.number_input("Брой пластове", min_value=1, max_value=10, step=1, value=default_n or 1)
+# Брой пластове (фиксиран на 2)
+st.markdown(f"**Брой пластове:** 2 (фиксиран за това изчисление)")
+n = 2
 
+# Въвеждане на параметри за двата пласта
 Ei_list = []
 hi_list = []
 
@@ -89,49 +89,39 @@ for i in range(1, n + 1):
         )
     Ei_list.append(Ei)
     hi_list.append(hi)
-    
+
+# Запазване на параметрите
+st.session_state["final_D"] = D
+st.session_state["Ei_list"] = Ei_list
+st.session_state["hi_list"] = hi_list
+
 # Вземане на Ed от първата страница
 st.markdown("---")
-
-# Автоматично определяне на Ed (модул на следващия пласт)
 if "final_Ed_list" not in st.session_state:
     st.error("⚠️ Липсва final_Ed_list в session_state!")
     st.info("Моля, върнете се на първата страница и изчислете всички пластове")
     st.stop()
 
-# Вземане на броя въведени пластове (от текущата страница)
-n_layers = len(Ei_list)  # Брой пластове, които потребителят е въвел на текущата страница
-
-# Проверка дали има достатъчно пластове в final_Ed_list
+# Автоматично определяне на Ed (модул на следващия пласт)
+n_layers = len(Ei_list)
 if len(st.session_state.final_Ed_list) <= n_layers:
     st.error(f"⚠️ Недостатъчно пластове в final_Ed_list (изисква се поне {n_layers+1})!")
-    st.info(f"Имате {n_layers} въведени пласта, но final_Ed_list съдържа само {len(st.session_state.final_Ed_list)} стойности")
     st.stop()
 
-Ed = st.session_state.final_Ed_list[n_layers-1]  # Вземаме Ed на следващия пласт (ако имаме 2 пласта, вземаме 3-тия)
+Ed = st.session_state.final_Ed_list[n_layers]
+st.session_state["final_Ed"] = Ed
 
-# Показване на информация за Ed
 st.markdown(f"""
 #### 🟢 Стойност за Ed (модул на деформация на земното основание)
-- Взета от пласт {n_layers} 
+- Взета от пласт {n_layers+1} 
 - Ed = {Ed:.0f} MPa
 """)
-    
-# Запазваме въведените параметри в session_state
-st.session_state["final_D"] = D
-st.session_state["final_Ed"] = Ed
-st.session_state["Ei_list"] = Ei_list
-st.session_state["hi_list"] = hi_list
 
 # Изчисляване на Esr и H
 numerator = sum(Ei * hi for Ei, hi in zip(Ei_list, hi_list))
 denominator = sum(hi_list)
-if denominator == 0:
-    st.error("Сумата на hᵢ не може да бъде 0.")
-    st.stop()
-
-Esr = numerator / denominator
-H = denominator  # автоматично взимаме сбор от всички hᵢ
+Esr = numerator / denominator if denominator != 0 else 0
+H = denominator
 
 # Показване на формулите
 st.markdown("### ℹ️ Формули за изчисление")
@@ -144,36 +134,21 @@ denominator_str = " + ".join([f"{hi}" for hi in hi_list])
 st.latex(fr"Esr = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \text{{ MPa}}")
 st.latex(fr"H = {denominator_str} = {H:.2f} \text{{ см}}")
 
-# Вземаме евентуално запазени резултати
-sigma_saved = st.session_state.get("final_sigma", None)
-hD_saved = st.session_state.get("final_hD", None)
-y_low_saved = st.session_state.get("final_y_low", None)
-y_high_saved = st.session_state.get("final_y_high", None)
-low_saved = st.session_state.get("final_low", None)
-high_saved = st.session_state.get("final_high", None)
-
-if st.button("Изчисли σR"):
+# Автоматично изчисляване на σR
+if denominator != 0:
     sigma, hD, y_low, y_high, low, high = compute_sigma_R(H, D, Esr, Ed)
     
     if sigma is not None:
-        # Запазваме резултатите в session_state
+        # Запазване на резултатите
         st.session_state["final_sigma"] = sigma
         st.session_state["final_hD"] = hD
         st.session_state["final_y_low"] = y_low
         st.session_state["final_y_high"] = y_high
         st.session_state["final_low"] = low
         st.session_state["final_high"] = high
-    else:
-        # Премахваме старите резултати, ако няма нови валидни
-        for key in ["final_sigma", "final_hD", "final_y_low", "final_y_high", "final_low", "final_high"]:
-            if key in st.session_state:
-                del st.session_state[key]
-
-    st.markdown("## 📋 Резултати от изчисленията")
-
-    if sigma is None:
-        st.warning("❗ Точката е извън диапазона на наличните данни.")
-    else:
+        
+        # Показване на резултатите
+        st.markdown("## 📋 Резултати от изчисленията")
         st.markdown(f"""
         **Изчислено:**
         - $Esr / Ed = {Esr:.2f} / {Ed:.0f} = {Esr / Ed:.3f}$
@@ -182,6 +157,7 @@ if st.button("Изчисли σR"):
         st.success(f"✅ σR = {sigma:.3f}")
         st.info(f"Интерполация между изолинии: Esr/Ed = {low:.2f} и {high:.2f}")
 
+        # Графика
         fig = go.Figure()
         for val, group in data.groupby("Esr_over_Ed"):
             fig.add_trace(go.Scatter(
@@ -203,77 +179,42 @@ if st.button("Изчисли σR"):
             height=700
         )
         st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.warning("❗ Точката е извън диапазона на наличните данни.")
+        for key in ["final_sigma", "final_hD", "final_y_low", "final_y_high", "final_low", "final_high"]:
+            if key in st.session_state:
+                del st.session_state[key]
+else:
+    st.error("Сумата на hᵢ не може да бъде 0.")
 
-# Ако има запазени резултати, показваме ги веднага
-elif sigma_saved is not None:
-    st.markdown("## 📋 Запазени резултати от предишното изчисление")
-    st.markdown(f"""
-    **Изчислено (запазено):**
-    - $Esr / Ed = {Esr:.2f} / {Ed:.0f} = {Esr / Ed:.3f}$
-    - $H / D = {H:.2f} / {D:.2f} = {H / D:.3f}$
-    """)
-    st.success(f"✅ σR = {sigma_saved:.3f}")
-    st.info(f"Интерполация между изолинии: Esr/Ed = {low_saved:.2f} и {high_saved:.2f}")
-
-    fig = go.Figure()
-    for val, group in data.groupby("Esr_over_Ed"):
-        fig.add_trace(go.Scatter(
-            x=group["H_over_D"],
-            y=group["sigma_R"],
-            mode='lines',
-            name=f"Esr/Ed = {val:.1f}"
-        ))
-    fig.add_trace(go.Scatter(
-        x=[hD_saved], y=[sigma_saved],
-        mode='markers',
-        marker=dict(size=8, color='red'),
-        name="Твоята точка"
-    ))
-    fig.update_layout(
-        title="Номограма: σR срещу H/D",
-        xaxis_title="H / D",
-        yaxis_title="σR",
-        height=700
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
+# Изображение на допустимите напрежения
 st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
 
-# Вземане на осов товар от първата страница
+# Автоматично изчисляване на крайното σR
 axle_load = st.session_state.get("axle_load", 100)
+p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else None
 
-# Определяне на p според осовия товар
-if axle_load == 100:
-    p = 0.620
-elif axle_load == 115:
-    p = 0.633
-else:
-    p = None
-st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
 if p is not None:
+    st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
     st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
+    
+    sigma = st.session_state.get("final_sigma", None)
+    
+    if sigma is not None:
+        sigma_final = 1.15 * p * sigma
+        st.markdown("### Формула за изчисление на крайното напрежение σR:")
+        st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
+        st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
+        st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+        
+        # Запазване на крайната стойност
+        st.session_state["final_sigma_R"] = sigma_final
+    else:
+        st.warning("❗ Липсва σR от номограмата за изчисление.")
 else:
     st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
 
-# Вземаме sigma от session_state, ако има
-sigma = st.session_state.get("final_sigma", None)
-
-# Променлива за крайното σR
-sigma_final = None
-
-if p is not None and sigma is not None:
-    sigma_final = 1.15 * p * sigma
-    st.markdown("### Формула за изчисление на крайното напрежение σR:")
-    st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
-    st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
-    st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
-    
-    # Запазваме крайната стойност за проверката
-    st.session_state["final_sigma_R"] = sigma_final
-else:
-    st.warning("❗ Липсва p или σR от номограмата за изчисление.")
-
-# Лек акцент за заглавие
+# Секция за ръчно въвеждане
 st.markdown(
     """
     <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
@@ -283,11 +224,11 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Инициализираме ръчната стойност в session_state, ако не съществува
+# Инициализиране на ръчната стойност
 if 'manual_sigma_value' not in st.session_state:
     st.session_state.manual_sigma_value = 1.2
 
-# Полето за ръчно въвеждане на стойност
+# Поле за ръчно въвеждане
 manual_value = st.number_input(
     label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
     min_value=0.0,
@@ -298,17 +239,14 @@ manual_value = st.number_input(
     label_visibility="visible"
 )
 
-# Запазваме въведената стойност в session_state
+# Запазване на въведената стойност
 st.session_state.manual_sigma_value = manual_value
 
-# Проверка на условието (без бутон, автоматично при промяна)
+# Автоматична проверка на условието
 sigma_to_compare = st.session_state.get("final_sigma_R", None)
 
 if sigma_to_compare is not None:
-    # Проверяваме условието
     check_passed = sigma_to_compare <= manual_value
-    
-    # Показваме резултата
     if check_passed:
         st.success(
             f"✅ Проверката е удовлетворена: "
@@ -322,4 +260,5 @@ if sigma_to_compare is not None:
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
+# Линк към предишната страница
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
