@@ -58,6 +58,9 @@ if "axle_load" not in st.session_state:
     st.session_state.axle_load = 100
 if "final_D" not in st.session_state:
     st.session_state.final_D = 32.04
+# Инициализация на calculation_messages
+if "calculation_messages" not in st.session_state:
+    st.session_state.calculation_messages = {}
 
 def reset_calculations_from_layer(layer_idx):
     for i in range(layer_idx, st.session_state.num_layers):
@@ -69,6 +72,10 @@ def reset_calculations_from_layer(layer_idx):
         if i > 0 and i != layer_idx:
             prev_ed = st.session_state.layers_data[i-1].get("Ed", 2700.0)
             layer["Ee"] = prev_ed
+    # Премахваме съобщенията за всички пластове след този
+    for i in range(layer_idx, st.session_state.num_layers):
+        if i in st.session_state.calculation_messages:
+            del st.session_state.calculation_messages[i]
 
 st.title("Оразмеряване на пътна конструкция с няколко пластове")
 
@@ -241,6 +248,10 @@ def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, hi
         name='Резултат'
     ))
 
+# Показване на запазеното съобщение за текущия пласт (ако има)
+if layer_idx in st.session_state.calculation_messages:
+    st.success(st.session_state.calculation_messages[layer_idx])
+
 if mode == "Ed / Ei":
     # Въвеждане на дебелина h
     h_input = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
@@ -274,13 +285,17 @@ if mode == "Ed / Ei":
                 "mode": mode
             })
             
-            st.success(
+            success_message = (
                 f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \n"
                 f"Ed = Ei * {EdEi_point:.3f} = {layer_data['Ei']} * {EdEi_point:.3f} = {round(result)} MPa  \n"
                 f"Ed = {round(result)} MPa  \n"
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
                 f"h/D = {layer_data['h']:.1f}/{d_value} = {hD_point:.3f}"
             )
+            
+            # Запазване на съобщението в session_state
+            st.session_state.calculation_messages[layer_idx] = success_message
+            st.success(success_message)
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             # Обновяване на следващия слой (ако има)
@@ -317,14 +332,17 @@ elif mode == "h / D":
                 "mode": mode
             })
             
-            # Показване на резултатите само след натискане на бутона
-            st.success(
+            success_message = (
                 f"✅ Изчислено: h/D = {hD_point:.3f}  \n"
                 f"h = D*{hD_point:.3f} = {d_value} * {hD_point:.3f} = {layer_data['h']:.2f}  \n"
                 f"h = {result:.2f} cm  \n"
                 f"Ed/Ei = {Ed_input:.1f}/{layer_data['Ei']:.0f} = {Ed_input/layer_data['Ei']:.3f}  \n"
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
             )
+            
+            # Запазване на съобщението в session_state
+            st.session_state.calculation_messages[layer_idx] = success_message
+            st.success(success_message)
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             if layer_idx < st.session_state.num_layers - 1:
