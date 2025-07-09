@@ -8,7 +8,7 @@ st.markdown(
     """
     <style>
         .main > div {
-            max-width: 40%;
+            max-width: 10%;
             padding: 1rem;
         }
     </style>
