@@ -44,23 +44,28 @@ for i in range(n):
         E = st.number_input(f"E{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
         E_values.append(E)
 
-h_array = np.array(h_values)
-E_array = np.array(E_values)
+# Избор на пласт за проверка
+st.markdown("### Избери пласт за проверка")
+selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
+layer_idx = int(selected_layer.split()[-1]) - 1
 
-# Изчисляване на H и Esr
+# Изчисляване на H и Esr за избрания пласт
+h_array = np.array(h_values[:layer_idx+1])
+E_array = np.array(E_values[:layer_idx+1])
+
 H = h_array.sum()
 weighted_sum = np.sum(E_array * h_array)
 Esr = weighted_sum / H if H != 0 else 0
 
 # Формули и резултати
 st.latex(r"H = \sum_{i=1}^n h_i")
-h_terms = " + ".join([f"h_{to_subscript(i+1)}" for i in range(n)])
+h_terms = " + ".join([f"h_{to_subscript(i+1)}" for i in range(layer_idx+1)])
 st.latex(r"H = " + h_terms)
 st.write(f"H = {H:.3f}")
 
 st.latex(r"Esr = \frac{\sum_{i=1}^n (E_i \cdot h_i)}{\sum_{i=1}^n h_i}")
-numerator = " + ".join([f"{E_values[i]} \cdot {h_values[i]}" for i in range(n)])
-denominator = " + ".join([f"{h_values[i]}" for i in range(n)])
+numerator = " + ".join([f"{E_values[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])
+denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
 formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr:.3f}"
 st.latex(formula_with_values)
 
@@ -228,7 +233,7 @@ if point_on_esr_eo is not None:
 
 # Настройка на графиката
 fig.update_layout(
-    title="Графика на изолинии и точки",
+    title=f"Графика на изолинии и точки за пласт {layer_idx+1}",
     xaxis_title="H/D",
     yaxis_title="y",
     legend_title="Легенда",
@@ -252,7 +257,7 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.update_layout(
-    title='Графика на изолинии',
+    title=f'Графика на изолинии за пласт {layer_idx+1}',
     xaxis=dict(
         title='H/D',
         showgrid=True,
@@ -271,7 +276,6 @@ fig.update_layout(
         title='φ',
         fixedrange=True,
         showticklabels=True,
-
     ),
     yaxis=dict(
         title='y',
