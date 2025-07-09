@@ -3,25 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
-# Движи конфигурацията на страницата НАЙ-ОТГОРЕ
-st.set_page_config(
-    layout="centered",
-    page_title="Опънно напрежение в междинен пласт",
-    initial_sidebar_width=200
-)
-
-# След това добави стиловете
-st.markdown(
-    """
-    <style>
-        .stApp > .block-container {
-            max-width: 500px;
-            padding: 2rem;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
 
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
@@ -297,7 +278,7 @@ if layer_idx in st.session_state.layer_results:
 
         st.plotly_chart(fig, use_container_width=True)
 
-        st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=400)
+        st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
         
         # Проверка дали x_intercept е дефинирана и не е None
         if ('x_intercept' in locals()) and (x_intercept is not None):
