@@ -36,34 +36,29 @@ else:
     n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=4)
     D = st.selectbox("Избери D", options=[32.04, 34.0], index=0)
 
-# Input data for all layers - MODIFIED SECTION
+# Input data for all layers
 st.markdown("### Въведи стойности за всички пластове")
 h_values = []
 E_values = []
 Ed_values = []
 
-# Create a container for inputs to control width
-input_container = st.container()
-
-with input_container:
-    # Use narrower columns for inputs
-    cols = st.columns([1, 1, 1])  # Equal width columns
+# Create columns for inputs
+cols = st.columns(3)
+for i in range(n):
+    # Автоматично попълване ако има данни
+    h_default = h_values_auto[i] if use_auto_data and i < len(h_values_auto) else 4.0
+    E_default = E_values_auto[i] if use_auto_data and i < len(E_values_auto) else [1200.0, 1000.0, 800.0, 400.0][i] if i < 4 else 400.0
+    Ed_default = Ed_values_auto[i] if use_auto_data and i < len(Ed_values_auto) else 30.0
     
-    for i in range(n):
-        # Автоматично попълване ако има данни
-        h_default = h_values_auto[i] if use_auto_data and i < len(h_values_auto) else 4.0
-        E_default = E_values_auto[i] if use_auto_data and i < len(E_values_auto) else [1200.0, 1000.0, 800.0, 400.0][i] if i < 4 else 400.0
-        Ed_default = Ed_values_auto[i] if use_auto_data and i < len(Ed_values_auto) else 30.0
-        
-        with cols[0]:
-            h = st.number_input(f"h{to_subscript(i+1)}", value=h_default, step=0.1, key=f"h_{i}")
-            h_values.append(h)
-        with cols[1]:
-            E = st.number_input(f"E{to_subscript(i+1)}", value=E_default, step=0.1, key=f"E_{i}")
-            E_values.append(E)
-        with cols[2]:
-            Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=round(Ed_default), step=1, key=f"Ed_{i}")
-            Ed_values.append(Ed)
+    with cols[0]:
+        h = st.number_input(f"h{to_subscript(i+1)}", value=h_default, step=0.1, key=f"h_{i}")
+        h_values.append(h)
+    with cols[1]:
+        E = st.number_input(f"E{to_subscript(i+1)}", value=E_default, step=0.1, key=f"E_{i}")
+        E_values.append(E)
+    with cols[2]:
+        Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=round(Ed_default), step=1, key=f"Ed_{i}")
+        Ed_values.append(Ed)
 
 # Layer selection
 st.markdown("### Избери пласт за проверка")
@@ -135,60 +130,56 @@ if layer_idx in st.session_state.layer_results:
     st.latex(fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = {results['Esr_over_En_r']}")
     st.latex(fr"\frac{{E_{{{layer_idx+1}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']}}}{{{results['Ed_r']}}} = {results['En_over_Ed_r']}")
 
-    # Visualization - MODIFIED SECTION
-    # Create columns to control graph width
-    graph_col1, graph_col2, graph_col3 = st.columns([1, 8, 1])  # Wider middle column for graph
+    # Visualization
+    try:
+        df_original = pd.read_csv("danni_1.csv")
+        df_new = pd.read_csv("Оразмеряване на опън за междиннен плстH_D_1.csv")
+        df_new.rename(columns={'Esr/Ei': 'sr_Ei'}, inplace=True)
 
-    with graph_col2:
-        try:
-            df_original = pd.read_csv("danni_1.csv")
-            df_new = pd.read_csv("Оразмеряване на опън за междиннен плстH_D_1.csv")
-            df_new.rename(columns={'Esr/Ei': 'sr_Ei'}, inplace=True)
+        fig = go.Figure()
 
-            fig = go.Figure()
+        # Add isolines from original df
+        if 'Ei/Ed' in df_original.columns:
+            for level in sorted(df_original['Ei/Ed'].unique()):
+                df_level = df_original[df_original['Ei/Ed'] == level].sort_values(by='H/D')
+                fig.add_trace(go.Scatter(
+                    x=df_level['H/D'], y=df_level['y'],
+                    mode='lines', name=f'Ei/Ed = {round(level,3)}',
+                    line=dict(width=2)
+                ))
 
-            # Add isolines from original df
-            if 'Ei/Ed' in df_original.columns:
-                for level in sorted(df_original['Ei/Ed'].unique()):
-                    df_level = df_original[df_original['Ei/Ed'] == level].sort_values(by='H/D')
-                    fig.add_trace(go.Scatter(
-                        x=df_level['H/D'], y=df_level['y'],
-                        mode='lines', name=f'Ei/Ed = {round(level,3)}',
-                        line=dict(width=2)
-                    ))
+        # Add isolines from new df
+        if 'sr_Ei' in df_new.columns:
+            for sr_Ei in sorted(df_new['sr_Ei'].unique()):
+                df_level = df_new[df_new['sr_Ei'] == sr_Ei].sort_values(by='H/D')
+                fig.add_trace(go.Scatter(
+                    x=df_level['H/D'], y=df_level['y'],
+                    mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
+                    line=dict(width=2)
+                ))
 
-            # Add isolines from new df
-            if 'sr_Ei' in df_new.columns:
-                for sr_Ei in sorted(df_new['sr_Ei'].unique()):
-                    df_level = df_new[df_new['sr_Ei'] == sr_Ei].sort_values(by='H/D')
-                    fig.add_trace(go.Scatter(
-                        x=df_level['H/D'], y=df_level['y'],
-                        mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
-                        line=dict(width=2)
-                    ))
+        # Interpolation and marking points
+        if layer_idx > 0:
+            sr_Ei_values = sorted(df_new['sr_Ei'].unique())
+            target_sr_Ei = results['Esr_over_En_r']
+            target_Hn_D = results['ratio_r']
 
-            # Interpolation and marking points
-            if layer_idx > 0:
-                sr_Ei_values = sorted(df_new['sr_Ei'].unique())
-                target_sr_Ei = results['Esr_over_En_r']
-                target_Hn_D = results['ratio_r']
-
-                y_at_ratio = None
-                if min(sr_Ei_values) <= target_sr_Ei <= max(sr_Ei_values):
-                    if target_sr_Ei in sr_Ei_values:
-                        df_target = df_new[df_new['sr_Ei'] == target_sr_Ei].sort_values(by='H/D')
-                        y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
-                    else:
-                        for i in range(len(sr_Ei_values)-1):
-                            if sr_Ei_values[i] < target_sr_Ei < sr_Ei_values[i+1]:
-                                df_lower = df_new[df_new['sr_Ei'] == sr_Ei_values[i]].sort_values(by='H/D')
-                                df_upper = df_new[df_new['sr_Ei'] == sr_Ei_values[i+1]].sort_values(by='H/D')
-                                
-                                y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
-                                y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
-                                
-                                y_at_ratio = y_lower + (y_upper - y_lower) * (target_sr_Ei - sr_Ei_values[i]) / (sr_Ei_values[i+1] - sr_Ei_values[i])
-                                break
+            y_at_ratio = None
+            if min(sr_Ei_values) <= target_sr_Ei <= max(sr_Ei_values):
+                if target_sr_Ei in sr_Ei_values:
+                    df_target = df_new[df_new['sr_Ei'] == target_sr_Ei].sort_values(by='H/D')
+                    y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                else:
+                    for i in range(len(sr_Ei_values)-1):
+                        if sr_Ei_values[i] < target_sr_Ei < sr_Ei_values[i+1]:
+                            df_lower = df_new[df_new['sr_Ei'] == sr_Ei_values[i]].sort_values(by='H/D')
+                            df_upper = df_new[df_new['sr_Ei'] == sr_Ei_values[i+1]].sort_values(by='H/D')
+                            
+                            y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
+                            y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
+                            
+                            y_at_ratio = y_lower + (y_upper - y_lower) * (target_sr_Ei - sr_Ei_values[i]) / (sr_Ei_values[i+1] - sr_Ei_values[i])
+                            break
 
                 if y_at_ratio is not None:
                     # Вертикална линия (синя)
@@ -250,146 +241,146 @@ if layer_idx in st.session_state.layer_results:
                                     name='Вертикална линия до y=2.5'
                                 ))
 
-            # --- Добавяне на невидим trace за втората ос (за да се покаже мащабът)
-            fig.add_trace(go.Scatter(
-                x=[0, 1],
-                y=[None, None],  # y не влияе
-                mode='lines',
-                line=dict(color='rgba(0,0,0,0)'),
-                showlegend=False,
-                hoverinfo='skip',
-                xaxis='x2'  # Свързваме с втората ос
-            ))
+        # --- Добавяне на невидим trace за втората ос (за да се покаже мащабът)
+        fig.add_trace(go.Scatter(
+            x=[0, 1],
+            y=[None, None],  # y не влияе
+            mode='lines',
+            line=dict(color='rgba(0,0,0,0)'),
+            showlegend=False,
+            hoverinfo='skip',
+            xaxis='x2'  # Свързваме с втората ос
+        ))
 
-            fig.update_layout(
-                title='Графика на изолинии',
-                xaxis=dict(
-                    title='H/D',
-                    showgrid=True,
-                    zeroline=False,
-                ),
-                xaxis2=dict(
-                    overlaying='x',
-                    side='top',
-                    range=[fig.layout.xaxis.range[0] if fig.layout.xaxis.range else 0, 1],
-                    showgrid=False,
-                    zeroline=False,
-                    tickvals=[0, 0.25, 0.5, 0.75, 1],
-                    ticktext=['0', '0.25', '0.5', '0.75', '1'],
-                    title='σr'
-                ),
-                yaxis=dict(
-                    title='y',
-                    range=[0, 3]
-                ),
-                showlegend=False
+        fig.update_layout(
+            title='Графика на изолинии',
+            xaxis=dict(
+                title='H/D',
+                showgrid=True,
+                zeroline=False,
+            ),
+            xaxis2=dict(
+                overlaying='x',
+                side='top',
+                range=[fig.layout.xaxis.range[0] if fig.layout.xaxis.range else 0, 1],
+                showgrid=False,
+                zeroline=False,
+                tickvals=[0, 0.25, 0.5, 0.75, 1],
+                ticktext=['0', '0.25', '0.5', '0.75', '1'],
+                title='σr'
+            ),
+            yaxis=dict(
+                title='y',
+                range=[0, 3]
+            ),
+            showlegend=False
+        )
+
+        # Display the graph in a centered column
+        col1, col2, col3 = st.columns([1, 6, 1])
+        with col2:
+            st.plotly_chart(fig, use_container_width=True)
+            st.image("Допустими опънни напрежения.png", 
+                   caption="Допустими опънни напрежения", 
+                   use_column_width=True)
+
+        # Проверка дали x_intercept е дефинирана и не е None
+        if ('x_intercept' in locals()) and (x_intercept is not None):
+            sigma_r = round(x_intercept / 2, 3)
+            st.markdown(f"**Изчислено σr = {sigma_r}**")
+            
+            # Запазваме стойността в session_state
+            st.session_state.final_sigma = sigma_r
+
+            # Вземане на осов товар от първата страница
+            axle_load = st.session_state.get("axle_load", 100)
+            
+            # Определяне на p според осовия товар
+            if axle_load == 100:
+                p = 0.620
+            elif axle_load == 115:
+                p = 0.633
+            else:
+                p = None
+            st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
+            if p is not None:
+                st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
+            else:
+                st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
+                
+            # Вземаме sigma от session_state, ако има
+            sigma = st.session_state.get("final_sigma", None)
+
+            # Променлива за крайното σR
+            sigma_final = None
+            
+            if p is not None and sigma is not None:
+                sigma_final = 1.15 * p * sigma
+                st.markdown("### Формула за изчисление на крайното напрежение σR:")
+                st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
+                st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
+                st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+                
+                # Запазваме крайната стойност за проверката
+                st.session_state["final_sigma_R"] = sigma_final
+            else:
+                st.warning("❗ Липсва p или σR от номограмата за изчисление.")
+
+            # Секция за ръчно въвеждане
+            st.markdown(
+                """
+                <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
+                    <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
+                </div>
+                """,
+                unsafe_allow_html=True
             )
 
-            st.plotly_chart(fig, use_container_width=True)
+            # Инициализираме ръчната стойност за този пласт, ако не съществува
+            if f'manual_sigma_{layer_idx}' not in st.session_state.manual_sigma_values:
+                st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = sigma_r
 
-            st.image("Допустими опънни напрежения.png", 
-                    caption="Допустими опънни напрежения", 
-                    use_column_width=True)  # Adjust image to column width
-
-            # Проверка дали x_intercept е дефинирана и не е None
-            if ('x_intercept' in locals()) and (x_intercept is not None):
-                sigma_r = round(x_intercept / 2, 3)
-                st.markdown(f"**Изчислено σr = {sigma_r}**")
+            # Поле за ръчно въвеждане
+            manual_value = st.number_input(
+                label="Въведете ръчно отчетена стойност σR [MPa]",
+                min_value=0.0,
+                max_value=20.0,
+                value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r),
+                step=0.1,
+                key=f"manual_sigma_input_{layer_idx}",
+                label_visibility="visible"
+            )
+            
+            # Запазваме ръчно въведената стойност
+            st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
+            
+            # Проверка на условието (без бутон, автоматично при промяна)
+            sigma_to_compare = st.session_state.get("final_sigma_R", None)
+            
+            if sigma_to_compare is not None:
+                # Проверяваме дали вече имаме резултат за този пласт
+                if f'check_result_{layer_idx}' not in st.session_state.check_results:
+                    st.session_state.check_results[f'check_result_{layer_idx}'] = None
                 
-                # Запазваме стойността в session_state
-                st.session_state.final_sigma = sigma_r
-
-                # Вземане на осов товар от първата страница
-                axle_load = st.session_state.get("axle_load", 100)
+                # Проверка на условието
+                check_passed = sigma_to_compare <= manual_value
+                st.session_state.check_results[f'check_result_{layer_idx}'] = check_passed
                 
-                # Определяне на p според осовия товар
-                if axle_load == 100:
-                    p = 0.620
-                elif axle_load == 115:
-                    p = 0.633
+                # Показваме резултата
+                if check_passed:
+                    st.success(
+                        f"✅ Проверката е удовлетворена: "
+                        f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
+                    )
                 else:
-                    p = None
-                st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
-                if p is not None:
-                    st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
-                else:
-                    st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
-                    
-                # Вземаме sigma от session_state, ако има
-                sigma = st.session_state.get("final_sigma", None)
-
-                # Променлива за крайното σR
-                sigma_final = None
-                
-                if p is not None and sigma is not None:
-                    sigma_final = 1.15 * p * sigma
-                    st.markdown("### Формула за изчисление на крайното напрежение σR:")
-                    st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
-                    st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
-                    st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
-                    
-                    # Запазваме крайната стойност за проверката
-                    st.session_state["final_sigma_R"] = sigma_final
-                else:
-                    st.warning("❗ Липсва p или σR от номограмата за изчисление.")
-
-
-        
-                # Секция за ръчно въвеждане
-                st.markdown(
-                    """
-                    <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
-                        <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-                # Инициализираме ръчната стойност за този пласт, ако не съществува
-                if f'manual_sigma_{layer_idx}' not in st.session_state.manual_sigma_values:
-                    st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = sigma_r
-
-                # Поле за ръчно въвеждане
-                manual_value = st.number_input(
-                    label="Въведете ръчно отчетена стойност σR [MPa]",
-                    min_value=0.0,
-                    max_value=20.0,
-                    value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r),
-                    step=0.1,
-                    key=f"manual_sigma_input_{layer_idx}",
-                    label_visibility="visible"
-                )
-                
-                # Запазваме ръчно въведената стойност
-                st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
-                
-                # Проверка на условието (без бутон, автоматично при промяна)
-                sigma_to_compare = st.session_state.get("final_sigma_R", None)
-                
-                if sigma_to_compare is not None:
-                    # Проверяваме дали вече имаме резултат за този пласт
-                    if f'check_result_{layer_idx}' not in st.session_state.check_results:
-                        st.session_state.check_results[f'check_result_{layer_idx}'] = None
-                    
-                    # Проверка на условието
-                    check_passed = sigma_to_compare <= manual_value
-                    st.session_state.check_results[f'check_result_{layer_idx}'] = check_passed
-                    
-                    # Показваме резултата
-                    if check_passed:
-                        st.success(
-                            f"✅ Проверката е удовлетворена: "
-                            f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
-                        )
-                    else:
-                        st.error(
-                            f"❌ Проверката НЕ е удовлетворена: "
-                            f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
-                        )
-                else:
-                    st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
+                    st.error(
+                        f"❌ Проверката НЕ е удовлетворена: "
+                        f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
+                    )
             else:
-                st.markdown("**σr = -** (Няма изчислена стойност)")
+                st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
+        else:
+            st.markdown("**σr = -** (Няма изчислена стойност)")
 
-        except Exception as e:
-            st.error(f"Грешка при визуализацията: {e}")
+    except Exception as e:
+        st.error(f"Грешка при визуализацията: {e}")
