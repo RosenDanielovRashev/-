@@ -429,7 +429,7 @@ for i, layer in enumerate(st.session_state.layers_data):
     """, unsafe_allow_html=True)
 
 if all_data_ready:
-    cols = st.columns(2)
+    cols = st.columns(3)  # Променено на 3 колони
     with cols[0]:
         if st.button("📤 Изпрати към 'Опън в покритието'", type="primary", use_container_width=True):
             st.session_state.final_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
@@ -445,9 +445,17 @@ if all_data_ready:
             st.session_state.final_D_all = st.session_state.final_D
             st.success("✅ Данните са запазени за междинния пласт!")
             st.page_link("pages/опън за междиннен плст.py", label="Към Опън в междинен пласт", icon="📄")
+    with cols[2]:  # Добавен нов бутон
+        if st.button("📤 Изпрати към 'Ꚍμ_p (фиг9.4)'", type="primary", use_container_width=True, key="to_fig9_4"):
+            st.session_state.fig9_4_h = [layer["h"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_4_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_4_D = st.session_state.final_D
+            st.session_state.fig9_4_last_Ed = st.session_state.layers_data[-1]["Ed"]
+            st.success("✅ Данните за фиг.9.4 са готови!")
+            st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.4.py", label="Към Ꚍμ_p (фиг9.4)", icon="📊")
 else:
     st.warning("ℹ️ Моля, попълнете данните за всички пластове преди да продължите")
-
+    
 st.markdown("---")
 st.subheader("Навигация към другите модули:")
 col1, col2 = st.columns(2)
