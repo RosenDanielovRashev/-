@@ -176,7 +176,7 @@ if st.button("Изчисли σR"):
     else:
         st.markdown(f"""
         **Изчислено:**
-        - $Esr / Ed = {Esr:.2f} / {Ed:.2f} = {Esr / Ed:.3f}$
+        - $Esr / Ed = {Esr:.2f} / {Ed:.0f} = {Esr / Ed:.3f}$
         - $H / D = {H:.2f} / {D:.2f} = {H / D:.3f}$
         """)
         st.success(f"✅ σR = {sigma:.3f}")
