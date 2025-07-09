@@ -136,7 +136,7 @@ if layer_idx in st.session_state.layer_results:
         st.latex(r"Esr = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}")
         numerator = " + ".join([f"{results['E_values'][i]} \cdot {results['h_values'][i]}" for i in range(layer_idx)])
         denominator = " + ".join([f"{results['h_values'][i]}" for i in range(layer_idx)])
-        st.latex(fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {results['Esr_r']}")
+        st.latex(fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {round(results['Esr_r'])}")
     else:
         st.write("Esr = 0 (няма предишни пластове)")
 
