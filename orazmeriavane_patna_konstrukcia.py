@@ -155,7 +155,7 @@ if layer_idx == 0:
         reset_calculations_from_layer(0)  # Нулиране на всички пластове
 else:
     Ee = layer_data.get("Ee", 2700.0)
-    st.write(f"**Ee (автоматично от предишен пласт):** {Ee:.2f} MPa")
+    st.write(f"**Ee (автоматично от предишен пласт):** {round(Ee)} MPa")
 
 # Въвеждане на Ei с проверка за промяна
 Ei_input = st.number_input("Ei (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ei", 3000.0), key=f"Ei_{layer_idx}")
