@@ -359,7 +359,7 @@ elif mode == "h / D":
         # Промяна 1: Добавяне на Ee/Ei и Ed/Ei
         st.success(
             f"✅ Вече изчислено: h = {layer_data['h']:.2f} cm  \n"
-            f"h/D = {layer_data['hD_point']:.3f}  \n"
+            f"h/D = {layer_data['hD_point']:.3f}\n"
             f"Ed/Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \n"
             f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
         )
