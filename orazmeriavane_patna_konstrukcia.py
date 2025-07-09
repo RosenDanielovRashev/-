@@ -258,9 +258,10 @@ if mode == "Ed / Ei":
         # Промяна 1: Добавяне на Ee/Ei и h/D
         st.success(
             f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \n"
+            f"Изчислено Ed = Ei * Ed = {layer_data['Ei']} * {layer_data['Ed']/layer_data['Ei']:.3f} = {layer_data['Ed']:.1f} MPa"
             f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
             f"h/D = {layer_data['hD_point']:.3f}"
-            f"Изчислено Ed = Ei * (Ed/Ei) = {layer_data['Ei']} * {layer_data['Ed']/layer_data['Ei']:.3f} = {layer_data['Ed']:.1f} MPa"
+            
         )
         st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
         
