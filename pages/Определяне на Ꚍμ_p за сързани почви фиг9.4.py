@@ -35,13 +35,6 @@ if session_data_available:
     E_values = st.session_state.fig9_4_Ei
     D_value = st.session_state.fig9_4_D
     
-    # Ако Ed стойностите са налични в session_state, ги използваме
-    if 'fig9_4_Ed' in st.session_state:
-        Ed_values = st.session_state.fig9_4_Ed
-    else:
-        # Създаване на Ed стойности по подразбиране
-        Ed_values = [30] * n
-    
     # Създаване на опции за D с приоритет на стойността от сесията
     D_options = [32.04, 34.0, 33.0]
     if D_value not in D_options:
@@ -53,14 +46,12 @@ if session_data_available:
     
     # Показване на автоматично заредените данни
     st.markdown("### Автоматично заредени данни за пластовете")
-    cols = st.columns(3)
+    cols = st.columns(2)
     for i in range(n):
         with cols[0]:
             st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
         with cols[1]:
             st.number_input(f"E{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
-        with cols[2]:
-            st.number_input(f"Ed{to_subscript(i+1)}", value=Ed_values[i], disabled=True, key=f"Ed_{i}")
 
 # Ръчно въвеждане ако няма данни в сесията
 else:
@@ -72,9 +63,7 @@ else:
     st.markdown("### Въведи стойности за всеки пласт")
     h_values = []
     E_values = []
-    Ed_values = []  # Добавяне на списък за Ed стойности
-    
-    cols = st.columns(3)
+    cols = st.columns(2)
     for i in range(n):
         with cols[0]:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
@@ -82,24 +71,16 @@ else:
         with cols[1]:
             E = st.number_input(f"E{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
             E_values.append(E)
-        with cols[2]:
-            Ed = st.number_input(f"Ed{to_subscript(i+1)}", value=30, step=1, key=f"Ed_{i}")  # Ново поле
-            Ed_values.append(Ed)
 
-# Общи параметри (Eo)
-# Ако избраният пласт е пласт 2, вземаме Eo от Ed на пласт 2
-if layer_idx == 1:  # Пласт 2 (индекс 1)
-    if 'Ed_values' in locals() and len(Ed_values) > 1:
-        Eo_value = Ed_values[1]
-        st.write(f"Eo е взето от Ed на пласт 2: {Eo_value}")
-        Eo = Eo_value
-    else:
-        st.error("Няма достатъчно пластове за Ed на пласт 2. Въведете Eo ръчно.")
-        Eo = st.number_input("Eo", value=30, step=1)
-else:
-    Eo = st.number_input("Eo", value=30, step=1)
+# Общи параметри (винаги се въвеждат ръчно)
+Eo = st.number_input("Eo", value=30, step=1)
 
-# Остатъкът от кода остава непроменен
+# Избор на пласт за проверка
+st.markdown("### Избери пласт за проверка")
+selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
+layer_idx = int(selected_layer.split()[-1]) - 1
+
+# Остатъкът от кода остава непроменен (както е в оригиналния фрагмент)
 # ===================================================================
 # Изчисляване на H и Esr за избрания пласт
 h_array = np.array(h_values[:layer_idx+1])
