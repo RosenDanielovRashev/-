@@ -318,8 +318,9 @@ elif mode == "h / D":
             
             # Показване на резултатите само след натискане на бутона
             st.success(
-                f"✅ Изчислено: h/D={hD_point:.3f}, h = {result:.2f} cm  \n"
+                f"✅ Изчислено: h/D={hD_point:.3f}  \n"
                 f"h=D*{hD_point:.3f} = {d_value} * {hD_point:.3f} = {layer_data['h']:.2f}  \n"
+                h = {result:.2f} cm  \n"
                 f"Ed/Ei = {Ed_input:.1f}/{layer_data['Ei']:.0f} = {Ed_input/layer_data['Ei']:.3f}  \n"
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
             )
