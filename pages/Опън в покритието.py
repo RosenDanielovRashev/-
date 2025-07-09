@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
 
+
 st.title("Опън в покритието")
 
 # Зареждане на данните
