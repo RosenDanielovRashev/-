@@ -283,46 +283,43 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# CSS за стилизиране на number_input
-st.markdown("""
-<style>
-div[data-baseweb="input"] > input {
-    width: 70px !important;
-    padding-left: 5px !important;
-    padding-right: 5px !important;
-    text-align: left !important;  /* Подравняване на текста в input */
-}
-</style>
-""", unsafe_allow_html=True)
+# Инициализираме ръчната стойност в session_state, ако не съществува
+if 'manual_sigma_value' not in st.session_state:
+    st.session_state.manual_sigma_value = 1.2
 
 # Полето за ръчно въвеждане на стойност
 manual_value = st.number_input(
     label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
     min_value=0.0,
     max_value=20.0,
-    value=1.2,
+    value=st.session_state.manual_sigma_value,
     step=0.1,
     key="manual_sigma_input",
     label_visibility="visible"
 )
 
-# Бутон за проверка на условието (АКТУАЛИЗИРАН)
-if st.button("Провери условието (след коефициенти)"):
-    # Взимаме крайното σR (след умножение с коефициентите)
-    sigma_to_compare = st.session_state.get("final_sigma_R", None)
+# Запазваме въведената стойност в session_state
+st.session_state.manual_sigma_value = manual_value
+
+# Проверка на условието (без бутон, автоматично при промяна)
+sigma_to_compare = st.session_state.get("final_sigma_R", None)
+
+if sigma_to_compare is not None:
+    # Проверяваме условието
+    check_passed = sigma_to_compare <= manual_value
     
-    if sigma_to_compare is None:
-        st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
+    # Показваме резултата
+    if check_passed:
+        st.success(
+            f"✅ Проверката е удовлетворена: "
+            f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
+        )
     else:
-        if sigma_to_compare <= manual_value:
-            st.success(
-                f"✅ Проверката е удовлетворена: "
-                f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
-            )
-        else:
-            st.error(
-                f"❌ Проверката НЕ е удовлетворена: "
-                f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
-            )
+        st.error(
+            f"❌ Проверката НЕ е удовлетворена: "
+            f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
+        )
+else:
+    st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
