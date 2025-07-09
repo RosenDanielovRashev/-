@@ -278,7 +278,6 @@ if mode == "Ed / Ei":
                 f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \n"
                 f"Изчислено Ed = Ei * c = {layer_data['Ei']} * {EdEi_point:.3f} = {round(result)} MPa  \n"
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
-                f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
                 f"h/D = {hD_point:.3f}"
             )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
