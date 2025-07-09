@@ -321,6 +321,7 @@ elif mode == "h / D":
                 f"✅ Изчислено: h = {result:.2f} cm  \n"
                 f"h/D = {hD_point:.3f}  \n"
                 f"Ed/Ei = {Ed_input/layer_data['Ei']:.3f}  \n"
+                f"Ed/Ei = {Ed_input:.1f}/{layer_data['Ei']:.0f} = {Ed_input/layer_data['Ei']:.3f}  \n"
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
             )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
