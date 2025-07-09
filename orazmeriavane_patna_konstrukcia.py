@@ -242,26 +242,21 @@ def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, hi
     ))
 
 if mode == "Ed / Ei":
+    # Въвеждане на дебелина h
     h_input = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
     if h_input != layer_data.get("h"):
         layer_data["h"] = h_input
         reset_calculations_from_layer(layer_idx)
     
-    if "Ed" in layer_data and "hD_point" in layer_data:
-        st.success(
-            f"✅ Вече изчислено: Ed / Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \n"
-            f"Изчислено Ed = Ei * Ed = {layer_data['Ei']} * {layer_data['Ed']/layer_data['Ei']:.3f} = ({round(layer_data['Ed'])} MPa)  \n"
-            f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
-            f"h/D = {layer_data['hD_point']:.3f}"
-        )
-        st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
-    
+    # Бутон за изчисляване на Ed
     if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
+        # Изчисляване на резултата
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h_input, d_value, layer_data["Ee"], layer_data["Ei"])
 
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
+            # Изчисляване на съотношение Ed / Ei
             EdEi_point = result / layer_data["Ei"]
             st.success(
                 f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \n"
@@ -271,6 +266,7 @@ if mode == "Ed / Ei":
             )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
+            # Актуализиране на данните в layer_data
             layer_data.update({
                 "Ee": layer_data["Ee"],
                 "Ei": layer_data["Ei"],
@@ -285,10 +281,12 @@ if mode == "Ed / Ei":
                 "mode": mode
             })
 
+            # Обновяване на следващия слой (ако има)
             if layer_idx < st.session_state.num_layers - 1:
                 next_layer = st.session_state.layers_data[layer_idx + 1]
                 next_layer["Ee"] = result
                 st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {result:.2f} MPa")
+
 
 elif mode == "h / D":
     Ed_input = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 50.0), key=f"Ed_{layer_idx}")
