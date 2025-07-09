@@ -318,9 +318,9 @@ elif mode == "h / D":
             
             # Показване на резултатите само след натискане на бутона
             st.success(
-                f"✅ Изчислено: h = {result:.2f} cm\n"
-                f"h/D = {hD_point:.3f}\n"
-                f"Ed/Ei = {Ed_input/layer_data['Ei']:.3f}\n"
+                f"✅ Изчислено: h = {result:.2f} cm  \n"
+                f"h/D = {hD_point:.3f}  \n"
+                f"Ed/Ei = {Ed_input/layer_data['Ei']:.3f}  \n"
                 f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
             )
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
