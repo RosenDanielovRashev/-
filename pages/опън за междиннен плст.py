@@ -3,19 +3,23 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
-# Custom CSS to reduce page width
 st.markdown(
     """
     <style>
-        .main > div {
-            max-width: 10%;
-            padding: 1rem;
+        .reportview-container .main .block-container {
+            max-width: 500px;
+            padding-top: 2rem;
+            padding-right: 2rem;
+            padding-left: 2rem;
+            padding-bottom: 2rem;
+        }
+        .sidebar .sidebar-content {
+            width: 200px;
         }
     </style>
     """,
-    unsafe_allow_html=True,
+    unsafe_allow_html=True
 )
-
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
 def to_subscript(number):
