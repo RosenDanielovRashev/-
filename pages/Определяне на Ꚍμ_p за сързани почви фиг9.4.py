@@ -25,30 +25,63 @@ def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
-# Входни параметри
-n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=3)
-D = st.selectbox("Избери D", options=[32.04, 34.0, 33.0], index=0)
-Eo = st.number_input("Eo", value=30, step=1)
-Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
+# Проверка за данни в session_state
+session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_Ei', 'fig9_4_D'])
 
-# Въвеждане на h_i и E_i за всеки пласт
-st.markdown("### Въведи стойности за всеки пласт")
-h_values = []
-E_values = []
-cols = st.columns(2)
-for i in range(n):
-    with cols[0]:
-        h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
-        h_values.append(h)
-    with cols[1]:
-        E = st.number_input(f"E{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
-        E_values.append(E)
+# Автоматично зареждане на данни от сесията ако са налични
+if session_data_available:
+    n = len(st.session_state.fig9_4_h)
+    h_values = st.session_state.fig9_4_h
+    E_values = st.session_state.fig9_4_Ei
+    D_value = st.session_state.fig9_4_D
+    
+    # Създаване на опции за D с приоритет на стойността от сесията
+    D_options = [32.04, 34.0, 33.0]
+    if D_value not in D_options:
+        D_options.insert(0, D_value)
+    D = st.selectbox("Избери D", options=D_options, index=0)
+    
+    # Ръчно въвеждане само за Fi
+    Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
+    
+    # Показване на автоматично заредените данни
+    st.markdown("### Автоматично заредени данни за пластовете")
+    cols = st.columns(2)
+    for i in range(n):
+        with cols[0]:
+            st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
+        with cols[1]:
+            st.number_input(f"E{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
+
+# Ръчно въвеждане ако няма данни в сесията
+else:
+    n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=3)
+    D = st.selectbox("Избери D", options=[32.04, 34.0, 33.0], index=0)
+    Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
+    
+    # Ръчно въвеждане на данни за пластовете
+    st.markdown("### Въведи стойности за всеки пласт")
+    h_values = []
+    E_values = []
+    cols = st.columns(2)
+    for i in range(n):
+        with cols[0]:
+            h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
+            h_values.append(h)
+        with cols[1]:
+            E = st.number_input(f"E{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
+            E_values.append(E)
+
+# Общи параметри (винаги се въвеждат ръчно)
+Eo = st.number_input("Eo", value=30, step=1)
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
 layer_idx = int(selected_layer.split()[-1]) - 1
 
+# Остатъкът от кода остава непроменен (както е в оригиналния фрагмент)
+# ===================================================================
 # Изчисляване на H и Esr за избрания пласт
 h_array = np.array(h_values[:layer_idx+1])
 E_array = np.array(E_values[:layer_idx+1])
