@@ -258,15 +258,8 @@ if mode == "Ed / Ei":
         else:
             # Изчисляване на съотношение Ed / Ei
             EdEi_point = result / layer_data["Ei"]
-            st.success(
-                f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}  \n"
-                 f"Изчислено Ed = Ei * Ed = {layer_data['Ei']} * {layer_data['Ed']/layer_data['Ei']:.3f} = ({round(layer_data['Ed'])} MPa)  \n"
-                f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
-                f"h/D = {hD_point:.3f}"
-            )
-            st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
-
-            # Актуализиране на данните в layer_data
+            
+            # Актуализиране на данните ПРЕДИ използването им
             layer_data.update({
                 "Ee": layer_data["Ee"],
                 "Ei": layer_data["Ei"],
@@ -280,6 +273,14 @@ if mode == "Ed / Ei":
                 "high_iso": high_iso,
                 "mode": mode
             })
+            
+            st.success(
+                f"✅ Изчислено: Ed / Ei = {EdEi_point:.3f}\n"
+                f"Изчислено Ed = Ei * (Ed/Ei) = {layer_data['Ei']} * {EdEi_point:.3f} = {round(result)} MPa\n"
+                f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}\n"
+                f"h/D = {hD_point:.3f}"
+            )
+            st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             # Обновяване на следващия слой (ако има)
             if layer_idx < st.session_state.num_layers - 1:
@@ -296,9 +297,9 @@ elif mode == "h / D":
     
     if "h" in layer_data and "hD_point" in layer_data:
         st.success(
-            f"✅ Вече изчислено: h = {layer_data['h']:.2f} cm  \n"
+            f"✅ Вече изчислено: h = {layer_data['h']:.2f} cm\n"
             f"h/D = {layer_data['hD_point']:.3f}\n"
-            f"Ed/Ei = {layer_data['Ed']/layer_data['Ei']:.3f}  \n"
+            f"Ed/Ei = {layer_data['Ed']/layer_data['Ei']:.3f}\n"
             f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
         )
         st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {layer_data['low_iso']:.3f} и Ee / Ei = {layer_data['high_iso']:.3f}")
@@ -308,14 +309,7 @@ elif mode == "h / D":
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
-            st.success(
-                f"✅ Изчислено: h = {result:.2f} cm  \n"
-                f"h/D = {hD_point:.3f}  \n"
-                f"Ed/Ei = {Ed_input/layer_data['Ei']:.3f}  \n"
-                f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
-            )
-            st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
-
+            # Актуализиране на данните ПРЕДИ използването им
             layer_data.update({
                 "Ee": layer_data["Ee"],
                 "Ei": layer_data["Ei"],
@@ -328,6 +322,14 @@ elif mode == "h / D":
                 "high_iso": high_iso,
                 "mode": mode
             })
+            
+            st.success(
+                f"✅ Изчислено: h = {result:.2f} cm\n"
+                f"h/D = {hD_point:.3f}\n"
+                f"Ed/Ei = {Ed_input/layer_data['Ei']:.3f}\n"
+                f"Ee/Ei = {layer_data['Ee']/layer_data['Ei']:.3f}"
+            )
+            st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
             if layer_idx < st.session_state.num_layers - 1:
                 next_layer = st.session_state.layers_data[layer_idx + 1]
