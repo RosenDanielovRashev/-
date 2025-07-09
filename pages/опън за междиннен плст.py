@@ -275,7 +275,7 @@ if layer_idx in st.session_state.layer_results:
             showlegend=False
         )
 
-        st.plotly_chart(fig, use_container_width=False)
+        st.plotly_chart(fig, use_container_width=True)
 
         st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
         
