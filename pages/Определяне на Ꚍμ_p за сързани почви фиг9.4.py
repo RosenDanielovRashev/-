@@ -637,7 +637,7 @@ f = 0.65
 K = (K1 * K2) / (d * f) * (1 / K3)
 tau_dop = K * C
 
-# Останалият код остава същият до...
+# Останалият код остава същият до..
 
 # Проверка дали sigma_r и tau_b са дефинирани
 sigma_r_val = sigma_r if 'sigma_r' in locals() else 0.0
@@ -653,6 +653,10 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 \frac{{{K1:.2f} \cdot {K2:.2f}}}{{1.15 \cdot 0.65}} \cdot \frac{{1}}{{{K3:.2f}}} = {K:.3f}
 """
 
+# Основното неравенство като заглавие
+st.latex(r"\tau_{\mu} + \tau_b \leq K \cdot C = \tau_{доп}")
+
+# Подробно изчисление
 formula_tau = fr"""
 \tau_{{\mu}} + \tau_b = {sigma_r_val:.6f} + {tau_b_val:.6f} = {left_side:.6f} \\
 K \cdot C = {K:.3f} \cdot {C:.2f} = {right_side:.6f} \\
