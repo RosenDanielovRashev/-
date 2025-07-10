@@ -102,7 +102,7 @@ st.markdown(f"**Eo = Ed{to_subscript(layer_idx+1)} = {Eo}**")
 
 # Изчисляване на H и Esr за избрания пласт
 h_array = np.array(h_values[:layer_idx+1])
-E_array = np.array(Ed_values[:layer_idx+1])  # Променено от E_values на Ed_values
+E_array = np.array(Ei_values[:layer_idx+1])  # Използваме Ei вместо Ed
 
 H = h_array.sum()
 weighted_sum = np.sum(E_array * h_array)
@@ -115,7 +115,7 @@ st.latex(r"H = " + h_terms)
 st.write(f"H = {H:.3f}")
 
 st.latex(r"Esr = \frac{\sum_{i=1}^n (E_i \cdot h_i)}{\sum_{i=1}^n h_i}")
-numerator = " + ".join([f"{Ed_values[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])  # Променено на Ed_values
+numerator = " + ".join([f"{Ei_values[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])  # Променено на Ei_values
 denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
 formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr:.3f}"
 st.latex(formula_with_values)
