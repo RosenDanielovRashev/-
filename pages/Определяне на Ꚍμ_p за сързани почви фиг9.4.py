@@ -119,6 +119,10 @@ st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{rati
 st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
 
+print(f"Стойност на ratio (H/D): {ratio}")
+print(f"Минимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].min()}")
+print(f"Максимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].max()}")
+
 # Зареждане на данни
 df_fi = pd.read_csv("fi.csv")
 df_esr_eo = pd.read_csv("Esr_Eo.csv")
@@ -152,9 +156,6 @@ for val in unique_esr_eo:
         line=dict(width=2)
     ))
 
-print(f"Стойност на ratio (H/D): {ratio}")
-print(f"Минимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].min()}")
-print(f"Максимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].max()}")
 
 
 # Функция за интерполация на точка по H/D
