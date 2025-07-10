@@ -176,14 +176,14 @@ def plot_tau_b(fi_value, h_value):
         ax.plot(x_value, y_tau, 'ko', markersize=8, 
                 # Добавяне на текста в долния ляв ъгъл (координати [0, 0] = долен ляв ъгъл)
                 ax.text(0.02, 0.02,  # x, y (в относителни координати, 0-1)
-                        f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}',
+                        label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
                         transform=ax.transAxes,  # използва относителни координати
                         bbox=dict(facecolor='white', alpha=0.7, edgecolor='gray', boxstyle='round'),  # фон на текста
                         fontsize=10,
                         verticalalignment='bottom',  # подравняване към долния край
                         horizontalalignment='left')  # подравняване вляво
                 
-                label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
+                
 
         
               
