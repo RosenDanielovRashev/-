@@ -25,14 +25,17 @@ def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
-# Проверка за данни в session_state
-session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_Ei', 'fig9_4_D'])
+# Проверка за данни в session_state - ПРОМЕНЕНО: проверяваме layers_data вместо fig9_4_Ei
+session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_D']) and \
+                         'layers_data' in st.session_state and \
+                         len(st.session_state.layers_data) > 0
 
-# Автоматично зареждане на данни от сесията ако са налични
+# Автоматично зареждане на данни ако са налични
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    E_values = st.session_state.fig9_4_Ei
+    # ПРОМЕНЕНО: Взимаме Ed стойностите от layers_data вместо Ei
+    E_values = [layer["Ed"] for layer in st.session_state.layers_data]
     D_value = st.session_state.fig9_4_D
     
     # Създаване на опции за D с приоритет на стойността от сесията
@@ -51,7 +54,8 @@ if session_data_available:
         with cols[0]:
             st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
         with cols[1]:
-            st.number_input(f"E{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
+            # ПРОМЕНЕНО: Показваме Ed вместо Ei
+            st.number_input(f"Ed{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
 
 # Ръчно въвеждане ако няма данни в сесията
 else:
@@ -69,7 +73,8 @@ else:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
             h_values.append(h)
         with cols[1]:
-            E = st.number_input(f"E{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
+            # ПРОМЕНЕНО: Въвеждаме Ed вместо Ei
+            E = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
             E_values.append(E)
 
 # Общи параметри (винаги се въвеждат ръчно)
