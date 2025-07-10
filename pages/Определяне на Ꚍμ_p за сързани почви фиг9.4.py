@@ -62,9 +62,11 @@ def load_tau_b_data():
     h_values_available = sorted(h_to_x.keys())
     
     return Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h
-# Промени в функцията plot_tau_b
+
+# Функция за изчисляване и визуализация на τb с билинейна интерполация
 def plot_tau_b(fi_value, h_value):
     try:
+        # Зареждане на данните
         Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h = load_tau_b_data()
         
         h_value = float(h_value)
@@ -187,11 +189,17 @@ def plot_tau_b(fi_value, h_value):
         
     except Exception as e:
         st.error(f"Грешка при изчисляване на τb: {str(e)}")
-        import traceback
-        st.error(traceback.format_exc())
         return None, None
-# Явна дефиниция на D
-D = st.session_state.get('fig9_4_D', 32.04)  # Основна корекция
+
+def to_subscript(number):
+    subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+    return str(number).translate(subscripts)
+
+# Инициализиране на променливите
+h_values = []
+Ei_values = []
+Ed_values = []
+n = 3  # Стойност по подразбиране
 
 # Проверка за данни в session_state
 session_data_available = all(key in st.session_state for key in ['fig9_4_h']) and \
@@ -200,50 +208,59 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h']) an
 
 # Автоматично зареждане на данни ако са налични
 if session_data_available:
-    n = len(st.session_state.fig9_4_h)
-    h_values = st.session_state.fig9_4_h
-    Ed_values = [round(layer["Ed"]) for layer in st.session_state.layers_data]
-    Ei_values = [round(layer["Ei"]) for layer in st.session_state.layers_data]
-    
-    D_options = [32.04, 34.0, 33.0]
-    
-    if 'fig9_4_D' in st.session_state:
-        current_d = st.session_state.fig9_4_D
-        if current_d not in D_options:
-            D_options.insert(0, current_d)
-    else:
-        current_d = D_options[0]
+    try:
+        n = len(st.session_state.fig9_4_h)
+        h_values = st.session_state.fig9_4_h
+        Ed_values = [round(layer["Ed"]) for layer in st.session_state.layers_data]
+        Ei_values = [round(layer["Ei"]) for layer in st.session_state.layers_data]
+        
+        D_options = [32.04, 34.0, 33.0]
+        
+        if 'fig9_4_D' in st.session_state:
+            current_d = st.session_state.fig9_4_D
+            if current_d not in D_options:
+                D_options.insert(0, current_d)
+        else:
+            current_d = D_options[0]
 
-    selected_d = st.selectbox("Избери D", options=D_options, index=D_options.index(current_d))
-    st.session_state.fig9_4_D = selected_d
-    D = selected_d
-    
-    Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
-    
-    st.markdown("### Автоматично заредени данни за пластовете")
-    cols = st.columns(3)
-    
-    h_values_edited = []
-    Ei_values_edited = []
-    Ed_values_edited = []
-    
-    for i in range(n):
-        with cols[0]:
-            h_val = st.number_input(f"h{to_subscript(i+1)}", value=float(h_values[i]), step=0.1, key=f"auto_h_{i}")
-            h_values_edited.append(h_val)
-        with cols[1]:
-            ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=int(Ei_values[i]), step=1, key=f"auto_Ei_{i}")
-            Ei_values_edited.append(ei_val)
-        with cols[2]:
-            ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=int(Ed_values[i]), step=1, key=f"auto_Ed_{i}")
-            Ed_values_edited.append(ed_val)
-    
-    h_values = h_values_edited
-    Ei_values = Ei_values_edited
-    Ed_values = Ed_values_edited
+        selected_d = st.selectbox("Избери D", options=D_options, index=D_options.index(current_d))
+        st.session_state.fig9_4_D = selected_d
+        D = selected_d
+        
+        Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
+        
+        st.markdown("### Автоматично заредени данни за пластовете")
+        cols = st.columns(3)
+        
+        h_values_edited = []
+        Ei_values_edited = []
+        Ed_values_edited = []
+        
+        for i in range(n):
+            with cols[0]:
+                # Добавяне на проверка за граници
+                default_h = float(h_values[i]) if i < len(h_values) else 4.0
+                h_val = st.number_input(f"h{to_subscript(i+1)}", value=default_h, step=0.1, key=f"auto_h_{i}")
+                h_values_edited.append(h_val)
+            with cols[1]:
+                default_ei = int(Ei_values[i]) if i < len(Ei_values) else 1000
+                ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=default_ei, step=1, key=f"auto_Ei_{i}")
+                Ei_values_edited.append(ei_val)
+            with cols[2]:
+                default_ed = int(Ed_values[i]) if i < len(Ed_values) else 1000
+                ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=default_ed, step=1, key=f"auto_Ed_{i}")
+                Ed_values_edited.append(ed_val)
+        
+        h_values = h_values_edited
+        Ei_values = Ei_values_edited
+        Ed_values = Ed_values_edited
 
-# Ръчно въвеждане ако няма данни в сесията
-else:
+    except Exception as e:
+        st.error(f"Грешка при зареждане на данните: {str(e)}")
+        session_data_available = False
+
+# Ръчно въвеждане ако няма данни в сесията или има грешка
+if not session_data_available:
     n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=3)
     D_options = [32.04, 34.0, 33.0]
     selected_d = st.selectbox("Избери D", options=D_options, index=0)
