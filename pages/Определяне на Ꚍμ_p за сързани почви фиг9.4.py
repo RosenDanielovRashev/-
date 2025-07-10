@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
-
-
 st.markdown("""
     <style>
         .streamlit-expanderHeader {
@@ -121,9 +119,6 @@ st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{rati
 st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
 
-st.write(f"Стойност на ratio (H/D): {ratio:.3f}")
-
-
 # Зареждане на данни
 df_fi = pd.read_csv("fi.csv")
 df_esr_eo = pd.read_csv("Esr_Eo.csv")
@@ -132,9 +127,6 @@ df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
 df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
 
 fig = go.Figure()
-
-st.write(f"Минимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].min():.3f}")
-st.write(f"Максимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].max():.3f}")
 
 # Изолинии fi
 unique_fi = sorted(df_fi['fi'].unique())
@@ -160,8 +152,6 @@ for val in unique_esr_eo:
         line=dict(width=2)
     ))
 
-
-
 # Функция за интерполация на точка по H/D
 def get_point_on_curve(df, x_target):
     x_vals = df['H/D'].values
@@ -174,6 +164,11 @@ def get_point_on_curve(df, x_target):
             y_interp = y1 + t * (y2 - y1)
             return np.array([x_target, y_interp])
     return None
+
+# Инициализиране на променливите
+point_on_esr_eo = None
+x_orange = None
+y_red = None
 
 # Интерполация за червената точка между Esr/Eo изолинии
 unique_esr_eo_sorted = sorted(df_esr_eo['Esr_Eo'].unique())
@@ -202,6 +197,91 @@ if lower_vals and upper_vals:
 else:
     point_on_esr_eo = None
 
+# Функция за интерполация по y за дадена fi изолиния
+def interp_x_at_y(df_curve, y_target):
+    x_arr = df_curve['H/D'].values
+    y_arr = df_curve['y'].values
+    for k in range(len(y_arr) - 1):
+        y1, y2 = y_arr[k], y_arr[k + 1]
+        if (y1 - y_target) * (y2 - y_target) <= 0:
+            x1, x2 = x_arr[k], x_arr[k + 1]
+            if y2 == y1:
+                return x1
+            t = (y_target - y1) / (y2 - y1)
+            return x1 + t * (x2 - x1)
+    return None
+
+# Интерполация на x (H/D) между fi изолинии
+def interp_x_for_fi_interp(df, fi_target, y_target):
+    fi_values = sorted(df['fi'].unique())
+    lower_fi = [v for v in fi_values if v <= fi_target]
+    upper_fi = [v for v in fi_values if v >= fi_target]
+
+    if not lower_fi or not upper_fi:
+        return None
+
+    fi1 = lower_fi[-1]
+    fi2 = upper_fi[0]
+
+    if fi1 == fi2:
+        df1 = df[df['fi'] == fi1].sort_values(by='y')
+        return interp_x_at_y(df1, y_target)
+    else:
+        df1 = df[df['fi'] == fi1].sort_values(by='y')
+        df2 = df[df['fi'] == fi2].sort_values(by='y')
+        x1 = interp_x_at_y(df1, y_target)
+        x2 = interp_x_at_y(df2, y_target)
+        if x1 is not None and x2 is not None:
+            t = (fi_target - fi1) / (fi2 - fi1)
+            return x1 + t * (x2 - x1)
+    return None
+
+# Добавяне на червена точка и вертикална червена линия
+if point_on_esr_eo is not None:
+    fig.add_trace(go.Scatter(
+        x=[point_on_esr_eo[0]],
+        y=[point_on_esr_eo[1]],
+        mode='markers',
+        marker=dict(color='red', size=10),
+        name='Червена точка (Esr/Eo)'
+    ))
+    fig.add_trace(go.Scatter(
+        x=[ratio, ratio],
+        y=[0, point_on_esr_eo[1]],
+        mode='lines',
+        line=dict(color='red', dash='dash'),
+        name='Вертикална линия H/D → Esr/Eo'
+    ))
+    
+    # Запазване на y стойност
+    y_red = point_on_esr_eo[1]
+    
+    # Търсене на оранжева точка
+    x_orange = interp_x_for_fi_interp(df_fi, Fi_input, y_red)
+    
+    if x_orange is not None:
+        # Добавяне на оранжева точка и линии
+        fig.add_trace(go.Scatter(
+            x=[x_orange],
+            y=[y_red],
+            mode='markers',
+            marker=dict(color='orange', size=10),
+            name='Оранжева точка'
+        ))
+        fig.add_trace(go.Scatter(
+            x=[point_on_esr_eo[0], x_orange],
+            y=[y_red, y_red],
+            mode='lines',
+            line=dict(color='orange', dash='dash'),
+            name='Хоризонтална линия'
+        ))
+        fig.add_trace(go.Scatter(
+            x=[x_orange, x_orange],
+            y=[y_red, 1.35],
+            mode='lines',
+            line=dict(color='orange', dash='dash'),
+            name='Вертикална линия до y=1.35'
+        ))
 
 # Настройка на графиката
 fig.update_layout(
@@ -260,9 +340,8 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # Изчисление на σr от x на оранжевата точка (ако съществува)
-if 'x_orange' in locals() and x_orange is not None:
+if x_orange is not None and y_red is not None:
     sigma_r = round(x_orange / 10, 3)
-    x_val = round(x_orange, 3)
     st.markdown(f"**Ꚍμ/p = {sigma_r}**")
 else:
     st.markdown("**Ꚍμ/p = -** (Няма изчислена стойност)")
