@@ -173,18 +173,16 @@ def plot_tau_b(fi_value, h_value):
         # Маркиране на пресечната точка с интерполирана x координата
         
         ax.plot([x_low, x_high], [y_tau, y_tau], 'g--', alpha=0.6)
-        ax.plot(x_value, y_tau, 'ko', markersize=8)
-        
-        # Adding text in the bottom left corner (coordinates [0, 0] = bottom left)
-        ax.text(0.02, 0.02,  # x, y (in relative coordinates, 0-1)
-                label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}',
-                transform=ax.transAxes,  # uses relative coordinates
-                bbox=dict(facecolor='white', alpha=0.7, edgecolor='gray', boxstyle='round'),  # text background
+        ax.plot(x_value, y_tau, 'ko', markersize=8, 
+
+        # Добавяне на текста в долния ляв ъгъл (координати [0, 0] = долен ляв ъгъл)
+        ax.text(0.02, 0.02,  # x, y (в относителни координати, 0-1)
+                f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}',
+                transform=ax.transAxes,  # използва относителни координати
+                bbox=dict(facecolor='white', alpha=0.7, edgecolor='gray', boxstyle='round'),  # фон на текста
                 fontsize=10,
-                verticalalignment='bottom',  # align to bottom
-                horizontalalignment='left')  # left alignment
-    
-            
+                verticalalignment='bottom',  # подравняване към долния край
+                horizontalalignment='left')  # подравняване вляво
               
         
         # Настройки на графиката
