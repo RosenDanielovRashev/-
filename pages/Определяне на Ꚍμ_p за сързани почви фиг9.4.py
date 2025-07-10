@@ -25,7 +25,7 @@ def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
-# Проверка за данни в session_state - ПРОМЕНЕНО: проверяваме layers_data вместо fig9_4_Ei
+# Проверка за данни в session_state
 session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_D']) and \
                          'layers_data' in st.session_state and \
                          len(st.session_state.layers_data) > 0
@@ -34,50 +34,36 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fi
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    # Взимаме Ed стойностите от layers_data
     E_values = [layer["Ed"] for layer in st.session_state.layers_data]
     
-    # Създаване на опции за D с приоритет на сесийната стойност
     D_options = [32.04, 34.0, 33.0]
     
-    # Ако вече има запазена стойност в сесията и не е в опциите, добавяме я първа
     if 'fig9_4_D' in st.session_state:
         current_d = st.session_state.fig9_4_D
         if current_d not in D_options:
             D_options.insert(0, current_d)
     else:
-        current_d = D_options[0]  # Стойност по подразбиране
+        current_d = D_options[0]
 
-    # Показваме selectbox с актуалните опции
-    selected_d = st.selectbox(
-        "Избери D", 
-        options=D_options,
-        index=D_options.index(current_d)  # Автоматично избира текущата стойност
-    )
-    
-    # Запазваме избраната стойност в сесията
+    selected_d = st.selectbox("Избери D", options=D_options, index=D_options.index(current_d))
     st.session_state.fig9_4_D = selected_d
     
-    # Ръчно въвеждане само за Fi
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
     
-    # Показване на автоматично заредените данни
     st.markdown("### Автоматично заредени данни за пластовете")
     cols = st.columns(2)
     for i in range(n):
         with cols[0]:
             st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
         with cols[1]:
-            # ПРОМЕНЕНО: Показваме Ed вместо Ei
             st.number_input(f"Ed{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
 
 # Ръчно въвеждане ако няма данни в сесията
 else:
     n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=3)
-    D = st.selectbox("Избери D", options=[32.04, 34.0, 33.0], index=0)
+    selected_d = st.selectbox("Избери D", options=[32.04, 34.0, 33.0], index=0)  # Корекция 1
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
     
-    # Ръчно въвеждане на данни за пластовете
     st.markdown("### Въведи стойности за всеки пласт")
     h_values = []
     E_values = []
@@ -87,11 +73,10 @@ else:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
             h_values.append(h)
         with cols[1]:
-            # ПРОМЕНЕНО: Въвеждаме Ed вместо Ei
             E = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
             E_values.append(E)
 
-# Общи параметри (винаги се въвеждат ръчно)
+# Общи параметри
 Eo = st.number_input("Eo", value=30, step=1)
 
 # Избор на пласт за проверка
@@ -99,8 +84,6 @@ st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
 layer_idx = int(selected_layer.split()[-1]) - 1
 
-# Остатъкът от кода остава непроменен (както е в оригиналния фрагмент)
-# ===================================================================
 # Изчисляване на H и Esr за избрания пласт
 h_array = np.array(h_values[:layer_idx+1])
 E_array = np.array(E_values[:layer_idx+1])
@@ -121,8 +104,9 @@ denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
 formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr:.3f}"
 st.latex(formula_with_values)
 
-ratio = H / D if D != 0 else 0
-st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
+# Корекция 2: Използване на selected_d вместо D
+ratio = H / selected_d if selected_d != 0 else 0
+st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{selected_d}" + "} = " + f"{ratio:.3f}")
 
 st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
