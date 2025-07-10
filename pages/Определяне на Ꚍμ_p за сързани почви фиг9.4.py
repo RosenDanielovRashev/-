@@ -62,8 +62,6 @@ def load_tau_b_data():
     h_values_available = sorted(h_to_x.keys())
     
     return Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h
-
-# Функция за изчисляване и визуализация на τb с билинейна интерполация
 def plot_tau_b(fi_value, h_value):
     try:
         # Зареждане на данните
@@ -71,6 +69,14 @@ def plot_tau_b(fi_value, h_value):
         
         h_value = float(h_value)
         fi_value = float(fi_value)
+        
+        # Проверка дали h_value е в допустимите граници
+        if h_value < min(h_values_available):
+            st.warning(f"H = {h_value} е по-малко от минималната допустима стойност ({min(h_values_available)}). Използва се минималната стойност.")
+            h_value = min(h_values_available)
+        elif h_value > max(h_values_available):
+            st.warning(f"H = {h_value} е по-голямо от максималната допустима стойност ({max(h_values_available)}). Използва се максималната стойност.")
+            h_value = max(h_values_available)
         
         # Намиране на двата най-близки H (долна и горна граница)
         h_val_arr = np.array(h_values_available)
