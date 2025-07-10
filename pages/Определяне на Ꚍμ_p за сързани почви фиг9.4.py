@@ -205,6 +205,7 @@ def interp_x_at_y(df_curve, y_target):
             t = (y_target - y1) / (y2 - y1)
             return x1 + t * (x2 - x1)
     return None
+    
 
 # Интерполация на x (H/D) между fi изолинии
 def interp_x_for_fi_interp(df, fi_target, y_target):
