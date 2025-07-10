@@ -25,8 +25,11 @@ def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
+# Явна дефиниция на D
+D = st.session_state.get('fig9_4_D', 32.04)  # Основна корекция
+
 # Проверка за данни в session_state
-session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_D']) and \
+session_data_available = all(key in st.session_state for key in ['fig9_4_h']) and \
                          'layers_data' in st.session_state and \
                          len(st.session_state.layers_data) > 0
 
@@ -47,6 +50,7 @@ if session_data_available:
 
     selected_d = st.selectbox("Избери D", options=D_options, index=D_options.index(current_d))
     st.session_state.fig9_4_D = selected_d
+    D = selected_d  # Актуализиране на D
     
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
     
@@ -61,7 +65,11 @@ if session_data_available:
 # Ръчно въвеждане ако няма данни в сесията
 else:
     n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=3)
-    selected_d = st.selectbox("Избери D", options=[32.04, 34.0, 33.0], index=0)  # Корекция 1
+    D_options = [32.04, 34.0, 33.0]
+    selected_d = st.selectbox("Избери D", options=D_options, index=0)
+    st.session_state.fig9_4_D = selected_d
+    D = selected_d  # Задаване на D
+    
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
     
     st.markdown("### Въведи стойности за всеки пласт")
@@ -104,9 +112,8 @@ denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
 formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr:.3f}"
 st.latex(formula_with_values)
 
-# Корекция 2: Използване на selected_d вместо D
-ratio = H / selected_d if selected_d != 0 else 0
-st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{selected_d}" + "} = " + f"{ratio:.3f}")
+ratio = H / D if D != 0 else 0
+st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
 
 st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
@@ -298,17 +305,17 @@ fig.update_layout(
         title='H/D',
         showgrid=True,
         zeroline=False,
-        range=[xaxis_min, xaxis_max],  # фиксиран диапазон на основната ос
+        range=[xaxis_min, xaxis_max],
     ),
     xaxis2=dict(
         overlaying='x',
         side='top',
-        range=[xaxis_min, xaxis_max],  # същия диапазон, за да са еднакви дължините
+        range=[xaxis_min, xaxis_max],
         showgrid=False,
         zeroline=False,
         ticks="outside",
-        tickvals=np.linspace(xaxis_min, xaxis_max, 11),  # примерно 11 tick-а
-        ticktext=[f"{(0.20 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],  # мащабирани стойности
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
+        ticktext=[f"{(0.20 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],
         title='φ',
         fixedrange=True,
         showticklabels=True,
@@ -324,7 +331,7 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 # Изчисление на σr от x на оранжевата точка (ако съществува)
-if ('x_orange' in locals()) and (x_orange is not None):
+if 'x_orange' in locals() and x_orange is not None:
     sigma_r = round(x_orange / 10, 3)
     x_val = round(x_orange, 3)
     st.markdown(f"**Ꚍμ/p = {sigma_r}**")
