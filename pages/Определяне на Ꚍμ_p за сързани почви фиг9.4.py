@@ -576,8 +576,29 @@ if tau_b_fig is not None and tau_b is not None:
 else:
     st.error("Неуспешно изчисление на τb")
 
+# Останалият код остава същият до...
+
 st.image("9.8 Таблица.png", width=600)
 
-st.latex(r"""
-K=\frac{K_1\cdot K_2}{d\cdot f}\cdot \frac{1}{K_3}=\frac{K_1\cdot \:K_2}{1.15\cdot 0.65}\cdot \:\frac{1}{K_3}
-""")
+# Добавяне на полета за въвеждане на K стойностите
+st.markdown("### Въведете коефициентите за изчисление на K")
+col1, col2, col3 = st.columns(3)
+with col1:
+    K1 = st.number_input("K₁", value=1.0, step=0.1, format="%.2f", key=f"K1_{layer_idx}")
+with col2:
+    K2 = st.number_input("K₂", value=1.0, step=0.1, format="%.2f", key=f"K2_{layer_idx}")
+with col3:
+    K3 = st.number_input("K₃", value=1.0, step=0.1, format="%.2f", key=f"K3_{layer_idx}")
+
+# Изчисление на K
+d = 1.15
+f = 0.65
+K = (K1 * K2) / (d * f) * (1 / K3)
+
+# Динамична LaTeX формула с текущи стойности
+formula = fr"""
+K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} = 
+\frac{{{K1:.2f} \cdot {K2:.2f}}}{{1.15 \cdot 0.65}} \cdot \frac{{1}}{{{K3:.2f}}} = {K:.3f}
+"""
+
+st.latex(formula)
