@@ -580,20 +580,20 @@ else:
 
 st.image("9.8 Таблица.png", width=600)
 
-# Инициализиране на session_state за K стойностите, ако не съществуват
+# Инициализиране на session_state за K стойностите и C, ако не съществуват
 if 'K_values' not in st.session_state:
     st.session_state.K_values = {}
 
-# Добавяне на полета за въвеждане на K стойностите
-st.markdown("### Въведете коефициентите за изчисление на K")
-col1, col2, col3 = st.columns(3)
+# Добавяне на полета за въвеждане на K стойностите и C
+st.markdown("### Въведете коефициентите за изчисление")
+cols = st.columns(4)  # Сега имаме 4 колони
 
 # Вземане или инициализиране на стойностите за текущия пласт
 current_layer_key = f"layer_{layer_idx}"
 if current_layer_key not in st.session_state.K_values:
-    st.session_state.K_values[current_layer_key] = {'K1': 1.0, 'K2': 1.0, 'K3': 1.0}
+    st.session_state.K_values[current_layer_key] = {'K1': 1.0, 'K2': 1.0, 'K3': 1.0, 'C': 1.0}
 
-with col1:
+with cols[0]:
     K1 = st.number_input("K₁", 
                         value=st.session_state.K_values[current_layer_key]['K1'], 
                         step=0.1, 
@@ -601,7 +601,7 @@ with col1:
                         key=f"K1_{layer_idx}",
                         on_change=lambda: st.session_state.K_values[current_layer_key].update({'K1': st.session_state[f"K1_{layer_idx}"]}))
 
-with col2:
+with cols[1]:
     K2 = st.number_input("K₂", 
                         value=st.session_state.K_values[current_layer_key]['K2'], 
                         step=0.1, 
@@ -609,7 +609,7 @@ with col2:
                         key=f"K2_{layer_idx}",
                         on_change=lambda: st.session_state.K_values[current_layer_key].update({'K2': st.session_state[f"K2_{layer_idx}"]}))
 
-with col3:
+with cols[2]:
     K3 = st.number_input("K₃", 
                         value=st.session_state.K_values[current_layer_key]['K3'], 
                         step=0.1, 
@@ -617,17 +617,37 @@ with col3:
                         key=f"K3_{layer_idx}",
                         on_change=lambda: st.session_state.K_values[current_layer_key].update({'K3': st.session_state[f"K3_{layer_idx}"]}))
 
+with cols[3]:
+    C = st.number_input("C", 
+                       value=st.session_state.K_values[current_layer_key]['C'], 
+                       step=0.1, 
+                       format="%.2f",
+                       key=f"C_{layer_idx}",
+                       on_change=lambda: st.session_state.K_values[current_layer_key].update({'C': st.session_state[f"C_{layer_idx}"]}))
+
 # Изчисление на K
 d = 1.15
 f = 0.65
 K = (K1 * K2) / (d * f) * (1 / K3)
+tau_dop = K * C
 
-# Динамична LaTeX формула с текущи стойности
-formula = fr"""
+# Динамични LaTeX формули с текущи стойности
+formula_k = fr"""
 K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} = 
 \frac{{{K1:.2f} \cdot {K2:.2f}}}{{1.15 \cdot 0.65}} \cdot \frac{{1}}{{{K3:.2f}}} = {K:.3f}
 """
 
-st.latex(formula)
+formula_tau = fr"""
+\tau_{{\mu}} + \tau_b \leq K \cdot C = \tau_{{доп}} \\
+{sigma_r:.3f} + {tau_b:.6f} \leq {K:.3f} \cdot {C:.2f} = {tau_dop:.3f}
+"""
 
-# Останалият код остава същият...
+st.latex(formula_k)
+st.latex(formula_tau)
+
+# Проверка на условието
+if (sigma_r + tau_b) <= tau_dop:
+    st.success(f"Условието е изпълнено: {sigma_r:.3f} + {tau_b:.6f} = {(sigma_r + tau_b):.3f} ≤ {tau_dop:.3f}")
+else:
+    st.error(f"Условието НЕ е изпълнено: {sigma_r:.3f} + {tau_b:.6f} = {(sigma_r + tau_b):.3f} > {tau_dop:.3f}")
+
