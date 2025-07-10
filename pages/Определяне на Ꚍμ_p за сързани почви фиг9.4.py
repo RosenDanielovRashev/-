@@ -577,3 +577,7 @@ else:
     st.error("Неуспешно изчисление на τb")
 
 st.image("9.8 Таблица.png", width=600)
+
+st.latex(r"""
+K=\frac{K_1\cdot K_2}{d\cdot f}\cdot \frac{1}{K_3}=\frac{K_1\cdot \:K_2}{1.15\cdot 0.65}\cdot \:\frac{1}{K_3}
+""")
