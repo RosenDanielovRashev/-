@@ -84,13 +84,14 @@ else:
             E = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
             E_values.append(E)
 
-# Общи параметри
-Eo = st.number_input("Eo", value=30, step=1)
-
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
 layer_idx = int(selected_layer.split()[-1]) - 1
+
+# Задаване на Eo = Ed на избрания пласт
+Eo = E_values[layer_idx]
+st.markdown(f"**Eo = Ed{to_subscript(layer_idx+1)} = {Eo}**")
 
 # Изчисляване на H и Esr за избрания пласт
 h_array = np.array(h_values[:layer_idx+1])
