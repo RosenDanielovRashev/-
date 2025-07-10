@@ -181,6 +181,8 @@ if lower_vals and upper_vals:
         name='H/D → Esr/Eo'
     ))
 
+st.write("Esr_over_Eo =", Esr_over_Eo)
+st.write("unique_esr_eo =", unique_esr_eo)
 
 # Настройка на графиката
 fig.update_layout(
