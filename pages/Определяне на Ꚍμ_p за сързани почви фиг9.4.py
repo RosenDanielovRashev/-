@@ -580,15 +580,42 @@ else:
 
 st.image("9.8 Таблица.png", width=600)
 
+# Инициализиране на session_state за K стойностите, ако не съществуват
+if 'K_values' not in st.session_state:
+    st.session_state.K_values = {}
+
 # Добавяне на полета за въвеждане на K стойностите
 st.markdown("### Въведете коефициентите за изчисление на K")
 col1, col2, col3 = st.columns(3)
+
+# Вземане или инициализиране на стойностите за текущия пласт
+current_layer_key = f"layer_{layer_idx}"
+if current_layer_key not in st.session_state.K_values:
+    st.session_state.K_values[current_layer_key] = {'K1': 1.0, 'K2': 1.0, 'K3': 1.0}
+
 with col1:
-    K1 = st.number_input("K₁", value=1.0, step=0.1, format="%.2f", key=f"K1_{layer_idx}")
+    K1 = st.number_input("K₁", 
+                        value=st.session_state.K_values[current_layer_key]['K1'], 
+                        step=0.1, 
+                        format="%.2f",
+                        key=f"K1_{layer_idx}",
+                        on_change=lambda: st.session_state.K_values[current_layer_key].update({'K1': st.session_state[f"K1_{layer_idx}"]}))
+
 with col2:
-    K2 = st.number_input("K₂", value=1.0, step=0.1, format="%.2f", key=f"K2_{layer_idx}")
+    K2 = st.number_input("K₂", 
+                        value=st.session_state.K_values[current_layer_key]['K2'], 
+                        step=0.1, 
+                        format="%.2f",
+                        key=f"K2_{layer_idx}",
+                        on_change=lambda: st.session_state.K_values[current_layer_key].update({'K2': st.session_state[f"K2_{layer_idx}"]}))
+
 with col3:
-    K3 = st.number_input("K₃", value=1.0, step=0.1, format="%.2f", key=f"K3_{layer_idx}")
+    K3 = st.number_input("K₃", 
+                        value=st.session_state.K_values[current_layer_key]['K3'], 
+                        step=0.1, 
+                        format="%.2f",
+                        key=f"K3_{layer_idx}",
+                        on_change=lambda: st.session_state.K_values[current_layer_key].update({'K3': st.session_state[f"K3_{layer_idx}"]}))
 
 # Изчисление на K
 d = 1.15
@@ -602,3 +629,5 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 """
 
 st.latex(formula)
+
+# Останалият код остава същият...
