@@ -152,6 +152,11 @@ for val in unique_esr_eo:
         line=dict(width=2)
     ))
 
+print(f"Стойност на ratio (H/D): {ratio}")
+print(f"Минимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].min()}")
+print(f"Максимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].max()}")
+
+
 # Функция за интерполация на точка по H/D
 def get_point_on_curve(df, x_target):
     x_vals = df['H/D'].values
