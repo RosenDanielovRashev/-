@@ -175,8 +175,16 @@ def plot_tau_b(fi_value, h_value):
         ax.plot([x_low, x_high], [y_tau, y_tau], 'g--', alpha=0.6)
         ax.plot(x_value, y_tau, 'ko', markersize=8, 
                 label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
-                ax.legend(loc='lower left')   # Долу вляво
-      
+
+        # Добавяне на текста в долния ляв ъгъл (координати [0, 0] = долен ляв ъгъл)
+        ax.text(0.02, 0.02,  # x, y (в относителни координати, 0-1)
+                f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}',
+                transform=ax.transAxes,  # използва относителни координати
+                bbox=dict(facecolor='white', alpha=0.7, edgecolor='gray', boxstyle='round'),  # фон на текста
+                fontsize=10,
+                verticalalignment='bottom',  # подравняване към долния край
+                horizontalalignment='left')  # подравняване вляво
+              
         
         # Настройки на графиката
         ax.set_xlim(x_min, x_max)
