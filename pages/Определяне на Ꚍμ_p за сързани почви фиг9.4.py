@@ -182,7 +182,7 @@ def plot_tau_b(fi_value, h_value):
         ax.set_ylim(y_min, y_max)
         
         # КОРИГИРАНА ЧАСТ: Подготовка на тикчетата (включвайки h_value)
-        h_ticks = sorted(set([h_low, h_value, h_high] + h_values_available))
+    
         x_positions = []
         h_tick_labels = []
         
