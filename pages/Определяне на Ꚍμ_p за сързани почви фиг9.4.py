@@ -62,40 +62,62 @@ def load_tau_b_data():
     h_values_available = sorted(h_to_x.keys())
     
     return Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h
-
-# Функция за изчисляване и визуализация на τb
+# Промени в функцията plot_tau_b
 def plot_tau_b(fi_value, h_value):
     try:
-        # Зареждане на данните
         Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h = load_tau_b_data()
         
-        # Намиране на най-близките стойности за H
         h_value = float(h_value)
-        h_vals = np.array(list(h_to_x.keys()))
-        closest_idx = np.abs(h_vals - h_value).argmin()
-        closest_h = h_vals[closest_idx]
-        x_h = h_to_x[closest_h]
-        
-        # Интерполация за Fi
         fi_value = float(fi_value)
-        f_fi = None
         
-        if fi_value in fi_interpolators:
-            f_fi = fi_interpolators[fi_value]
+        # Намиране на двата най-близки H (долна и горна граница)
+        h_val_arr = np.array(h_values_available)
+        idx_h = np.searchsorted(h_val_arr, h_value)
+        if idx_h == 0:
+            h_low = h_high = h_val_arr[0]
+        elif idx_h == len(h_val_arr):
+            h_low = h_high = h_val_arr[-1]
         else:
-            # Намиране на най-близките Fi стойности
-            fi_vals = np.array(fi_values_available)
-            closest_fi_idx = np.abs(fi_vals - fi_value).argmin()
-            closest_fi = fi_vals[closest_fi_idx]
-            f_fi = fi_interpolators[closest_fi]
+            h_low = h_val_arr[idx_h-1]
+            h_high = h_val_arr[idx_h]
         
-        # Изчисляване на τb
-        y_tau = float(f_fi(x_h))
+        # Намиране на двата най-близки φ (долна и горна граница)
+        fi_val_arr = np.array(fi_values_available)
+        idx_fi = np.searchsorted(fi_val_arr, fi_value)
+        if idx_fi == 0:
+            fi_low = fi_high = fi_val_arr[0]
+        elif idx_fi == len(fi_val_arr):
+            fi_low = fi_high = fi_val_arr[-1]
+        else:
+            fi_low = fi_val_arr[idx_fi-1]
+            fi_high = fi_val_arr[idx_fi]
+        
+        # Изчисляване на тегла за интерполация
+        t_h = (h_value - h_low) / (h_high - h_low) if h_high != h_low else 0.0
+        t_fi = (fi_value - fi_low) / (fi_high - fi_low) if fi_high != fi_low else 0.0
+        
+        # Функция за получаване на y за дадени H и φ
+        def get_y_for_h_fi(h_val, fi_val):
+            x_h = h_to_x[h_val]
+            if fi_val in fi_interpolators:
+                return float(fi_interpolators[fi_val](x_h))
+            else:
+                closest_fi = min(fi_values_available, key=lambda x: abs(x - fi_val))
+                return float(fi_interpolators[closest_fi](x_h))
+        
+        # Изчисляване на τb с билинейна интерполация
+        y_low_low = get_y_for_h_fi(h_low, fi_low)
+        y_low_high = get_y_for_h_fi(h_low, fi_high)
+        y_high_low = get_y_for_h_fi(h_high, fi_low)
+        y_high_high = get_y_for_h_fi(h_high, fi_high)
+        
+        y_low = y_low_low + t_fi * (y_low_high - y_low_low)
+        y_high = y_high_low + t_fi * (y_high_high - y_high_low)
+        y_tau = y_low + t_h * (y_high - y_low)
         
         # Визуализация
         fig, ax = plt.subplots(figsize=(10, 7))
         
-        # Намиране на граници
         x_min = min(Fi_data['x'].min(), min(h_to_x.values()))
         x_max = max(Fi_data['x'].max(), max(h_to_x.values()))
         y_min = min(Fi_data['y'].min(), H_data['y'].min()) - 0.001
@@ -105,7 +127,8 @@ def plot_tau_b(fi_value, h_value):
         for fi_val in fi_values_available:
             group = fi_aggregated_groups[fi_val]
             if len(group) == 1:
-                ax.plot([x_min, x_max], [group['y'].iloc[0]]*2, 'b-', linewidth=0.5, alpha=0.3)
+                ax.plot([x_min, x_max], [group['y'].iloc[0]]*2, 
+                        'b-', linewidth=0.5, alpha=0.3)
                 ax.text(x_max, group['y'].iloc[0], f'φ={fi_val}', color='blue', 
                        va='center', ha='left', fontsize=9, alpha=0.7)
             else:
@@ -121,35 +144,52 @@ def plot_tau_b(fi_value, h_value):
             y_max_h = H_data[H_data['H'] == h_val]['y'].max()
             ax.plot([x_pos]*2, [y_min_h, y_max_h], 'r-', linewidth=0.5, alpha=0.3)
         
+        # Подчертаване на използваните изолинии (дебели линии)
+        for fi_val in [fi_low, fi_high]:
+            if fi_val in fi_aggregated_groups:
+                group = fi_aggregated_groups[fi_val]
+                if len(group) == 1:
+                    ax.plot([x_min, x_max], [group['y'].iloc[0]]*2, 
+                            'b-', linewidth=2, alpha=0.8)
+                else:
+                    x_smooth = np.linspace(group['x'].min(), group['x'].max(), 100)
+                    y_smooth = fi_interpolators[fi_val](x_smooth)
+                    ax.plot(x_smooth, y_smooth, 'b-', linewidth=2, alpha=0.8)
+        
+        for h_val in [h_low, h_high]:
+            if h_val in h_to_x:
+                x_pos = h_to_x[h_val]
+                y_min_h = H_data[H_data['H'] == h_val]['y'].min()
+                y_max_h = H_data[H_data['H'] == h_val]['y'].max()
+                ax.plot([x_pos]*2, [y_min_h, y_max_h], 'r-', linewidth=2, alpha=0.8)
+        
         # Маркиране на пресечната точка
-        ax.plot([x_h], [y_tau], 'ko', markersize=8, label=f'τb = {y_tau:.6f}')
+        ax.plot([h_to_x[h_low], h_to_x[h_high]], [y_tau, y_tau], 'g--', alpha=0.6)
+        ax.plot(h_to_x[h_value], y_tau, 'ko', markersize=8, 
+                label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
         
         # Настройки на графиката
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
         
-        # Създаване на H ticks
-        h_ticks = sorted(h_values_available)
-        x_positions = [h_to_x[h] for h in h_ticks]
+        h_ticks = sorted(set([h_low, h_value, h_high] + h_values_available))
+        x_positions = [h_to_x[h] for h in h_ticks if h in h_to_x]
         ax.set_xticks(x_positions)
-        ax.set_xticklabels([f"{h:.1f}" for h in h_ticks])
+        ax.set_xticklabels([f"{h:.1f}" for h in h_ticks if h in h_to_x])
         
         ax.set_xlabel('H', fontsize=12)
-        ax.set_ylabel('y', fontsize=12)
-        ax.set_title(f'Номограма φ-H (φ={fi_value}, H={h_value})', fontsize=14)
+        ax.set_ylabel('τb', fontsize=12)
+        ax.set_title(f'Номограма за активно напрежение на срязване (τb)', fontsize=14)
         ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend()
+        ax.legend(loc='lower right')
         
         return fig, y_tau
         
     except Exception as e:
         st.error(f"Грешка при изчисляване на τb: {str(e)}")
+        import traceback
+        st.error(traceback.format_exc())
         return None, None
-
-def to_subscript(number):
-    subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
-    return str(number).translate(subscripts)
-
 # Явна дефиниция на D
 D = st.session_state.get('fig9_4_D', 32.04)  # Основна корекция
 
