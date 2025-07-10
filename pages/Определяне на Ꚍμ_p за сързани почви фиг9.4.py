@@ -34,15 +34,29 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fi
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    # ПРОМЕНЕНО: Взимаме Ed стойностите от layers_data вместо Ei
+    # Взимаме Ed стойностите от layers_data
     E_values = [layer["Ed"] for layer in st.session_state.layers_data]
-    D_value = st.session_state.fig9_4_D
     
-    # Създаване на опции за D с приоритет на стойността от сесията
+    # Създаване на опции за D с приоритет на сесийната стойност
     D_options = [32.04, 34.0, 33.0]
-    if D_value not in D_options:
-        D_options.insert(0, D_value)
-    D = st.selectbox("Избери D", options=D_options, index=0)
+    
+    # Ако вече има запазена стойност в сесията и не е в опциите, добавяме я първа
+    if 'fig9_4_D' in st.session_state:
+        current_d = st.session_state.fig9_4_D
+        if current_d not in D_options:
+            D_options.insert(0, current_d)
+    else:
+        current_d = D_options[0]  # Стойност по подразбиране
+
+    # Показваме selectbox с актуалните опции
+    selected_d = st.selectbox(
+        "Избери D", 
+        options=D_options,
+        index=D_options.index(current_d)  # Автоматично избира текущата стойност
+    )
+    
+    # Запазваме избраната стойност в сесията
+    st.session_state.fig9_4_D = selected_d
     
     # Ръчно въвеждане само за Fi
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
