@@ -121,7 +121,7 @@ st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{rati
 st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
 
-print(f"Стойност на ratio (H/D): {ratio}")
+st.write(f"Стойност на ratio (H/D): {ratio:.3f}")
 
 
 # Зареждане на данни
