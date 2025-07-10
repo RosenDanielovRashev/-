@@ -171,10 +171,13 @@ def plot_tau_b(fi_value, h_value):
         x_value = x_low + t_h * (x_high - x_low)  # Интерполирана x координата
         
         # Маркиране на пресечната точка с интерполирана x координата
+        
+        fig, ax = plt.subplots()
         ax.plot([x_low, x_high], [y_tau, y_tau], 'g--', alpha=0.6)
         ax.plot(x_value, y_tau, 'ko', markersize=8, 
                 label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
         ax.legend(loc='lower left')   # Долу вляво
+        plt.show()
         
         # Настройки на графиката
         ax.set_xlim(x_min, x_max)
