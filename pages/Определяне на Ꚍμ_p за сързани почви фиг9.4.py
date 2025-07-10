@@ -637,9 +637,15 @@ f = 0.65
 K = (K1 * K2) / (d * f) * (1 / K3)
 tau_dop = K * C
 
-# Проверка дали sigma_r и tau_b са дефинирани преди използването им
+# Останалият код остава същият до...
+
+# Проверка дали sigma_r и tau_b са дефинирани
 sigma_r_val = sigma_r if 'sigma_r' in locals() else 0.0
 tau_b_val = tau_b if 'tau_b' in locals() else 0.0
+
+# Изчисляване на лявата и дясната страна
+left_side = sigma_r_val + tau_b_val
+right_side = K * C
 
 # Динамични LaTeX формули с текущи стойности
 formula_k = fr"""
@@ -648,17 +654,18 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 """
 
 formula_tau = fr"""
-\tau_{{\mu}} + \tau_b \leq K \cdot C = \tau_{{доп}} \\
-{sigma_r_val:.3f} + {tau_b_val:.6f} \leq {K:.3f} \cdot {C:.2f} = {tau_dop:.3f}
+\tau_{{\mu}} + \tau_b = {sigma_r_val:.6f} + {tau_b_val:.6f} = {left_side:.6f} \\
+K \cdot C = {K:.3f} \cdot {C:.2f} = {right_side:.6f} \\
+\tau_{{доп}} = {right_side:.6f}
 """
 
 st.latex(formula_k)
 st.latex(formula_tau)
 
 # Проверка на условието
-if (sigma_r_val + tau_b_val) <= tau_dop:
-    st.success(f"Условието е изпълнено: {sigma_r_val:.3f} + {tau_b_val:.6f} = {(sigma_r_val + tau_b_val):.3f} ≤ {tau_dop:.3f}")
+if left_side <= right_side:
+    st.success(f"Условието е изпълнено: {left_side:.6f} ≤ {right_side:.6f}")
 else:
-    st.error(f"Условието НЕ е изпълнено: {sigma_r_val:.3f} + {tau_b_val:.6f} = {(sigma_r_val + tau_b_val):.3f} > {tau_dop:.3f}")
+    st.error(f"Условието НЕ е изпълнено: {left_side:.6f} > {right_side:.6f}")
 
 # Останалият код остава същият...
