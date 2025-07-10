@@ -661,14 +661,6 @@ main_formula = fr"""
 {sigma_r_val:.6f} + ({tau_b_val:.6f}) = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
 """
 
-# Подробно изчисление
-detailed_calc = fr"""
-\tau_{{\mu}} = {sigma_r_val:.6f} \\
-\tau_b = {tau_b_val:.6f} \\
-K = {K:.3f} \\
-C = {C:.2f} \\
-\tau_{{доп}} = {right_side:.6f}
-"""
 
 st.latex(formula_k)
 st.latex(main_formula)  # Основната формула със заместени стойности
