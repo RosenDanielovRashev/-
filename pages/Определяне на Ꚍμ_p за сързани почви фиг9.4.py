@@ -25,8 +25,8 @@ st.title("Определяне на Ꚍμ/p за сързани почви фи�
 # Зареждане на данните за номограмата τb
 @st.cache_data
 def load_tau_b_data():
-    Fi_data = pd.read_csv('Fi.csv')
-    H_data = pd.read_csv('H.csv')
+    Fi_data = pd.read_csv('Fi_3.csv')
+    H_data = pd.read_csv('H_3.csv')
     
     Fi_data.columns = ['y', 'x', 'Fi']
     
