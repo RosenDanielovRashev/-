@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-from scipy.interpolate import griddata
 
 st.markdown("""
     <style>
@@ -127,18 +126,6 @@ df_esr_eo = pd.read_csv("Esr_Eo.csv")
 df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
 df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
 
-# Създаване на комбиниран DataFrame за интерполация
-df_combined = pd.concat([
-    df_fi[['H/D', 'y', 'fi']].rename(columns={'fi': 'value'}),
-    df_esr_eo[['H/D', 'y', 'Esr_Eo']].rename(columns={'Esr_Eo': 'value'})
-])
-
-# Функция за интерполация на y-стойност
-def interpolate_y(hd_ratio, esr_eo_ratio):
-    points = df_combined[['H/D', 'value']].values
-    values = df_combined['y'].values
-    return griddata(points, values, (hd_ratio, esr_eo_ratio), method='linear')
-
 fig = go.Figure()
 
 # Изолинии fi
@@ -164,41 +151,6 @@ for val in unique_esr_eo:
         name=f'Esr/Eo = {val}',
         line=dict(width=2)
     ))
-
-# Интерполиране на y-стойност за пресечната точка
-y_intersect = interpolate_y(ratio, Esr_over_Eo)
-
-# Добавяне на вертикална линия и маркер, ако има валидна пресечна точка
-if not np.isnan(y_intersect):
-    # Вертикална линия
-    fig.add_trace(go.Scatter(
-        x=[ratio, ratio],
-        y=[0, y_intersect],
-        mode='lines',
-        name='Вертикална линия',
-        line=dict(color='red', width=3, dash='dash')
-    ))
-    
-    # Пресечна точка
-    fig.add_trace(go.Scatter(
-        x=[ratio],
-        y=[y_intersect],
-        mode='markers',
-        name='Пресечна точка',
-        marker=dict(color='red', size=10)
-    ))
-    
-    # Текстова анотация
-    fig.add_annotation(
-        x=ratio,
-        y=y_intersect,
-        text=f"({ratio:.2f}, {y_intersect:.2f})",
-        showarrow=True,
-        arrowhead=1,
-        ax=-50,
-        ay=-40,
-        font=dict(color="red", size=12)
-    )
 
 # Настройка на графиката
 fig.update_layout(
