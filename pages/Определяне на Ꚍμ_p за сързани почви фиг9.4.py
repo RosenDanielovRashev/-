@@ -346,4 +346,4 @@ if 'x_orange' in locals() and x_orange is not None:
     st.markdown(f"**Ꚍμ/p = {sigma_r}**")
 else:
     st.markdown("**Ꚍμ/p = -** (Няма изчислена стойност)")
-[file content end]
+
