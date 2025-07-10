@@ -575,3 +575,5 @@ if tau_b_fig is not None and tau_b is not None:
     st.pyplot(tau_b_fig)
 else:
     st.error("Неуспешно изчисление на τb")
+
+st.image("9.8 Таблица.png", width=600)
