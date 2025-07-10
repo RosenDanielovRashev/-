@@ -37,8 +37,8 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h']) an
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    Ed_values = [layer["Ed"] for layer in st.session_state.layers_data]  # Променено на Ed_values
-    Ei_values = [layer["Ei"] for layer in st.session_state.layers_data]
+    Ed_values = [round(layer["Ed"]) for layer in st.session_state.layers_data]  # Закръглено до цяло число
+    Ei_values = [round(layer["Ei"]) for layer in st.session_state.layers_data]   # Закръглено до цяло число
     
     D_options = [32.04, 34.0, 33.0]
     
@@ -57,13 +57,28 @@ if session_data_available:
     
     st.markdown("### Автоматично заредени данни за пластовете")
     cols = st.columns(3)
+    
+    # Реинициализираме стойностите за редакция
+    h_values_edited = []
+    Ei_values_edited = []
+    Ed_values_edited = []
+    
     for i in range(n):
         with cols[0]:
-            st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
+            # Променяме: премахваме disabled и добавяме ключове
+            h_val = st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], step=0.1, key=f"auto_h_{i}")
+            h_values_edited.append(h_val)
         with cols[1]:
-            st.number_input(f"Ei{to_subscript(i+1)}", value=Ei_values[i], disabled=True, key=f"Ei_{i}")
+            ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=Ei_values[i], step=1.0, key=f"auto_Ei_{i}")
+            Ei_values_edited.append(ei_val)
         with cols[2]:
-            st.number_input(f"Ed{to_subscript(i+1)}", value=Ed_values[i], disabled=True, key=f"Ed_{i}")
+            ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=Ed_values[i], step=1.0, key=f"auto_Ed_{i}")
+            Ed_values_edited.append(ed_val)
+    
+    # Актуализираме стойностите с редактираните
+    h_values = h_values_edited
+    Ei_values = Ei_values_edited
+    Ed_values = Ed_values_edited
 
 # Ръчно въвеждане ако няма данни в сесията
 else:
@@ -78,35 +93,37 @@ else:
     st.markdown("### Въведи стойности за всеки пласт")
     h_values = []
     Ei_values = []
-    Ed_values = []  # Променено на Ed_values
+    Ed_values = []
     cols = st.columns(3)
     for i in range(n):
         with cols[0]:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
             h_values.append(h)
         with cols[1]:
-            Ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"Ei_{i}")
-            Ei_values.append(Ei_val)
+            Ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=1000.0, step=1.0, key=f"Ei_{i}")
+            Ei_values.append(round(Ei_val))  # Закръгляне
         with cols[2]:
-            Ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"Ed_{i}")
-            Ed_values.append(Ed_val)
+            Ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=1.0, key=f"Ed_{i}")
+            Ed_values.append(round(Ed_val))  # Закръгляне
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
 layer_idx = int(selected_layer.split()[-1]) - 1
 
-# Задаване на Eo = Ed на избрания пласт
-Eo = Ed_values[layer_idx]  # Променено от E_values на Ed_values
+# Задаване на Eo = Ed на избрания пласт (с закръгляне)
+Eo = round(Ed_values[layer_idx])
 st.markdown(f"**Eo = Ed{to_subscript(layer_idx+1)} = {Eo}**")
 
-# Изчисляване на H и Esr за избрания пласт
+# Изчисляване на H и Esr за избрания пласт (с закръгляне)
 h_array = np.array(h_values[:layer_idx+1])
-E_array = np.array(Ei_values[:layer_idx+1])  # Използваме Ei вместо Ed
+Ei_rounded = [round(val) for val in Ei_values[:layer_idx+1]]  # Закръглени Ei стойности
+E_array = np.array(Ei_rounded)
 
 H = h_array.sum()
 weighted_sum = np.sum(E_array * h_array)
 Esr = weighted_sum / H if H != 0 else 0
+Esr = round(Esr)  # Закръгляне до цяло число
 
 # Формули и резултати
 st.latex(r"H = \sum_{i=1}^n h_i")
@@ -115,15 +132,15 @@ st.latex(r"H = " + h_terms)
 st.write(f"H = {H:.3f}")
 
 st.latex(r"Esr = \frac{\sum_{i=1}^n (E_i \cdot h_i)}{\sum_{i=1}^n h_i}")
-numerator = " + ".join([f"{Ei_values[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])  # Променено на Ei_values
+numerator = " + ".join([f"{Ei_rounded[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])
 denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
-formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr:.3f}"
+formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr}"
 st.latex(formula_with_values)
 
 ratio = H / D if D != 0 else 0
 st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
 
-st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr:.3f}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
+st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
 
 # Зареждане на данни
