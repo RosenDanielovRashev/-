@@ -37,8 +37,8 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h']) an
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    Ed_values = [round(layer["Ed"]) for layer in st.session_state.layers_data]  # Закръглено до цяло число
-    Ei_values = [round(layer["Ei"]) for layer in st.session_state.layers_data]   # Закръглено до цяло число
+    Ed_values = [round(layer["Ed"]) for layer in st.session_state.layers_data]
+    Ei_values = [round(layer["Ei"]) for layer in st.session_state.layers_data]
     
     D_options = [32.04, 34.0, 33.0]
     
@@ -51,31 +51,28 @@ if session_data_available:
 
     selected_d = st.selectbox("Избери D", options=D_options, index=D_options.index(current_d))
     st.session_state.fig9_4_D = selected_d
-    D = selected_d  # Актуализиране на D
+    D = selected_d
     
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
     
     st.markdown("### Автоматично заредени данни за пластовете")
     cols = st.columns(3)
     
-    # Реинициализираме стойностите за редакция
     h_values_edited = []
     Ei_values_edited = []
     Ed_values_edited = []
     
     for i in range(n):
         with cols[0]:
-            # Променяме: премахваме disabled и добавяме ключове
-            h_val = st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], step=0.1, key=f"auto_h_{i}")
+            h_val = st.number_input(f"h{to_subscript(i+1)}", value=float(h_values[i]), step=0.1, key=f"auto_h_{i}")
             h_values_edited.append(h_val)
         with cols[1]:
-            ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=Ei_values[i], step=1.0, key=f"auto_Ei_{i}")
+            ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=int(Ei_values[i]), step=1, key=f"auto_Ei_{i}")
             Ei_values_edited.append(ei_val)
         with cols[2]:
-            ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=Ed_values[i], step=1.0, key=f"auto_Ed_{i}")
+            ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=int(Ed_values[i]), step=1, key=f"auto_Ed_{i}")
             Ed_values_edited.append(ed_val)
     
-    # Актуализираме стойностите с редактираните
     h_values = h_values_edited
     Ei_values = Ei_values_edited
     Ed_values = Ed_values_edited
@@ -86,7 +83,7 @@ else:
     D_options = [32.04, 34.0, 33.0]
     selected_d = st.selectbox("Избери D", options=D_options, index=0)
     st.session_state.fig9_4_D = selected_d
-    D = selected_d  # Задаване на D
+    D = selected_d
     
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
     
@@ -100,11 +97,11 @@ else:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
             h_values.append(h)
         with cols[1]:
-            Ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=1000.0, step=1.0, key=f"Ei_{i}")
-            Ei_values.append(round(Ei_val))  # Закръгляне
+            Ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=1000, step=1, key=f"Ei_{i}")
+            Ei_values.append(Ei_val)
         with cols[2]:
-            Ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=1.0, key=f"Ed_{i}")
-            Ed_values.append(round(Ed_val))  # Закръгляне
+            Ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=1000, step=1, key=f"Ed_{i}")
+            Ed_values.append(Ed_val)
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
