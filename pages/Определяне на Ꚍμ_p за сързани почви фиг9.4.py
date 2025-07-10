@@ -3,6 +3,15 @@ import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
 
+# Зареждане на данни
+df_fi = pd.read_csv("fi.csv")
+df_esr_eo = pd.read_csv("Esr_Eo.csv")
+
+df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
+df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
+
+fig = go.Figure()
+
 st.markdown("""
     <style>
         .streamlit-expanderHeader {
@@ -123,14 +132,7 @@ print(f"Стойност на ratio (H/D): {ratio}")
 print(f"Минимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].min()}")
 print(f"Максимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].max()}")
 
-# Зареждане на данни
-df_fi = pd.read_csv("fi.csv")
-df_esr_eo = pd.read_csv("Esr_Eo.csv")
 
-df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
-df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
-
-fig = go.Figure()
 
 # Изолинии fi
 unique_fi = sorted(df_fi['fi'].unique())
