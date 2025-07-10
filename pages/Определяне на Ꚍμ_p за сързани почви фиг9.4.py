@@ -639,6 +639,8 @@ tau_dop = K * C
 
 # Останалият код остава същият до..
 
+# Останалият код остава същият до...
+
 # Проверка дали sigma_r и tau_b са дефинирани
 sigma_r_val = sigma_r if 'sigma_r' in locals() else 0.0
 tau_b_val = tau_b if 'tau_b' in locals() else 0.0
@@ -647,29 +649,34 @@ tau_b_val = tau_b if 'tau_b' in locals() else 0.0
 left_side = sigma_r_val + tau_b_val
 right_side = K * C
 
-# Динамични LaTeX формули с текущи стойности
+# Динамични LaTeX формули
 formula_k = fr"""
 K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} = 
 \frac{{{K1:.2f} \cdot {K2:.2f}}}{{1.15 \cdot 0.65}} \cdot \frac{{1}}{{{K3:.2f}}} = {K:.3f}
 """
 
-# Основното неравенство като заглавие
-st.latex(r"\tau_{\mu} + \tau_b \leq K \cdot C = \tau_{доп}")
+# Пълно заместване в основната формула
+main_formula = fr"""
+\tau_{{\mu}} + \tau_b \leq K \cdot C = \tau_{{доп}} \\
+{sigma_r_val:.6f} + {tau_b_val:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
+"""
 
 # Подробно изчисление
-formula_tau = fr"""
-\tau_{{\mu}} + \tau_b = {sigma_r_val:.6f} + {tau_b_val:.6f} = {left_side:.6f} \\
-K \cdot C = {K:.3f} \cdot {C:.2f} = {right_side:.6f} \\
+detailed_calc = fr"""
+\tau_{{\mu}} = {sigma_r_val:.6f} \\
+\tau_b = {tau_b_val:.6f} \\
+K = {K:.3f} \\
+C = {C:.2f} \\
 \tau_{{доп}} = {right_side:.6f}
 """
 
 st.latex(formula_k)
-st.latex(formula_tau)
+st.latex(main_formula)  # Основната формула със заместени стойности
+st.latex(detailed_calc)  # Подробно изчисление
 
 # Проверка на условието
 if left_side <= right_side:
     st.success(f"Условието е изпълнено: {left_side:.6f} ≤ {right_side:.6f}")
 else:
     st.error(f"Условието НЕ е изпълнено: {left_side:.6f} > {right_side:.6f}")
-
 # Останалият код остава същият...
