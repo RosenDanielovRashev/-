@@ -177,7 +177,7 @@ def plot_tau_b(fi_value, h_value):
         ax.plot(x_value, y_tau, 'ko', markersize=8, 
                 label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
         ax.legend(loc='lower left')   # Долу вляво
-        plt.show()
+      
         
         # Настройки на графиката
         ax.set_xlim(x_min, x_max)
