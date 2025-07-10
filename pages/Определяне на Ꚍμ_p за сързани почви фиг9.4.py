@@ -152,6 +152,36 @@ for val in unique_esr_eo:
         line=dict(width=2)
     ))
 
+# --- НАМИРАНЕ НА НАЙ-БЛИЗКИТЕ ДВЕ Esr/Eo ИНТЕРВАЛА ---
+lower_vals = [v for v in unique_esr_eo if v <= Esr_over_Eo]
+upper_vals = [v for v in unique_esr_eo if v >= Esr_over_Eo]
+
+if lower_vals and upper_vals:
+    lower = max(lower_vals)
+    upper = min(upper_vals)
+    if lower == upper:
+        y_interp = df_esr_eo[(df_esr_eo['Esr_Eo'] == lower)].set_index('H/D').reindex([ratio], method='nearest')['y'].values[0]
+    else:
+        df_lower = df_esr_eo[df_esr_eo['Esr_Eo'] == lower]
+        df_upper = df_esr_eo[df_esr_eo['Esr_Eo'] == upper]
+
+        # Интерполация по x = H/D
+        y_lower = np.interp(ratio, df_lower['H/D'], df_lower['y'])
+        y_upper = np.interp(ratio, df_upper['H/D'], df_upper['y'])
+
+        # Линейна интерполация по Esr/Eo
+        y_interp = y_lower + (Esr_over_Eo - lower) / (upper - lower) * (y_upper - y_lower)
+
+    # --- ДОБАВЯНЕ НА ВЕРТИКАЛНАТА ЛИНИЯ ---
+    fig.add_trace(go.Scatter(
+        x=[ratio, ratio],
+        y=[0, y_interp],
+        mode='lines',
+        line=dict(color='red', dash='dash', width=3),
+        name='H/D → Esr/Eo'
+    ))
+
+
 # Настройка на графиката
 fig.update_layout(
     title=f"Графика на изолинии и точки за пласт {layer_idx+1}",
