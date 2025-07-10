@@ -62,6 +62,8 @@ def load_tau_b_data():
     h_values_available = sorted(h_to_x.keys())
     
     return Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h
+
+# Функция за изчисляване и визуализация на τb с билинейна интерполация
 def plot_tau_b(fi_value, h_value):
     try:
         # Зареждане на данните
@@ -69,14 +71,6 @@ def plot_tau_b(fi_value, h_value):
         
         h_value = float(h_value)
         fi_value = float(fi_value)
-        
-        # Проверка дали h_value е в допустимите граници
-        if h_value < min(h_values_available):
-            st.warning(f"H = {h_value} е по-малко от минималната допустима стойност ({min(h_values_available)}). Използва се минималната стойност.")
-            h_value = min(h_values_available)
-        elif h_value > max(h_values_available):
-            st.warning(f"H = {h_value} е по-голямо от максималната допустима стойност ({max(h_values_available)}). Използва се максималната стойност.")
-            h_value = max(h_values_available)
         
         # Намиране на двата най-близки H (долна и горна граница)
         h_val_arr = np.array(h_values_available)
@@ -171,19 +165,36 @@ def plot_tau_b(fi_value, h_value):
                 y_max_h = H_data[H_data['H'] == h_val]['y'].max()
                 ax.plot([x_pos]*2, [y_min_h, y_max_h], 'r-', linewidth=2, alpha=0.8)
         
-        # Маркиране на пресечната точка
-        ax.plot([h_to_x[h_low], h_to_x[h_high]], [y_tau, y_tau], 'g--', alpha=0.6)
-        ax.plot(h_to_x[h_value], y_tau, 'ko', markersize=8, 
+        # КОРИГИРАНА ЧАСТ: Интерполация на x за h_value
+        x_low = h_to_x[h_low]
+        x_high = h_to_x[h_high]
+        x_value = x_low + t_h * (x_high - x_low)  # Интерполирана x координата
+        
+        # Маркиране на пресечната точка с интерполирана x координата
+        ax.plot([x_low, x_high], [y_tau, y_tau], 'g--', alpha=0.6)
+        ax.plot(x_value, y_tau, 'ko', markersize=8, 
                 label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
         
         # Настройки на графиката
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
         
+        # КОРИГИРАНА ЧАСТ: Подготовка на тикчетата (включвайки h_value)
         h_ticks = sorted(set([h_low, h_value, h_high] + h_values_available))
-        x_positions = [h_to_x[h] for h in h_ticks if h in h_to_x]
+        x_positions = []
+        h_tick_labels = []
+        
+        for h in h_ticks:
+            if h in h_to_x:
+                x_positions.append(h_to_x[h])
+                h_tick_labels.append(f"{h:.1f}")
+            elif h == h_value:
+                # Добавяме текущата H стойност като тик
+                x_positions.append(x_value)
+                h_tick_labels.append(f"{h_value:.1f}")
+        
         ax.set_xticks(x_positions)
-        ax.set_xticklabels([f"{h:.1f}" for h in h_ticks if h in h_to_x])
+        ax.set_xticklabels(h_tick_labels)
         
         ax.set_xlabel('H', fontsize=12)
         ax.set_ylabel('τb', fontsize=12)
