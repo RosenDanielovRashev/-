@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+from scipy.interpolate import interp1d
 
 st.markdown("""
     <style>
@@ -20,6 +21,79 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.title("Определяне на Ꚍμ/p за сързани почви фиг9.4 maxH/D=2")
+
+# Зареждане на данните за номограмата τb
+@st.cache_data
+def load_tau_b_data():
+    Fi_data = pd.read_csv('Fi.csv')
+    H_data = pd.read_csv('H.csv')
+    
+    Fi_data.columns = ['y', 'x', 'Fi']
+    
+    Fi_data['Fi'] = Fi_data['Fi'].astype(float)
+    H_data['H'] = H_data['H'].astype(float)
+    
+    Fi_data = Fi_data.drop_duplicates(subset=['x', 'y', 'Fi'])
+    
+    # Подготовка на данните за Fi
+    fi_aggregated_groups = {}
+    fi_interpolators = {}
+    fi_values_available = sorted(Fi_data['Fi'].unique())
+
+    for fi in fi_values_available:
+        group = Fi_data[Fi_data['Fi'] == fi].sort_values(by='x')
+        fi_aggregated_groups[fi] = group
+        
+        x = group['x'].values
+        y = group['y'].values
+        
+        if len(x) < 2:
+            def constant_func(x_val, y_const=y[0]):
+                return np.full_like(x_val, y_const)
+            fi_interpolators[fi] = constant_func
+        else:
+            fi_interpolators[fi] = interp1d(x, y, kind='linear', bounds_error=False, fill_value="extrapolate")
+
+    # Създаване на mapping между x и H
+    unique_h = H_data[['x', 'H']].drop_duplicates()
+    h_to_x = dict(zip(unique_h['H'], unique_h['x']))
+    h_values_available = sorted(h_to_x.keys())
+    
+    return Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available
+
+# Функция за изчисляване на τb
+def calculate_tau_b(fi_value, h_value):
+    try:
+        # Зареждане на данните
+        Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available = load_tau_b_data()
+        
+        # Намиране на най-близките стойности за H
+        h_value = float(h_value)
+        h_vals = np.array(list(h_to_x.keys()))
+        closest_idx = np.abs(h_vals - h_value).argmin()
+        closest_h = h_vals[closest_idx]
+        x_h = h_to_x[closest_h]
+        
+        # Интерполация за Fi
+        fi_value = float(fi_value)
+        f_fi = None
+        
+        if fi_value in fi_interpolators:
+            f_fi = fi_interpolators[fi_value]
+        else:
+            # Намиране на най-близките Fi стойности
+            fi_vals = np.array(fi_values_available)
+            closest_fi_idx = np.abs(fi_vals - fi_value).argmin()
+            closest_fi = fi_vals[closest_fi_idx]
+            f_fi = fi_interpolators[closest_fi]
+        
+        # Изчисляване на τb
+        y_tau = float(f_fi(x_h))
+        return y_tau
+        
+    except Exception as e:
+        st.error(f"Грешка при изчисляване на τb: {str(e)}")
+        return None
 
 def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
@@ -361,3 +435,15 @@ if 'x_orange' in locals() and x_orange is not None:
 else:
     st.markdown("**Ꚍμ/p = -** (Няма изчислена стойност)")
 
+# Изчисляване на τb за текущия пласт
+st.divider()
+st.subheader("Изчисление на активно напрежение на срязване τb")
+
+tau_b = calculate_tau_b(Fi_input, H)
+if tau_b is not None:
+    st.markdown(f"**За пласт {layer_idx+1}:**")
+    st.markdown(f"- H = {H:.3f}")
+    st.markdown(f"- ϕ = {Fi_input}")
+    st.markdown(f"**τb = {tau_b:.6f}**")
+else:
+    st.error("Неуспешно изчисление на τb")
