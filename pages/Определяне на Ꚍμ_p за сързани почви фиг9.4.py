@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
 st.markdown("""
@@ -56,16 +57,17 @@ def load_tau_b_data():
 
     # Създаване на mapping между x и H
     unique_h = H_data[['x', 'H']].drop_duplicates()
+    x_to_h = dict(zip(unique_h['x'], unique_h['H']))
     h_to_x = dict(zip(unique_h['H'], unique_h['x']))
     h_values_available = sorted(h_to_x.keys())
     
-    return Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available
+    return Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h
 
-# Функция за изчисляване на τb
-def calculate_tau_b(fi_value, h_value):
+# Функция за изчисляване и визуализация на τb
+def plot_tau_b(fi_value, h_value):
     try:
         # Зареждане на данните
-        Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available = load_tau_b_data()
+        Fi_data, H_data, fi_aggregated_groups, fi_interpolators, fi_values_available, h_to_x, h_values_available, x_to_h = load_tau_b_data()
         
         # Намиране на най-близките стойности за H
         h_value = float(h_value)
@@ -89,11 +91,60 @@ def calculate_tau_b(fi_value, h_value):
         
         # Изчисляване на τb
         y_tau = float(f_fi(x_h))
-        return y_tau
+        
+        # Визуализация
+        fig, ax = plt.subplots(figsize=(10, 7))
+        
+        # Намиране на граници
+        x_min = min(Fi_data['x'].min(), min(h_to_x.values()))
+        x_max = max(Fi_data['x'].max(), max(h_to_x.values()))
+        y_min = min(Fi_data['y'].min(), H_data['y'].min()) - 0.001
+        y_max = max(Fi_data['y'].max(), H_data['y'].max()) + 0.001
+        
+        # Рисуване на всички изолинии (светли)
+        for fi_val in fi_values_available:
+            group = fi_aggregated_groups[fi_val]
+            if len(group) == 1:
+                ax.plot([x_min, x_max], [group['y'].iloc[0]]*2, 'b-', linewidth=0.5, alpha=0.3)
+                ax.text(x_max, group['y'].iloc[0], f'φ={fi_val}', color='blue', 
+                       va='center', ha='left', fontsize=9, alpha=0.7)
+            else:
+                x_smooth = np.linspace(group['x'].min(), group['x'].max(), 100)
+                y_smooth = fi_interpolators[fi_val](x_smooth)
+                ax.plot(x_smooth, y_smooth, 'b-', linewidth=0.5, alpha=0.3)
+                ax.text(x_smooth[-1], y_smooth[-1], f'φ={fi_val}', color='blue',
+                       va='center', ha='left', fontsize=9, alpha=0.7)
+
+        for h_val in h_values_available:
+            x_pos = h_to_x[h_val]
+            y_min_h = H_data[H_data['H'] == h_val]['y'].min()
+            y_max_h = H_data[H_data['H'] == h_val]['y'].max()
+            ax.plot([x_pos]*2, [y_min_h, y_max_h], 'r-', linewidth=0.5, alpha=0.3)
+        
+        # Маркиране на пресечната точка
+        ax.plot([x_h], [y_tau], 'ko', markersize=8, label=f'τb = {y_tau:.6f}')
+        
+        # Настройки на графиката
+        ax.set_xlim(x_min, x_max)
+        ax.set_ylim(y_min, y_max)
+        
+        # Създаване на H ticks
+        h_ticks = sorted(h_values_available)
+        x_positions = [h_to_x[h] for h in h_ticks]
+        ax.set_xticks(x_positions)
+        ax.set_xticklabels([f"{h:.1f}" for h in h_ticks])
+        
+        ax.set_xlabel('H', fontsize=12)
+        ax.set_ylabel('y', fontsize=12)
+        ax.set_title(f'Номограма φ-H (φ={fi_value}, H={h_value})', fontsize=14)
+        ax.grid(True, linestyle='--', alpha=0.5)
+        ax.legend()
+        
+        return fig, y_tau
         
     except Exception as e:
         st.error(f"Грешка при изчисляване на τb: {str(e)}")
-        return None
+        return None, None
 
 def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
@@ -435,15 +486,16 @@ if 'x_orange' in locals() and x_orange is not None:
 else:
     st.markdown("**Ꚍμ/p = -** (Няма изчислена стойност)")
 
-# Изчисляване на τb за текущия пласт
+# Изчисляване и визуализация на τb за текущия пласт
 st.divider()
 st.subheader("Изчисление на активно напрежение на срязване τb")
 
-tau_b = calculate_tau_b(Fi_input, H)
-if tau_b is not None:
+tau_b_fig, tau_b = plot_tau_b(Fi_input, H)
+if tau_b_fig is not None and tau_b is not None:
     st.markdown(f"**За пласт {layer_idx+1}:**")
     st.markdown(f"- H = {H:.3f}")
     st.markdown(f"- ϕ = {Fi_input}")
     st.markdown(f"**τb = {tau_b:.6f}**")
+    st.pyplot(tau_b_fig)
 else:
     st.error("Неуспешно изчисление на τb")
