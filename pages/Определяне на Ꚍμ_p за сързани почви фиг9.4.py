@@ -133,6 +133,9 @@ df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
 
 fig = go.Figure()
 
+st.write(f"Минимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].min():.3f}")
+st.write(f"Максимална стойност в df_esr_eo['H/D']: {df_esr_eo['H/D'].max():.3f}")
+
 # Изолинии fi
 unique_fi = sorted(df_fi['fi'].unique())
 for fi_val in unique_fi:
