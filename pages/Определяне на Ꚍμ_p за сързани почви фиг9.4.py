@@ -664,7 +664,7 @@ main_formula = fr"""
 
 st.latex(formula_k)
 st.latex(main_formula)  # Основната формула със заместени стойности
-st.latex(detailed_calc)  # Подробно изчисление
+
 
 # Проверка на условието
 if left_side <= right_side:
