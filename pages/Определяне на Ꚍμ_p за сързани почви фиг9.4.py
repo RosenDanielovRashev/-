@@ -591,45 +591,55 @@ cols = st.columns(4)  # Сега имаме 4 колони
 # Вземане или инициализиране на стойностите за текущия пласт
 current_layer_key = f"layer_{layer_idx}"
 if current_layer_key not in st.session_state.K_values:
+    # Инициализираме с всички необходими ключове, включително 'C'
     st.session_state.K_values[current_layer_key] = {'K1': 1.0, 'K2': 1.0, 'K3': 1.0, 'C': 1.0}
+
+# Вземаме стойностите, като гарантираме че 'C' съществува
+layer_values = st.session_state.K_values[current_layer_key]
+if 'C' not in layer_values:
+    layer_values['C'] = 1.0  # Добавяме 'C' ако липсва
 
 with cols[0]:
     K1 = st.number_input("K₁", 
-                        value=st.session_state.K_values[current_layer_key]['K1'], 
+                        value=layer_values['K1'], 
                         step=0.1, 
                         format="%.2f",
                         key=f"K1_{layer_idx}",
-                        on_change=lambda: st.session_state.K_values[current_layer_key].update({'K1': st.session_state[f"K1_{layer_idx}"]}))
+                        on_change=lambda: layer_values.update({'K1': st.session_state[f"K1_{layer_idx}"]}))
 
 with cols[1]:
     K2 = st.number_input("K₂", 
-                        value=st.session_state.K_values[current_layer_key]['K2'], 
+                        value=layer_values['K2'], 
                         step=0.1, 
                         format="%.2f",
                         key=f"K2_{layer_idx}",
-                        on_change=lambda: st.session_state.K_values[current_layer_key].update({'K2': st.session_state[f"K2_{layer_idx}"]}))
+                        on_change=lambda: layer_values.update({'K2': st.session_state[f"K2_{layer_idx}"]}))
 
 with cols[2]:
     K3 = st.number_input("K₃", 
-                        value=st.session_state.K_values[current_layer_key]['K3'], 
+                        value=layer_values['K3'], 
                         step=0.1, 
                         format="%.2f",
                         key=f"K3_{layer_idx}",
-                        on_change=lambda: st.session_state.K_values[current_layer_key].update({'K3': st.session_state[f"K3_{layer_idx}"]}))
+                        on_change=lambda: layer_values.update({'K3': st.session_state[f"K3_{layer_idx}"]}))
 
 with cols[3]:
     C = st.number_input("C", 
-                       value=st.session_state.K_values[current_layer_key]['C'], 
+                       value=layer_values['C'], 
                        step=0.1, 
                        format="%.2f",
                        key=f"C_{layer_idx}",
-                       on_change=lambda: st.session_state.K_values[current_layer_key].update({'C': st.session_state[f"C_{layer_idx}"]}))
+                       on_change=lambda: layer_values.update({'C': st.session_state[f"C_{layer_idx}"]}))
 
 # Изчисление на K
 d = 1.15
 f = 0.65
 K = (K1 * K2) / (d * f) * (1 / K3)
 tau_dop = K * C
+
+# Проверка дали sigma_r и tau_b са дефинирани преди използването им
+sigma_r_val = sigma_r if 'sigma_r' in locals() else 0.0
+tau_b_val = tau_b if 'tau_b' in locals() else 0.0
 
 # Динамични LaTeX формули с текущи стойности
 formula_k = fr"""
@@ -639,15 +649,16 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 
 formula_tau = fr"""
 \tau_{{\mu}} + \tau_b \leq K \cdot C = \tau_{{доп}} \\
-{sigma_r:.3f} + {tau_b:.6f} \leq {K:.3f} \cdot {C:.2f} = {tau_dop:.3f}
+{sigma_r_val:.3f} + {tau_b_val:.6f} \leq {K:.3f} \cdot {C:.2f} = {tau_dop:.3f}
 """
 
 st.latex(formula_k)
 st.latex(formula_tau)
 
 # Проверка на условието
-if (sigma_r + tau_b) <= tau_dop:
-    st.success(f"Условието е изпълнено: {sigma_r:.3f} + {tau_b:.6f} = {(sigma_r + tau_b):.3f} ≤ {tau_dop:.3f}")
+if (sigma_r_val + tau_b_val) <= tau_dop:
+    st.success(f"Условието е изпълнено: {sigma_r_val:.3f} + {tau_b_val:.6f} = {(sigma_r_val + tau_b_val):.3f} ≤ {tau_dop:.3f}")
 else:
-    st.error(f"Условието НЕ е изпълнено: {sigma_r:.3f} + {tau_b:.6f} = {(sigma_r + tau_b):.3f} > {tau_dop:.3f}")
+    st.error(f"Условието НЕ е изпълнено: {sigma_r_val:.3f} + {tau_b_val:.6f} = {(sigma_r_val + tau_b_val):.3f} > {tau_dop:.3f}")
 
+# Останалият код остава същият...
