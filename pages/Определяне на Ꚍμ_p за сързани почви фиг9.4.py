@@ -37,8 +37,9 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h']) an
 if session_data_available:
     n = len(st.session_state.fig9_4_h)
     h_values = st.session_state.fig9_4_h
-    E_values = [layer["Ed"] for layer in st.session_state.layers_data]
-    
+    Ed_values = [layer["Ed"] for layer in st.session_state.layers_data]
+    Ei_values = [layer["Ei"] for layer in st.session_state.layers_data]  # НОВО: Взимаме Ei стойностите
+ 
     D_options = [32.04, 34.0, 33.0]
     
     if 'fig9_4_D' in st.session_state:
@@ -53,14 +54,16 @@ if session_data_available:
     D = selected_d  # Актуализиране на D
     
     Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
-    
+ 
     st.markdown("### Автоматично заредени данни за пластовете")
-    cols = st.columns(2)
+    cols = st.columns(3)  # Променено на 3 колони
     for i in range(n):
         with cols[0]:
             st.number_input(f"h{to_subscript(i+1)}", value=h_values[i], disabled=True, key=f"h_{i}")
-        with cols[1]:
-            st.number_input(f"Ed{to_subscript(i+1)}", value=E_values[i], disabled=True, key=f"E_{i}")
+        with cols[1]:  # НОВА КОЛОНА ЗА Ei
+            st.number_input(f"Ei{to_subscript(i+1)}", value=Ei_values[i], disabled=True, key=f"Ei_{i}")
+        with cols[2]:
+            st.number_input(f"Ed{to_subscript(i+1)}", value=Ed_values[i], disabled=True, key=f"Ed_{i}")
 
 # Ръчно въвеждане ако няма данни в сесията
 else:
@@ -74,16 +77,20 @@ else:
     
     st.markdown("### Въведи стойности за всеки пласт")
     h_values = []
-    E_values = []
-    cols = st.columns(2)
+    Ei_values = []  # НОВО: Списък за Ei стойности
+    Ed_values = []  # Променено име за яснота
+    cols = st.columns(3)  # Променено на 3 колони
     for i in range(n):
         with cols[0]:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
             h_values.append(h)
-        with cols[1]:
-            E = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"E_{i}")
-            E_values.append(E)
-
+        with cols[1]:  # НОВА КОЛОНА ЗА Ei
+            Ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"Ei_{i}")
+            Ei_values.append(Ei_val)
+        with cols[2]:
+            Ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=1000.0, step=0.1, key=f"Ed_{i}")
+            Ed_values.append(Ed_val)
+            
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
 selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(n)], index=n-1)
