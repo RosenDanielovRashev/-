@@ -191,10 +191,7 @@ def plot_tau_b(fi_value, h_value):
                 x_positions.append(h_to_x[h])
                 h_tick_labels.append(f"{h:.1f}")
             elif h == h_value:
-                # Добавяме текущата H стойност като тик
-                x_positions.append(x_value)
-                h_tick_labels.append(f"{h_value:.1f}")
-        
+
         ax.set_xticks(x_positions)
         ax.set_xticklabels(h_tick_labels)
         
