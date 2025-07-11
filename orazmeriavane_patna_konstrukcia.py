@@ -450,6 +450,17 @@ if all_data_ready:
             st.session_state.axle_load_value2 = st.session_state.axle_load
             st.success("✅ Данните за фиг.9.4 са готови!")
             st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.4.py", label="Към Ꚍμ_p (фиг9.4)", icon="📈")
+
+            # Нов бутон под първия
+        if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.6)'", type="primary", use_container_width=True, key="to_fig9_6"):
+            st.session_state.fig9_6_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_6_h = [layer["h"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_6_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_6_D = st.session_state.final_D
+            st.session_state.fig9_6_last_Ed = st.session_state.layers_data[-1]["Ed"]
+            st.session_state.axle_load_value4 = st.session_state.axle_load
+            st.success("✅ Данните за фиг.9.6 са готови!")
+            st.page_link("pages/Определяне на Ꚍμ_p за несързани почви фиг9.6.py", label="Към Ꚍμ_p (фиг9.6)", icon="📈")
     
     with cols[1]:
         if st.button("📤 Изпрати към 'Опън в междинен пласт'", type="primary", use_container_width=True, key="to_intermediate"):
