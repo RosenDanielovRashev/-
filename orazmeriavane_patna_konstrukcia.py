@@ -79,24 +79,30 @@ def reset_calculations_from_layer(layer_idx):
 
 st.title("Оразмеряване на пътна конструкция с няколко пластове")
 
-# Layer count selection
+# Избор на брой пластове
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=st.session_state.num_layers)
 if num_layers != st.session_state.num_layers:
-    st.session_state.num_layers = num_layers
+    # Първо синхронизирай layers_data
     if len(st.session_state.layers_data) < num_layers:
         for i in range(len(st.session_state.layers_data), num_layers):
             prev_ed = st.session_state.layers_data[i-1].get("Ed", 2700.0)
             st.session_state.layers_data.append({"Ee": prev_ed, "Ei": 3000.0, "mode": "Ed / Ei"})
     elif len(st.session_state.layers_data) > num_layers:
         st.session_state.layers_data = st.session_state.layers_data[:num_layers]
-    # Sync lambda_values with layer count
-    if len(st.session_state.lambda_values) < num_layers:
-        st.session_state.lambda_values.extend([0.5 for _ in range(num_layers - len(st.session_state.lambda_values))])
-    elif len(st.session_state.lambda_values) > num_layers:
+    
+    # След това синхронизирай lambda_values
+    current_lambda_len = len(st.session_state.lambda_values)
+    if current_lambda_len < num_layers:
+        st.session_state.lambda_values.extend([0.5 for _ in range(num_layers - current_lambda_len)])
+    elif current_lambda_len > num_layers:
         st.session_state.lambda_values = st.session_state.lambda_values[:num_layers]
+    
+    # Актуализирай текущия пласт ако е необходимо
     if st.session_state.current_layer >= num_layers:
         st.session_state.current_layer = num_layers - 1
-
+    
+    st.session_state.num_layers = num_layers
+    
 # Parameter selection
 d_options = [32.04, 34, 33]
 current_d_index = d_options.index(st.session_state.final_D) if st.session_state.final_D in d_options else 0
