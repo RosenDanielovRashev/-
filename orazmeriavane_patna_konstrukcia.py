@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np 
 import plotly.graph_objs as go 
 
-
 st.set_page_config(layout="wide")
 
 st.markdown(
@@ -48,7 +47,7 @@ def load_data():
 
 data = load_data()
 
-# Инициализация на session state
+# Initialize session state
 if "num_layers" not in st.session_state:
     st.session_state.num_layers = 1
 if "current_layer" not in st.session_state:
@@ -59,10 +58,8 @@ if "axle_load" not in st.session_state:
     st.session_state.axle_load = 100
 if "final_D" not in st.session_state:
     st.session_state.final_D = 32.04
-# Инициализация на calculation_messages
 if "calculation_messages" not in st.session_state:
     st.session_state.calculation_messages = {}
-# Инициализация на lambda_values (ТУК Е ЕДИНСТВЕНОТО МЯСТО ЗА НЕЯ!)
 if "lambda_values" not in st.session_state:
     st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
 
@@ -76,14 +73,13 @@ def reset_calculations_from_layer(layer_idx):
         if i > 0 and i != layer_idx:
             prev_ed = st.session_state.layers_data[i-1].get("Ed", 2700.0)
             layer["Ee"] = prev_ed
-    # Премахваме съобщенията за всички пластове след този
     for i in range(layer_idx, st.session_state.num_layers):
         if i in st.session_state.calculation_messages:
             del st.session_state.calculation_messages[i]
 
 st.title("Оразмеряване на пътна конструкция с няколко пластове")
 
-# Избор на брой пластове
+# Layer count selection
 num_layers = st.number_input("Въведете брой пластове:", min_value=1, step=1, value=st.session_state.num_layers)
 if num_layers != st.session_state.num_layers:
     st.session_state.num_layers = num_layers
@@ -93,10 +89,15 @@ if num_layers != st.session_state.num_layers:
             st.session_state.layers_data.append({"Ee": prev_ed, "Ei": 3000.0, "mode": "Ed / Ei"})
     elif len(st.session_state.layers_data) > num_layers:
         st.session_state.layers_data = st.session_state.layers_data[:num_layers]
+    # Sync lambda_values with layer count
+    if len(st.session_state.lambda_values) < num_layers:
+        st.session_state.lambda_values.extend([0.5 for _ in range(num_layers - len(st.session_state.lambda_values))])
+    elif len(st.session_state.lambda_values) > num_layers:
+        st.session_state.lambda_values = st.session_state.lambda_values[:num_layers]
     if st.session_state.current_layer >= num_layers:
         st.session_state.current_layer = num_layers - 1
 
-# Избор на параметри
+# Parameter selection
 d_options = [32.04, 34, 33]
 current_d_index = d_options.index(st.session_state.final_D) if st.session_state.final_D in d_options else 0
 
@@ -114,7 +115,7 @@ axle_load = st.selectbox(
 )
 st.session_state.axle_load = axle_load
 
-# Навигация между пластовете
+# Layer navigation
 col1, col2, col3 = st.columns([1, 6, 1])
 with col1:
     if st.button("⬅️ Предишен пласт"):
@@ -125,11 +126,11 @@ with col3:
         if st.session_state.current_layer < st.session_state.num_layers - 1:
             st.session_state.current_layer += 1
 
-# Показване на текущ пласт
+# Current layer display
 layer_idx = st.session_state.current_layer
 st.subheader(f"Въвеждане на данни за пласт {layer_idx + 1}")
 
-# Легенда
+# Legend
 st.markdown("### 🧾 Легенда:")
 st.markdown("""
 - **Ed** – Модул на еластичност на повърхността под пласта  
@@ -139,7 +140,7 @@ st.markdown("""
 - **D** – Диаметър на отпечатък на колелото  
 """)
 
-# Въвеждане на параметри за пласта
+# Layer parameters input
 layer_data = st.session_state.layers_data[layer_idx]
 
 if layer_idx > 0:
@@ -166,7 +167,6 @@ if Ei_input != layer_data.get("Ei"):
     layer_data["Ei"] = Ei_input
     reset_calculations_from_layer(layer_idx)
 
-# Определяне на режим с проверка за промяна
 mode = st.radio(
     "Изберете параметър за отчитане:",
     ("Ed / Ei", "h / D"),
@@ -174,7 +174,6 @@ mode = st.radio(
     index=0 if layer_data.get("mode", "Ed / Ei") == "Ed / Ei" else 1
 )
 
-# Проверка за промяна на режима
 if "mode" in layer_data and layer_data["mode"] != mode:
     reset_calculations_from_layer(layer_idx)
     layer_data["mode"] = mode
@@ -252,29 +251,23 @@ def add_interpolation_line(fig, hD_point, EdEi_point, y_low, y_high, low_iso, hi
         name='Резултат'
     ))
 
-# Показване на запазеното съобщение за текущия пласт (ако има)
 if layer_idx in st.session_state.calculation_messages:
     st.success(st.session_state.calculation_messages[layer_idx])
 
 if mode == "Ed / Ei":
-    # Въвеждане на дебелина h
     h_input = st.number_input("Дебелина h (cm):", min_value=0.1, step=0.1, value=layer_data.get("h", 4.0), key=f"h_{layer_idx}")
     if h_input != layer_data.get("h"):
         layer_data["h"] = h_input
         reset_calculations_from_layer(layer_idx)
     
-    # Бутон за изчисляване на Ed
     if st.button("Изчисли Ed", key=f"calc_Ed_{layer_idx}"):
-        # Изчисляване на резултата
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_Ed(h_input, d_value, layer_data["Ee"], layer_data["Ei"])
 
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
-            # Изчисляване на съотношение Ed / Ei
             EdEi_point = result / layer_data["Ei"]
             
-            # Актуализиране на данните ПРЕДИ използването им
             layer_data.update({
                 "Ee": layer_data["Ee"],
                 "Ei": layer_data["Ei"],
@@ -297,17 +290,14 @@ if mode == "Ed / Ei":
                 f"h/D = {layer_data['h']:.1f}/{d_value} = {hD_point:.3f}"
             )
             
-            # Запазване на съобщението в session_state
             st.session_state.calculation_messages[layer_idx] = success_message
             st.success(success_message)
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
 
-            # Обновяване на следващия слой (ако има)
             if layer_idx < st.session_state.num_layers - 1:
                 next_layer = st.session_state.layers_data[layer_idx + 1]
                 next_layer["Ee"] = result
                 st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {result:.0f} MPa")
-
 
 elif mode == "h / D":
     Ed_input = st.number_input("Ed (MPa):", min_value=0.1, step=0.1, value=layer_data.get("Ed", 50.0), key=f"Ed_{layer_idx}")
@@ -315,14 +305,11 @@ elif mode == "h / D":
         layer_data["Ed"] = Ed_input
         reset_calculations_from_layer(layer_idx)
     
-    # Премахнато показване на резултати преди натискане на бутона
-    
     if st.button("Изчисли h", key=f"calc_h_{layer_idx}"):
         result, hD_point, y_low, y_high, low_iso, high_iso = compute_h(Ed_input, d_value, layer_data["Ee"], layer_data["Ei"])
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
-            # Актуализиране на данните ПРЕДИ използването им
             layer_data.update({
                 "Ee": layer_data["Ee"],
                 "Ei": layer_data["Ei"],
@@ -344,7 +331,6 @@ elif mode == "h / D":
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
             )
             
-            # Запазване на съобщението в session_state
             st.session_state.calculation_messages[layer_idx] = success_message
             st.success(success_message)
             st.info(f"ℹ️ Интерполация между изолини: Ee / Ei = {low_iso:.3f} и Ee / Ei = {high_iso:.3f}")
@@ -354,7 +340,6 @@ elif mode == "h / D":
                 next_layer["Ee"] = Ed_input
                 st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {Ed_input:.2f} MPa")
 
-# Визуализация на графиката (общо за двата режима)
 if "hD_point" in layer_data and "Ed" in layer_data and "Ei" in layer_data:
     fig = go.Figure()
     for value, group in data.groupby("Ee_over_Ei"):
@@ -369,7 +354,6 @@ if "hD_point" in layer_data and "Ed" in layer_data and "Ei" in layer_data:
     hD_point = layer_data['hD_point']
     EdEi_point = layer_data['Ed'] / layer_data['Ei']
     
-    # Проверка за наличност на интерполационни данни
     if all(key in layer_data for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
         add_interpolation_line(fig, 
                               hD_point, 
@@ -387,7 +371,7 @@ if "hD_point" in layer_data and "Ed" in layer_data and "Ei" in layer_data:
     )
     st.plotly_chart(fig, use_container_width=True, key=f"plot_{layer_idx}")
 
-# Визуализация на резултатите
+# Results display
 st.markdown("---")
 st.header("Резултати за всички пластове")
 
@@ -443,7 +427,6 @@ if all_data_ready:
             st.success("✅ Всички данни са подготвени за втората страница.")
             st.page_link("pages/Опън в покритието.py", label="Към Опън в покритието", icon="📄")
         
-        # Нов бутон под първия
         if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.4)'", type="primary", use_container_width=True, key="to_fig9_4"):
             st.session_state.fig9_4_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_4_h = [layer["h"] for layer in st.session_state.layers_data]
@@ -454,7 +437,6 @@ if all_data_ready:
             st.success("✅ Данните за фиг.9.4 са готови!")
             st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.4.py", label="Към Ꚍμ_p (фиг9.4)", icon="📈")
 
-            # Нов бутон под първия
         if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.6)'", type="primary", use_container_width=True, key="to_fig9_6"):
             st.session_state.fig9_6_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_6_h = [layer["h"] for layer in st.session_state.layers_data]
@@ -472,7 +454,6 @@ if all_data_ready:
             st.success("✅ Данните са запазени за междинния пласт!")
             st.page_link("pages/опън за междиннен плст.py", label="Към Опън в междинен пласт", icon="📄")
 
-        # Нов бутон под първия
         if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.5)'", type="primary", use_container_width=True, key="to_fig9_5"):
             st.session_state.fig9_5_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_5_h = [layer["h"] for layer in st.session_state.layers_data]
@@ -483,7 +464,6 @@ if all_data_ready:
             st.success("✅ Данните за фиг.9.5 са готови!")
             st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.5.py", label="Към Ꚍμ_p (фиг9.5)", icon="📈")
         
-        # Нов бутон под първия
         if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.7)'", type="primary", use_container_width=True, key="to_fig9_7"):
             st.session_state.fig9_7_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_7_h = [layer["h"] for layer in st.session_state.layers_data]
@@ -498,19 +478,15 @@ else:
     
 st.markdown("---")
 st.subheader("Навигация към другите модули:")
-# Изображение 
 st.image("5.2. Фиг.png", width=800)
 st.image("5.3. Фиг.png", width=800)
 st.image("5.2. Таблица.png", width=800)
 st.image("5.1. Таблица.png", width=800)
 
-# Добавете този код след последната картинка (преди края на файла)
-
 st.markdown("---")
 st.subheader("Редактиране на пластове")
 
-
-# Създаваме табличен изглед
+# Layer editing
 for i in range(st.session_state.num_layers):
     col1, col2, col3 = st.columns([2, 3, 3])
     
@@ -542,7 +518,7 @@ for i in range(st.session_state.num_layers):
             label_visibility="collapsed"
         )
 
-# Топлинни параметри
+# Thermal parameters
 st.markdown("---")
 st.subheader("Топлинни параметри")
 
@@ -581,12 +557,11 @@ with col2:
     </span>
     """, unsafe_allow_html=True)
 
-# Изчисления
+# Calculations
 if lambda_op > 0:
     m_value = lambda_zp / lambda_op
     st.latex(rf"m = \frac{{\lambda_{{зп}}}}{{\lambda_{{оп}}}} = \frac{{{lambda_zp:.2f}}}{{{lambda_op:.2f}}} = {m_value:.2f}")
     
-    # Добавяне на z1 и z
     z1 = st.number_input(
         "z₁ (cm)",
         min_value=1,
@@ -606,7 +581,7 @@ if lambda_op > 0:
 else:
     st.warning("λоп не може да бъде 0")
 
-# Изчисление на R₀
+# R₀ calculation
 st.markdown("---")
 st.subheader("Изчисление на R₀")
 
@@ -623,7 +598,7 @@ else:
     st.warning("Моля, задайте дебелини за всички пластове преди изчисление")
 
 st.markdown("---")
-# Проверка z vs сума на дебелините
+# Check z vs sum of thicknesses
 if all('h' in layer for layer in st.session_state.layers_data):
     sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
     
@@ -655,15 +630,12 @@ if all('h' in layer for layer in st.session_state.layers_data):
         </div>
         """, unsafe_allow_html=True)
         
-        # Препоръки за коригиране
         st.markdown("""
         **Препоръки:**
         - Увеличете дебелините на някои от пластовете
         - Използвайте материали с по-ниски λ коефициенти
         - Прегледайте избраните стойности за λоп и λзп
         """)
-
-st.markdown("---")
 
 # Добавете това в края на файла (преди затварящия стил)
 
