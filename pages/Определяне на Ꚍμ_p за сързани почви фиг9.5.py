@@ -526,7 +526,7 @@ if point_on_esr_eo is not None:
 
 # Настройка на графиката
 fig.update_layout(
-    title=f"Графика на изолинии и точки за пласт {layer_idx+1}",
+    title="Графика на изолинии и точки",
     xaxis_title="H/D",
     yaxis_title="y",
     legend_title="Легенда",
@@ -550,25 +550,27 @@ fig.add_trace(go.Scatter(
 ))
 
 fig.update_layout(
-    title=f'Графика на изолинии за пласт {layer_idx+1}',
+    title='Графика на изолинии',
     xaxis=dict(
         title='H/D',
         showgrid=True,
         zeroline=False,
-        range=[xaxis_min, xaxis_max],
+        range=[xaxis_min, xaxis_max],  # фиксиран диапазон на основната ос
     ),
     xaxis2=dict(
         overlaying='x',
         side='top',
-        range=[xaxis_min, xaxis_max],
+        range=[xaxis_min, xaxis_max],  # същия диапазон, за да са еднакви дължините
         showgrid=False,
         zeroline=False,
         ticks="outside",
-        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
-        ticktext=[f"{(0.004 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),  # примерно 11 tick-а
+        ticktext=[f"{(0.040 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],  # мащабирани стойности
+        ticklabeloverflow="allow",
         title='φ',
         fixedrange=True,
         showticklabels=True,
+
     ),
     yaxis=dict(
         title='y',
