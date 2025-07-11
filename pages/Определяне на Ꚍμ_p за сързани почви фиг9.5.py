@@ -21,7 +21,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Определяне на Ꚍμ/p за сързани почви фиг9.5 maxH/D=2")
+st.title("Определяне на Ꚍμ/p за сързани почви фиг9.5 maxH/D=4")
 
 # Зареждане на данните за номограмата τb
 @st.cache_data
