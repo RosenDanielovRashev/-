@@ -218,6 +218,7 @@ def to_subscript(number):
 h_values = []
 Ei_values = []
 Ed_values = []
+Fi_values = []
 n = 3  # Стойност по подразбиране
 
 # Проверка за данни в session_state
@@ -246,18 +247,16 @@ if session_data_available:
         st.session_state.fig9_4_D = selected_d
         D = selected_d
         
-        Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
-        
         st.markdown("### Автоматично заредени данни за пластовете")
-        cols = st.columns(3)
+        cols = st.columns(4)  # Променено от 3 на 4 колони
         
         h_values_edited = []
         Ei_values_edited = []
         Ed_values_edited = []
+        Fi_values_edited = []
         
         for i in range(n):
             with cols[0]:
-                # Добавяне на проверка за граници
                 default_h = float(h_values[i]) if i < len(h_values) else 4.0
                 h_val = st.number_input(f"h{to_subscript(i+1)}", value=default_h, step=0.1, key=f"auto_h_{i}")
                 h_values_edited.append(h_val)
@@ -269,10 +268,15 @@ if session_data_available:
                 default_ed = int(Ed_values[i]) if i < len(Ed_values) else 1000
                 ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=default_ed, step=1, key=f"auto_Ed_{i}")
                 Ed_values_edited.append(ed_val)
+            with cols[3]:
+                default_fi = 15  # Стойност по подразбиране за Fi
+                fi_val = st.number_input(f"Fi{to_subscript(i+1)}", value=default_fi, step=1, key=f"auto_Fi_{i}")
+                Fi_values_edited.append(fi_val)
         
         h_values = h_values_edited
         Ei_values = Ei_values_edited
         Ed_values = Ed_values_edited
+        Fi_values = Fi_values_edited
 
     except Exception as e:
         st.error(f"Грешка при зареждане на данните: {str(e)}")
@@ -286,13 +290,12 @@ if not session_data_available:
     st.session_state.fig9_4_D = selected_d
     D = selected_d
     
-    Fi_input = st.number_input("Fi (ϕ) стойност", value=15, step=1)
-    
     st.markdown("### Въведи стойности за всеки пласт")
     h_values = []
     Ei_values = []
     Ed_values = []
-    cols = st.columns(3)
+    Fi_values = []
+    cols = st.columns(4)  # Променено от 3 на 4 колони
     for i in range(n):
         with cols[0]:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
@@ -303,6 +306,9 @@ if not session_data_available:
         with cols[2]:
             Ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=1000, step=1, key=f"Ed_{i}")
             Ed_values.append(Ed_val)
+        with cols[3]:
+            Fi_val = st.number_input(f"Fi{to_subscript(i+1)}", value=15, step=1, key=f"Fi_{i}")
+            Fi_values.append(Fi_val)
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
@@ -473,7 +479,7 @@ if point_on_esr_eo is not None:
 
     # Добавяне на оранжева точка чрез интерполация по fi
     y_red = point_on_esr_eo[1]
-    x_orange = interp_x_for_fi_interp(df_fi, Fi_input, y_red)
+    x_orange = interp_x_for_fi_interp(df_fi, Fi_values[layer_idx], y_red)
 
     if x_orange is not None:
         fig.add_trace(go.Scatter(
@@ -566,11 +572,11 @@ else:
 st.divider()
 st.subheader("Изчисление на активно напрежение на срязване τb")
 
-tau_b_fig, tau_b = plot_tau_b(Fi_input, H)
+tau_b_fig, tau_b = plot_tau_b(Fi_values[layer_idx], H)
 if tau_b_fig is not None and tau_b is not None:
     st.markdown(f"**За пласт {layer_idx+1}:**")
     st.markdown(f"- H = {H:.3f}")
-    st.markdown(f"- ϕ = {Fi_input}")
+    st.markdown(f"- ϕ = {Fi_values[layer_idx]}")
     st.markdown(f"**τb = {tau_b:.6f}**")
     st.pyplot(tau_b_fig)
 else:
@@ -671,4 +677,3 @@ if left_side <= right_side:
     st.success(f"Условието е изпълнено: {left_side:.6f} ≤ {right_side:.6f}")
 else:
     st.error(f"Условието НЕ е изпълнено: {left_side:.6f} > {right_side:.6f}")
-# Останалият код остава същият...
