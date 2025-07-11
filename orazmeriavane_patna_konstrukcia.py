@@ -6,6 +6,7 @@ import os
 from fpdf import FPDF
 import tempfile
 from datetime import datetime
+import base64  # Добавено за PDF генериране
 
 st.set_page_config(layout="wide")
 
@@ -646,4 +647,166 @@ if all('h' in layer for layer in st.session_state.layers_data):
         - Използвайте материали с по-ниски λ коефициенти
         - Прегледайте избраните стойности за λоп и λзп
         """)
+# Добавяне на бутон за PDF отчет
+st.markdown("---")
+st.subheader("Генериране на отчет")
 
+if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"):
+    # Функция за създаване на PDF
+    def generate_pdf_report():
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('DejaVu', 'B', 15)
+                self.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
+                self.ln(5)
+                
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('DejaVu', 'I', 8)
+                self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+        
+        # Създаване на PDF обект с поддръжка на кирилица
+        pdf = PDF()
+        pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+        pdf.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
+        pdf.add_font('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
+        pdf.set_font('DejaVu', '', 12)
+        
+        pdf.add_page()
+        
+        # Заглавие
+        pdf.set_font('DejaVu', 'B', 16)
+        pdf.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
+        pdf.ln(10)
+        
+        # Дата
+        pdf.set_font('DejaVu', '', 12)
+        today = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        pdf.cell(0, 10, f'Дата: {today}', 0, 1)
+        pdf.ln(5)
+        
+        # Общи параметри
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, 'Общи параметри', 0, 1)
+        pdf.set_font('DejaVu', '', 12)
+        pdf.cell(0, 10, f'Брой пластове: {st.session_state.num_layers}', 0, 1)
+        pdf.cell(0, 10, f'D: {st.session_state.final_D} cm', 0, 1)
+        pdf.cell(0, 10, f'Осова тежест: {st.session_state.axle_load} kN', 0, 1)
+        pdf.ln(10)
+        
+        # Данни за пластовете
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, 'Пластове', 0, 1)
+        pdf.set_font('DejaVu', '', 12)
+        
+        # Таблица с данни
+        col_widths = [20, 30, 30, 30, 30, 30]
+        headers = ["Пласт", "Ei (MPa)", "Ee (MPa)", "Ed (MPa)", "h (cm)", "λ"]
+        
+        # Хедър на таблицата
+        for i, header in enumerate(headers):
+            pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
+        pdf.ln()
+        
+        # Данни за редовете
+        for i in range(st.session_state.num_layers):
+            layer = st.session_state.layers_data[i]
+            lambda_val = st.session_state.lambda_values[i]
+            
+            # Форматиране на стойностите
+            Ei_val = round(layer.get('Ei', 0)) if 'Ei' in layer else '-'
+            Ee_val = round(layer.get('Ee', 0)) if 'Ee' in layer else '-'
+            Ed_val = round(layer.get('Ed', 0)) if 'Ed' in layer else '-'
+            h_val = layer.get('h', '-')
+            
+            pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
+            pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
+            pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
+            pdf.cell(col_widths[3], 10, str(Ed_val), 1, 0, 'C')
+            pdf.cell(col_widths[4], 10, str(h_val), 1, 0, 'C')
+            pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
+            pdf.ln()
+        
+        pdf.ln(10)
+        
+        # Топлинни параметри
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, 'Топлинни параметри', 0, 1)
+        pdf.set_font('DejaVu', '', 12)
+        
+        lambda_op = st.session_state.get('lambda_op_input', 2.5)
+        lambda_zp = st.session_state.get('lambda_zp_input', 2.5)
+        m_value = lambda_zp / lambda_op
+        z1 = st.session_state.get('z1_input', 100)
+        z_value = z1 * m_value
+        
+        pdf.cell(0, 10, f'λоп = {lambda_op} kcal/mhg', 0, 1)
+        pdf.cell(0, 10, f'λзп = {lambda_zp} kcal/mhg', 0, 1)
+        pdf.cell(0, 10, f'm = λзп / λоп = {lambda_zp} / {lambda_op} = {m_value:.2f}', 0, 1)
+        pdf.cell(0, 10, f'z₁ = {z1} cm (дълбочина на замръзване в открито поле)', 0, 1)
+        pdf.cell(0, 10, f'z = z₁ * m = {z1} * {m_value:.2f} = {z_value:.2f} cm', 0, 1)
+        pdf.ln(10)
+        
+        # R₀ изчисление
+        if all('h' in layer for layer in st.session_state.layers_data):
+            sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
+            sum_lambda = sum(st.session_state.lambda_values)
+            R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
+            
+            pdf.cell(0, 10, f'R₀ = Σh / Σλ = {sum_h:.2f} / {sum_lambda:.2f} = {R0:.2f} cm', 0, 1)
+        else:
+            pdf.cell(0, 10, 'R₀: Недостатъчни данни за изчисление', 0, 1)
+        
+        # Проверка
+        pdf.ln(10)
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, 'Проверка на изискванията', 0, 1)
+        pdf.set_font('DejaVu', '', 12)
+        
+        if all('h' in layer for layer in st.session_state.layers_data):
+            if z_value > sum_h:
+                pdf.cell(0, 10, '✅ Условието е изпълнено: z > Σh', 0, 1)
+                pdf.cell(0, 10, f'z = {z_value:.2f} cm > Σh = {sum_h:.2f} cm', 0, 1)
+                pdf.cell(0, 10, 'Конструкцията удовлетворява изискванията!', 0, 1)
+            else:
+                pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
+                pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
+                pdf.cell(0, 10, 'Конструкцията НЕ удовлетворява изискванията!', 0, 1)
+                pdf.ln(5)
+                pdf.multi_cell(0, 10, 'Препоръки:\n- Увеличете дебелините на някои от пластовете\n- Използвайте материали с по-ниски λ коефициенти\n- Прегледайте избраните стойности за λоп и λзп')
+        else:
+            pdf.cell(0, 10, 'Проверката не може да бъде извършена поради липсващи данни', 0, 1)
+        
+        return pdf.output(dest='S').encode('latin1')
+    
+    # Генериране и сваляне на PDF
+    try:
+        pdf_bytes = generate_pdf_report()
+        
+        # Създаване на временен файл
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+            tmpfile.write(pdf_bytes)
+            tmpfile.flush()
+            
+        # Показване на бутон за сваляне
+        with open(tmpfile.name, "rb") as f:
+            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+            download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="patna_konstrukcia_report.pdf">Свали PDF отчет</a>'
+            st.markdown(download_link, unsafe_allow_html=True)
+        
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {str(e)}")
+        st.error("Моля, уверете се, че сте добавили DejaVu шрифтовете в същата директория")
+
+# Добавяне на информация за шрифтовете
+st.markdown("""
+<div class="warning-box">
+    <strong>Важно:</strong> За правилно генериране на PDF файлове на кирилица, 
+    моля добавете следните файлове в същата директория като приложението:
+    <ul>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf">DejaVuSans.ttf</a></li>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf">DejaVuSans-Bold.ttf</a></li>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf">DejaVuSans-Oblique.ttf</a></li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
