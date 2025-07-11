@@ -623,3 +623,44 @@ else:
     st.warning("Моля, задайте дебелини за всички пластове преди изчисление")
 
 st.markdown("---")
+# Проверка z vs сума на дебелините
+if all('h' in layer for layer in st.session_state.layers_data):
+    sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
+    
+    st.markdown("---")
+    st.subheader("Проверка на изискванията")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.metric("Сума на дебелините (Σh)", f"{sum_h:.2f} cm")
+    
+    with col2:
+        st.metric("Изчислена дълбочина (z)", f"{z_value:.2f} cm")
+    
+    if z_value > sum_h:
+        st.success("✅ Условието е изпълнено: z > Σh")
+        st.markdown("""
+        <div style="background-color:#e8f5e9; padding:10px; border-radius:5px; border-left:4px solid #2e7d32;">
+        <span style="color:#2e7d32; font-weight:bold;">Конструкцията удовлетворява изискванията!</span><br>
+        Замръзващата дълбочина (z) е по-голяма от общата дебелина на пластовете.
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.error("❌ Условието НЕ е изпълнено: z ≤ Σh")
+        st.markdown("""
+        <div style="background-color:#ffebee; padding:10px; border-radius:5px; border-left:4px solid #c62828;">
+        <span style="color:#c62828; font-weight:bold;">Конструкцията НЕ удовлетворява изискванията!</span><br>
+        Замръзващата дълбочина (z) трябва да бъде по-голяма от общата дебелина на пластовете.
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Препоръки за коригиране
+        st.markdown("""
+        **Препоръки:**
+        - Увеличете дебелините на някои от пластовете
+        - Използвайте материали с по-ниски λ коефициенти
+        - Прегледайте избраните стойности за λоп и λзп
+        """)
+
+st.markdown("---")
