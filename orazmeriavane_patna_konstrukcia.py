@@ -518,14 +518,14 @@ for i in range(st.session_state.num_layers):
         st.markdown(f"**Пласт {i+1}**")
     
     with col2:
-        # Редактиране на дебелината h
+        # Редактиране на дебелината h с уникален ключ
         if 'h' in st.session_state.layers_data[i]:
             new_h = st.number_input(
                 "Дебелина (cm)",
                 min_value=0.1,
                 step=0.1,
                 value=float(st.session_state.layers_data[i]['h']),
-                key=f"h_edit_{i}",
+                key=f"h_edit_{i}_unique_{st.session_state.layers_data[i].get('h', 0)}",  # Уникален ключ
                 label_visibility="collapsed"
             )
             st.session_state.layers_data[i]['h'] = new_h
@@ -533,58 +533,14 @@ for i in range(st.session_state.num_layers):
             st.markdown("Дебелина: -")
     
     with col3:
-        # Редактиране на λ
+        # Редактиране на λ с уникален ключ
         st.session_state.lambda_values[i] = st.number_input(
             "λ коефициент",
             min_value=0.0,
             max_value=1.0,
             step=0.01,
             value=st.session_state.lambda_values[i],
-            key=f"lambda_{i}",
-            label_visibility="collapsed"
-        )
-
-st.markdown("---")
-# Добавете този код след последната картинка (преди края на файла)
-
-st.markdown("---")
-st.subheader("Редактиране на пластове")
-
-# Инициализация на стойностите
-if "lambda_values" not in st.session_state:
-    st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
-
-# Създаваме табличен изглед
-for i in range(st.session_state.num_layers):
-    col1, col2, col3 = st.columns([2, 3, 3])
-    
-    with col1:
-        st.markdown(f"**Пласт {i+1}**")
-    
-    with col2:
-        # Редактиране на дебелината h
-        if 'h' in st.session_state.layers_data[i]:
-            new_h = st.number_input(
-                "Дебелина (cm)",
-                min_value=0.1,
-                step=0.1,
-                value=float(st.session_state.layers_data[i]['h']),
-                key=f"h_edit_{i}",
-                label_visibility="collapsed"
-            )
-            st.session_state.layers_data[i]['h'] = new_h
-        else:
-            st.markdown("Дебелина: -")
-    
-    with col3:
-        # Редактиране на λ
-        st.session_state.lambda_values[i] = st.number_input(
-            "λ коефициент",
-            min_value=0.0,
-            max_value=1.0,
-            step=0.01,
-            value=st.session_state.lambda_values[i],
-            key=f"lambda_{i}",
+            key=f"lambda_{i}_unique_{st.session_state.lambda_values[i]}",  # Уникален ключ
             label_visibility="collapsed"
         )
 
