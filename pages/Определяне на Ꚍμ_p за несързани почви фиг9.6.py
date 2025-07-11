@@ -530,7 +530,7 @@ fig.update_layout(
     xaxis_title="H/D",
     yaxis_title="y",
     legend_title="Легенда",
-    width=900,
+    width=950,
     height=600
 )
 
