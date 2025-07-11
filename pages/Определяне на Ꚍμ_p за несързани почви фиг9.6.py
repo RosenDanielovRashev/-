@@ -569,7 +569,7 @@ fig.update_layout(
         zeroline=False,
         ticks="outside",
         tickvals=np.linspace(xaxis_min, xaxis_max, 11),
-        ticktext=[f"{(0.040 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" 
+        ticktext=[f"{(0.150 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" 
                  for x in np.linspace(xaxis_min, xaxis_max, 11)],
         ticklabeloverflow="allow",
         title='φ',
