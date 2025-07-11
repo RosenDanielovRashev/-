@@ -633,10 +633,10 @@ if all('h' in layer for layer in st.session_state.layers_data):
     col1, col2 = st.columns(2)
     
     with col1:
-        st.metric("Сума на дебелините (Σh)", f"{sum_h:.2f} cm")
+        st.metric("Сума на дебелините (H)", f"{sum_h:.2f} cm")
     
     with col2:
-        st.metric("Изчислена дълбочина (z)", f"{z_value:.2f} cm")
+        st.metric("Изчислена дълбочина на замръзване (z)", f"{z_value:.2f} cm")
     
     if z_value > sum_h:
         st.success("✅ Условието е изпълнено: z > Σh")
