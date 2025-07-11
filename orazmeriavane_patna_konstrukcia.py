@@ -517,7 +517,7 @@ for i in range(st.session_state.num_layers):
         st.session_state.lambda_values[i] = st.number_input(
             "λ коефициент",
             min_value=0.0,
-            max_value=1.0,
+            max_value=4.0,
             step=0.01,
             value=st.session_state.lambda_values[i],
             key=f"lambda_{i}_unique_{st.session_state.lambda_values[i]}",
