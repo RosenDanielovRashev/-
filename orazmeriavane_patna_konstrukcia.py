@@ -676,59 +676,54 @@ if st.button("🖨️ Генериране на PDF отчет", type="primary")
         st.warning("Моля, изберете поне една страница за експорт.")
     else:
         try:
-            # Създаване на PDF обект
-            pdf = FPDF()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            
-            # Добавяне на Unicode шрифт (DejaVu Sans)
-            try:
-                # Проверка дали шрифтовете са достъпни
-                font_path = "DejaVuSans.ttf"
-                if os.path.exists(font_path):
-                    pdf.add_font('DejaVu', '', font_path, uni=True)
+            # Функция за генериране на PDF
+            def generate_pdf_report():
+                pdf = FPDF()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                
+                # Опитайте да заредите DejaVu шрифт първо
+                try:
+                    pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
                     pdf.set_font('DejaVu', '', 12)
-                else:
-                    # Ако шрифтът не е намерен, използвайте Arial Unicode MS (ако е инсталиран)
-                    font_path = "C:/Windows/Fonts/arial.ttf"
-                    if os.path.exists(font_path):
-                        pdf.add_font('Arial', '', font_path, uni=True)
+                except:
+                    # Ако DejaVu не е наличен, опитайте с Arial
+                    try:
+                        pdf.add_font('Arial', '', 'arial.ttf', uni=True)
                         pdf.set_font('Arial', '', 12)
-                    else:
-                        st.error("Не е намерен подходящ шрифт за кирилица. Моля, добавете DejaVuSans.ttf в основната директория.")
-                        return
-            except Exception as e:
-                st.error(f"Грешка при зареждане на шрифта: {str(e)}")
-                return
+                    except:
+                        st.error("Не е намерен подходящ шрифт за кирилица")
+                        return None
+                
+                pdf.add_page()
+                
+                # Заглавна страница
+                pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', 'B', 16)
+                pdf.cell(0, 10, report_title, 0, 1, 'C')
+                pdf.ln(10)
+                
+                pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', '', 12)
+                pdf.cell(0, 10, f"Дата на генериране: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 0, 1, 'C')
+                pdf.ln(15)
+                
+                # Добавете останалото съдържание тук...
+                
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                    pdf_path = tmpfile.name
+                    pdf.output(pdf_path)
+                return pdf_path
             
-            pdf.add_page()
-            
-            # Заглавна страница
-            pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', 'B', 16)
-            pdf.cell(0, 10, report_title, 0, 1, 'C')
-            pdf.ln(10)
-            
-            pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', '', 12)
-            pdf.cell(0, 10, f"Дата на генериране: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 0, 1, 'C')
-            pdf.ln(15)
-            
-            # Останалата част от кода за генериране на съдържанието...
-            
-            # Запазване на временния файл
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-                pdf_path = tmpfile.name
-                pdf.output(pdf_path)
-            
-            # Предоставяне на линк за изтегляне
-            with open(pdf_path, "rb") as f:
-                pdf_bytes = f.read()
-            
-            st.success("PDF отчетът е генериран успешно!")
-            st.download_button(
-                label="⬇️ Изтегли PDF отчет",
-                data=pdf_bytes,
-                file_name=f"road_design_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                mime="application/pdf"
-            )
+            pdf_path = generate_pdf_report()
+            if pdf_path:
+                with open(pdf_path, "rb") as f:
+                    pdf_bytes = f.read()
+                
+                st.success("PDF отчетът е генериран успешно!")
+                st.download_button(
+                    label="⬇️ Изтегли PDF отчет",
+                    data=pdf_bytes,
+                    file_name=f"road_design_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                    mime="application/pdf"
+                )
             
         except Exception as e:
             st.error(f"Грешка при генериране на PDF: {str(e)}")
