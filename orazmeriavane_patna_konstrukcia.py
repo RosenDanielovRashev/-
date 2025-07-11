@@ -499,3 +499,5 @@ st.subheader("Навигация към другите модули:")
 st.image("5.2. Фиг.png", width=800)
 st.image("5.3. Фиг.png", width=800)
 st.image("5.2. Таблица.png", width=800)
+st.image("5.1. Таблица.png", width=800)
+
