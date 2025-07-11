@@ -524,7 +524,7 @@ if point_on_esr_eo is not None:
             name='Вертикална линия до y=1.05'
         ))
 
-# Настройка на графиката
+# Настройки на графиката
 fig.update_layout(
     title="Графика на изолинии и точки",
     xaxis_title="H/D",
@@ -534,11 +534,11 @@ fig.update_layout(
     height=600
 )
 
-# Определи фиксиран мащаб на основната ос (например 0 до 2)
+# Определяне на фиксиран мащаб
 xaxis_min = 0
 xaxis_max = 1.5
 
-# Добавяне на невидим trace, за да се покаже втората ос x2
+# Добавяне на невидим trace за втората ос
 fig.add_trace(go.Scatter(
     x=[xaxis_min, xaxis_max],
     y=[None, None],
@@ -549,35 +549,55 @@ fig.add_trace(go.Scatter(
     xaxis='x2'
 ))
 
+# Финални настройки на осите с padding за показване на последните стойности
 fig.update_layout(
     title='Графика на изолинии',
     xaxis=dict(
         title='H/D',
         showgrid=True,
         zeroline=False,
-        range=[xaxis_min, xaxis_max],  # фиксиран диапазон на основната ос
+        range=[xaxis_min, xaxis_max * 1.005],  # Padding за последна стойност
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
+        gridcolor='lightgray',
+        gridwidth=1
     ),
     xaxis2=dict(
         overlaying='x',
         side='top',
-        range=[xaxis_min, xaxis_max],  # същия диапазон, за да са еднакви дължините
+        range=[xaxis_min, xaxis_max * 1.005],  # Padding за последна стойност
         showgrid=False,
         zeroline=False,
         ticks="outside",
-        tickvals=np.linspace(xaxis_min, xaxis_max, 11),  # примерно 11 tick-а
-        ticktext=[f"{(0.040 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],  # мащабирани стойности
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
+        ticktext=[f"{(0.040 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" 
+                 for x in np.linspace(xaxis_min, xaxis_max, 11)],
         ticklabeloverflow="allow",
         title='φ',
-        fixedrange=True,
-        showticklabels=True,
-
+        fixedrange=True
     ),
     yaxis=dict(
         title='y',
+        showgrid=True,
+        gridcolor='lightgray',
+        gridwidth=1
     ),
     showlegend=False,
     height=600,
-    width=900
+    width=900,
+    margin=dict(l=50, r=50, t=50, b=50)  # Допълнителни margin за labels
+)
+
+# Ръчно добавяне на последния tick label ако е необходимо (запасен вариант)
+fig.add_annotation(
+    x=xaxis_max,
+    y=0,
+    xref="x",
+    yref="y",
+    text=f"{xaxis_max}",
+    showarrow=False,
+    yshift=-20,
+    xanchor="center",
+    font=dict(size=10)
 )
 
 st.plotly_chart(fig, use_container_width=True)
