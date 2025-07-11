@@ -709,3 +709,6 @@ if left_side <= right_side:
     st.success(f"Условието е изпълнено: {left_side:.6f} ≤ {right_side:.6f}")
 else:
     st.error(f"Условието НЕ е изпълнено: {left_side:.6f} > {right_side:.6f}")
+
+# Линк към предишната страница
+st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
