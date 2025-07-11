@@ -518,7 +518,6 @@ for i in range(st.session_state.num_layers):
         st.markdown(f"**Пласт {i+1}**")
     
     with col2:
-        # Редактиране на дебелината h с уникален ключ
         if 'h' in st.session_state.layers_data[i]:
             new_h = st.number_input(
                 "Дебелина (cm)",
@@ -533,7 +532,6 @@ for i in range(st.session_state.num_layers):
             st.markdown("Дебелина: -")
     
     with col3:
-        # Редактиране на λ с уникален ключ
         st.session_state.lambda_values[i] = st.number_input(
             "λ коефициент",
             min_value=0.0,
@@ -544,46 +542,67 @@ for i in range(st.session_state.num_layers):
             label_visibility="collapsed"
         )
 
-# Добавяне на новите параметри
+# Топлинни параметри
 st.markdown("---")
 st.subheader("Топлинни параметри")
 
-# Въвеждане на λоп
-lambda_op = st.number_input(
-    "λоп (коефициент на топлопроводност на почвата в открито поле)",
-    min_value=0.1,
-    step=0.1,
-    value=2.5,
-    key="lambda_op_input"
-)
-st.markdown("""
-<span style="font-size: small; color: #666;">
-– коефициент на топлопроводност на почвата в условия на открито поле. 
-Приема се средно 2,50 kcal/mhg за Іва климатична зона, съответно 2,2 kcal/mhg за ІІра 
-климатична зона. Климатичните зони се определят от фиг. 5.3.
-</span>
-""", unsafe_allow_html=True)
+col1, col2 = st.columns(2)
 
-# Въвеждане на λзп
-lambda_zp = st.number_input(
-    "λзп (коефициент на топлопроводност под настилката)",
-    min_value=0.1,
-    step=0.1,
-    value=2.5,
-    key="lambda_zp_input"
-)
-st.markdown("""
-<span style="font-size: small; color: #666;">
-коефициент на топлопроводност на почвата, непосредствено под настилката.
-При равни други условия зависи от топлинната съпротивляемост на
-настилката, в съгласие с данните от таблица 5.2.
-</span>
-""", unsafe_allow_html=True)
+with col1:
+    lambda_op = st.number_input(
+        "λоп (kcal/mhg)",
+        min_value=0.1,
+        step=0.1,
+        value=2.5,
+        key="lambda_op_input"
+    )
+    st.markdown("""
+    <span style="font-size: small; color: #666;">
+    Коефициент на топлопроводност в открито поле.<br>
+    2.50 kcal/mhg за І климат. зона<br>
+    2.20 kcal/mhg за ІІ климат. зона<br>
+    (фиг.5.3)
+    </span>
+    """, unsafe_allow_html=True)
 
-# Изчисление на m
+with col2:
+    lambda_zp = st.number_input(
+        "λзп (kcal/mhg)",
+        min_value=0.1,
+        step=0.1,
+        value=2.5,
+        key="lambda_zp_input"
+    )
+    st.markdown("""
+    <span style="font-size: small; color: #666;">
+    Коефициент на топлопроводност под настилката.<br>
+    Зависи от топлинната съпротивляемост<br>
+    (таблица 5.2)
+    </span>
+    """, unsafe_allow_html=True)
+
+# Изчисления
 if lambda_op > 0:
     m_value = lambda_zp / lambda_op
-    st.latex(rf"m = \frac{{\lambda_{{зп}}}}{{\lambda_{{оп}}}} = \frac{{{lambda_zp}}}{{{lambda_op}}} = {m_value:.2f}")
+    st.latex(rf"m = \frac{{\lambda_{{зп}}}}{{\lambda_{{оп}}}} = \frac{{{lambda_zp:.2f}}}{{{lambda_op:.2f}}} = {m_value:.2f}")
+    
+    # Добавяне на z1 и z
+    z1 = st.number_input(
+        "z₁ (cm)",
+        min_value=1,
+        step=1,
+        value=100,
+        key="z1_input"
+    )
+    st.markdown("""
+    <span style="font-size: small; color: #666;">
+    Замръзваща дълбочина на почвата в открито поле.<br>
+    Определя се от карта с изохети (фиг.5.2)
+    </span>
+    """, unsafe_allow_html=True)
+    
+    z_value = z1 * m_value
+    st.latex(rf"z = z_1 \cdot m = {z1} \cdot {m_value:.2f} = {z_value:.2f}\ \text{{cm}}")
 else:
     st.warning("λоп не може да бъде 0")
 
@@ -598,7 +617,7 @@ if all('h' in layer for layer in st.session_state.layers_data):
     
     st.latex(rf"""
     R_0 = \frac{{\sum_{{i=0}}^n h_i}}{{\sum_{{i=0}}^n \lambda_i}} = 
-    \frac{{{sum_h:.2f}}}{{{sum_lambda:.2f}}} = {R0:.2f} \ \text{{cm}}
+    \frac{{{sum_h:.2f}}}{{{sum_lambda:.2f}}} = {R0:.2f}\ \text{{cm}}
     """)
 else:
     st.warning("Моля, задайте дебелини за всички пластове преди изчисление")
