@@ -691,6 +691,7 @@ main_formula = fr"""
 {sigma_r:.6f} + ({tau_b:.6f}) = {left_side / p_value:.6f} \leq \frac{{{K:.3f} \cdot {C:.2f}}}{{{p_value:.3f}}} = {right_side / p_value:.6f}
 """
 
+
 st.latex(formula_k)
 st.latex(main_formula)  # Основната формула със заместени стойности
 
