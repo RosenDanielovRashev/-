@@ -687,7 +687,7 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 
 main_formula = fr"""
 \tau_{{\mu}} + \tau_b \leq K \cdot C \\
-{tau_mu:.6f} + {tau_b:.6f} = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
+{tau_mu:.6f} + ({tau_b:.6f}) = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
 """
 
 st.latex(formula_k)
