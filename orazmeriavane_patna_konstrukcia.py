@@ -545,3 +545,63 @@ for i in range(st.session_state.num_layers):
         )
 
 st.markdown("---")
+# Добавете този код след последната картинка (преди края на файла)
+
+st.markdown("---")
+st.subheader("Редактиране на пластове")
+
+# Инициализация на стойностите
+if "lambda_values" not in st.session_state:
+    st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
+
+# Създаваме табличен изглед
+for i in range(st.session_state.num_layers):
+    col1, col2, col3 = st.columns([2, 3, 3])
+    
+    with col1:
+        st.markdown(f"**Пласт {i+1}**")
+    
+    with col2:
+        # Редактиране на дебелината h
+        if 'h' in st.session_state.layers_data[i]:
+            new_h = st.number_input(
+                "Дебелина (cm)",
+                min_value=0.1,
+                step=0.1,
+                value=float(st.session_state.layers_data[i]['h']),
+                key=f"h_edit_{i}",
+                label_visibility="collapsed"
+            )
+            st.session_state.layers_data[i]['h'] = new_h
+        else:
+            st.markdown("Дебелина: -")
+    
+    with col3:
+        # Редактиране на λ
+        st.session_state.lambda_values[i] = st.number_input(
+            "λ коефициент",
+            min_value=0.0,
+            max_value=1.0,
+            step=0.01,
+            value=st.session_state.lambda_values[i],
+            key=f"lambda_{i}",
+            label_visibility="collapsed"
+        )
+
+# Изчисление на R₀
+st.markdown("---")
+st.subheader("Изчисление на R₀")
+
+if all('h' in layer for layer in st.session_state.layers_data):
+    sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
+    sum_lambda = sum(st.session_state.lambda_values)
+    R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
+    
+    st.latex(rf"""
+    R_0 = \frac{{\sum_{{i=0}}^n h_i}}{{\sum_{{i=0}}^n \lambda_i}} = 
+    \frac{{{sum_h:.2f}}}{{{sum_lambda:.2f}}} = {R0:.2f} \ \text{{cm}}
+    """)
+else:
+    st.warning("Моля, задайте дебелини за всички пластове преди изчисление")
+
+st.markdown("---")
