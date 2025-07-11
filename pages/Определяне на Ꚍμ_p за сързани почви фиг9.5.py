@@ -368,8 +368,8 @@ st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr}" + "}{" + f"{Eo}" + "} = " + f"{E
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
 
 # Зареждане на данни
-df_fi = pd.read_csv("fi.csv")
-df_esr_eo = pd.read_csv("Esr_Eo.csv")
+df_fi = pd.read_csv("fi_9.5.csv")
+df_esr_eo = pd.read_csv("Esr_Eo_9.5.csv")
 
 df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
 df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
