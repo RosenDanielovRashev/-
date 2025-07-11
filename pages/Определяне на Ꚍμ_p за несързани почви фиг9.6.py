@@ -11,7 +11,7 @@ st.markdown("""
             font-size: 18px !important;
         }
         .block-container {
-            max-width: 850px;
+            max-width: 800px;
             margin: 0 auto;
         }
         .css-1lcbmi9 {
