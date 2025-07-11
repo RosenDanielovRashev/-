@@ -536,7 +536,7 @@ fig.update_layout(
 
 # Определи фиксиран мащаб на основната ос (например 0 до 2)
 xaxis_min = 0
-xaxis_max = 4
+xaxis_max = 2
 
 # Добавяне на невидим trace, за да се покаже втората ос x2
 fig.add_trace(go.Scatter(
@@ -584,7 +584,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Изчисление на σr от x на оранжевата точка (ако съществува)
 if 'x_orange' in locals() and x_orange is not None:
-    sigma_r = round(x_orange / 100, 3)
+    sigma_r = round(x_orange / 50, 3)
     x_val = round(x_orange, 3)
     
     # Определяне на p според осовия товар
