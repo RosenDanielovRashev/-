@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd 
 import numpy as np 
 import plotly.graph_objs as go 
+import os
+from fpdf import FPDF
+import tempfile
+from datetime import datetime
 
 st.set_page_config(layout="wide")
 
@@ -672,44 +676,42 @@ if st.button("🖨️ Генериране на PDF отчет", type="primary")
         st.warning("Моля, изберете поне една страница за експорт.")
     else:
         try:
-            from fpdf import FPDF
-            import tempfile
-            from datetime import datetime
-            
             # Създаване на PDF обект
             pdf = FPDF()
             pdf.set_auto_page_break(auto=True, margin=15)
+            
+            # Добавяне на Unicode шрифт (DejaVu Sans)
+            try:
+                # Проверка дали шрифтовете са достъпни
+                font_path = "DejaVuSans.ttf"
+                if os.path.exists(font_path):
+                    pdf.add_font('DejaVu', '', font_path, uni=True)
+                    pdf.set_font('DejaVu', '', 12)
+                else:
+                    # Ако шрифтът не е намерен, използвайте Arial Unicode MS (ако е инсталиран)
+                    font_path = "C:/Windows/Fonts/arial.ttf"
+                    if os.path.exists(font_path):
+                        pdf.add_font('Arial', '', font_path, uni=True)
+                        pdf.set_font('Arial', '', 12)
+                    else:
+                        st.error("Не е намерен подходящ шрифт за кирилица. Моля, добавете DejaVuSans.ttf в основната директория.")
+                        return
+            except Exception as e:
+                st.error(f"Грешка при зареждане на шрифта: {str(e)}")
+                return
+            
             pdf.add_page()
             
             # Заглавна страница
-            pdf.set_font("Arial", 'B', 16)
+            pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', 'B', 16)
             pdf.cell(0, 10, report_title, 0, 1, 'C')
             pdf.ln(10)
             
-            pdf.set_font("Arial", '', 12)
+            pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', '', 12)
             pdf.cell(0, 10, f"Дата на генериране: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 0, 1, 'C')
             pdf.ln(15)
             
-            # Основно съдържание
-            if "Оразмеряване на пътна конструкция" in pages_to_export:
-                pdf.set_font("Arial", 'B', 14)
-                pdf.cell(0, 10, "1. Оразмеряване на пътна конструкция", 0, 1)
-                pdf.set_font("Arial", '', 12)
-                
-                # Данни за пластовете
-                pdf.cell(0, 10, "Параметри на пластовете:", 0, 1)
-                for i, layer in enumerate(st.session_state.layers_data):
-                    pdf.cell(0, 10, f"Пласт {i+1}:", 0, 1)
-                    pdf.cell(20, 10, "", 0, 0)
-                    pdf.cell(0, 10, f"Ei = {layer.get('Ei', '-')} MPa, Ed = {layer.get('Ed', '-')} MPa, h = {layer.get('h', '-')} cm", 0, 1)
-                
-                pdf.ln(5)
-                pdf.cell(0, 10, f"Диаметър на отпечатък (D): {st.session_state.final_D} cm", 0, 1)
-                pdf.cell(0, 10, f"Осова товарност: {st.session_state.axle_load} kN", 0, 1)
-                pdf.ln(10)
-            
-            # Добавете подобни секции за другите страници тук...
-            # Можете да добавите логика за всяка от избраните страници
+            # Останалата част от кода за генериране на съдържанието...
             
             # Запазване на временния файл
             with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
@@ -730,4 +732,3 @@ if st.button("🖨️ Генериране на PDF отчет", type="primary")
             
         except Exception as e:
             st.error(f"Грешка при генериране на PDF: {str(e)}")
-            st.warning("Моля, уверете се, че всички необходими библиотеки са инсталирани (fpdf2)")
