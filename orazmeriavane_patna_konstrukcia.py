@@ -457,6 +457,17 @@ if all_data_ready:
             st.session_state.final_D_all = st.session_state.final_D
             st.success("✅ Данните са запазени за междинния пласт!")
             st.page_link("pages/опън за междиннен плст.py", label="Към Опън в междинен пласт", icon="📄")
+
+        # Нов бутон под първия
+        if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.5)'", type="primary", use_container_width=True, key="to_fig9_5"):
+            st.session_state.fig9_5_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_5_h = [layer["h"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_5_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_5_D = st.session_state.final_D
+            st.session_state.fig9_5_last_Ed = st.session_state.layers_data[-1]["Ed"]
+            st.session_state.axle_load_value3 = st.session_state.axle_load
+            st.success("✅ Данните за фиг.9.5 са готови!")
+            st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.5.py", label="Към Ꚍμ_p (фиг9.5)", icon="📈")
 else:
     st.warning("ℹ️ Моля, попълнете данните за всички пластове преди да продължите")
     
