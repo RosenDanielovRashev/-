@@ -530,13 +530,13 @@ fig.update_layout(
     xaxis_title="H/D",
     yaxis_title="y",
     legend_title="Легенда",
-    width=950,
+    width=900,
     height=600
 )
 
 # Определи фиксиран мащаб на основната ос (например 0 до 2)
 xaxis_min = 0
-xaxis_max = 1.6
+xaxis_max = 1.5
 
 # Добавяне на невидим trace, за да се покаже втората ос x2
 fig.add_trace(go.Scatter(
@@ -564,8 +564,8 @@ fig.update_layout(
         showgrid=False,
         zeroline=False,
         ticks="outside",
-        tickvals=np.linspace(xaxis_min, xaxis_max, 12),  # примерно 11 tick-а
-        ticktext=[f"{(0.15 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],  # мащабирани стойности
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),  # примерно 11 tick-а
+        ticktext=[f"{(0.040 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],  # мащабирани стойности
         ticklabeloverflow="allow",
         title='φ',
         fixedrange=True,
@@ -577,7 +577,7 @@ fig.update_layout(
     ),
     showlegend=False,
     height=600,
-    width=950
+    width=900
 )
 
 st.plotly_chart(fig, use_container_width=True)
