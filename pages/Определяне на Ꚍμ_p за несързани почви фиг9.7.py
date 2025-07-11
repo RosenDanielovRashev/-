@@ -221,30 +221,30 @@ Fi_values = []
 n = 3  # Стойност по подразбиране
 
 # Проверка за данни в session_state
-session_data_available = all(key in st.session_state for key in ['fig9_5_h', 'fig9_5_fi']) and \
+session_data_available = all(key in st.session_state for key in ['fig9_7_h', 'fig9_7_fi']) and \
                          'layers_data' in st.session_state and \
                          len(st.session_state.layers_data) > 0
 
 # Автоматично зареждане на данни ако са налични
 if session_data_available:
     try:
-        n = len(st.session_state.fig9_5_h)
-        h_values = [round(float(h), 2) for h in st.session_state.fig9_5_h]
+        n = len(st.session_state.fig9_7_h)
+        h_values = [round(float(h), 2) for h in st.session_state.fig9_7_h]
         Ed_values = [round(layer["Ed"]) for layer in st.session_state.layers_data]
         Ei_values = [round(layer["Ei"]) for layer in st.session_state.layers_data]
-        Fi_values = st.session_state.fig9_5_fi[:n]  # Взимаме само необходимия брой
+        Fi_values = st.session_state.fig9_7_fi[:n]  # Взимаме само необходимия брой
         
         D_options = [32.04, 34.0, 33.0]
         
-        if 'fig9_5_D' in st.session_state:
-            current_d = st.session_state.fig9_5_D
+        if 'fig9_7_D' in st.session_state:
+            current_d = st.session_state.fig9_7_D
             if current_d not in D_options:
                 D_options.insert(0, current_d)
         else:
             current_d = D_options[0]
 
         selected_d = st.selectbox("Избери D", options=D_options, index=D_options.index(current_d))
-        st.session_state.fig9_5_D = selected_d
+        st.session_state.fig9_7_D = selected_d
         D = selected_d
         
         # Добавяне на избор за осов товар
@@ -286,7 +286,7 @@ if session_data_available:
         Ei_values = Ei_values_edited
         Ed_values = Ed_values_edited
         Fi_values = Fi_values_edited
-        st.session_state.fig9_5_fi = Fi_values  # Запазване във session state
+        st.session_state.fig9_7_fi = Fi_values  # Запазване във session state
 
     except Exception as e:
         st.error(f"Грешка при зареждане на данните: {str(e)}")
@@ -297,7 +297,7 @@ if not session_data_available:
     n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=3)
     D_options = [32.04, 34.0, 33.0]
     selected_d = st.selectbox("Избери D", options=D_options, index=0)
-    st.session_state.fig9_5_D = selected_d
+    st.session_state.fig9_7_D = selected_d
     D = selected_d
     
     # Добавяне на избор за осов товар
@@ -328,7 +328,7 @@ if not session_data_available:
         with cols[3]:
             Fi_val = st.number_input(f"Fi{to_subscript(i+1)}", value=15, step=1, key=f"Fi_{i}")
             Fi_values.append(Fi_val)
-    st.session_state.fig9_5_fi = Fi_values  # Запазване във session state
+    st.session_state.fig9_7_fi = Fi_values  # Запазване във session state
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
