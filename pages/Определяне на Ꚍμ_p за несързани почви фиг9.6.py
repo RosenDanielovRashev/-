@@ -587,18 +587,7 @@ fig.update_layout(
     margin=dict(l=50, r=50, t=50, b=50)  # Допълнителни margin за labels
 )
 
-# Ръчно добавяне на последния tick label ако е необходимо (запасен вариант)
-fig.add_annotation(
-    x=xaxis_max,
-    y=0,
-    xref="x",
-    yref="y",
-    text=f"{xaxis_max}",
-    showarrow=False,
-    yshift=-20,
-    xanchor="center",
-    font=dict(size=10)
-)
+
 
 st.plotly_chart(fig, use_container_width=True)
 
