@@ -678,52 +678,83 @@ if st.button("🖨️ Генериране на PDF отчет", type="primary")
         try:
             # Функция за генериране на PDF
             def generate_pdf_report():
-                pdf = FPDF()
-                pdf.set_auto_page_break(auto=True, margin=15)
-                
-                # Опитайте да заредите DejaVu шрифт първо
-                try:
-                    pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-                    pdf.set_font('DejaVu', '', 12)
-                except:
-                    # Ако DejaVu не е наличен, опитайте с Arial
-                    try:
-                        pdf.add_font('Arial', '', 'arial.ttf', uni=True)
-                        pdf.set_font('Arial', '', 12)
-                    except:
-                        st.error("Не е намерен подходящ шрифт за кирилица")
-                        return None
-                
-                pdf.add_page()
-                
-                # Заглавна страница
-                pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', 'B', 16)
-                pdf.cell(0, 10, report_title, 0, 1, 'C')
-                pdf.ln(10)
-                
-                pdf.set_font('DejaVu' if 'DejaVu' in pdf.fonts else 'Arial', '', 12)
-                pdf.cell(0, 10, f"Дата на генериране: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 0, 1, 'C')
-                pdf.ln(15)
-                
-                # Добавете останалото съдържание тук...
-                
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-                    pdf_path = tmpfile.name
-                    pdf.output(pdf_path)
-                return pdf_path
-            
-            pdf_path = generate_pdf_report()
-            if pdf_path:
-                with open(pdf_path, "rb") as f:
-                    pdf_bytes = f.read()
-                
-                st.success("PDF отчетът е генериран успешно!")
-                st.download_button(
-                    label="⬇️ Изтегли PDF отчет",
-                    data=pdf_bytes,
-                    file_name=f"road_design_report_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                    mime="application/pdf"
-                )
-            
-        except Exception as e:
-            st.error(f"Грешка при генериране на PDF: {str(e)}")
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Добавяне на Unicode шрифт за кирилица
+    try:
+        # Опитайте със 'DejaVu' ако е инсталиран
+        pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+        font_name = 'DejaVu'
+    except:
+        try:
+            # Алтернативен Unicode шрифт
+            pdf.add_font('ArialUni', '', 'arial-unicode-ms.ttf', uni=True)
+            font_name = 'ArialUni'
+        except:
+            # Стандартен Unicode шрифт
+            try:
+                pdf.add_font('freeserif', '', 'freeserif.ttf', uni=True)
+                font_name = 'freeserif'
+            except:
+                # Последна опция - използваме вградения Helvetica (но няма да работи за кирилица)
+                font_name = 'Helvetica'
+                st.warning("⚠️ Не е намерен Unicode шрифт - кирилицата може да не се показва правилно")
+    
+    pdf.add_page()
+    
+    # Заглавна страница с Unicode шрифт
+    pdf.set_font(font_name, 'B', 16)
+    pdf.cell(0, 10, report_title, 0, 1, 'C')
+    pdf.ln(10)
+    
+    pdf.set_font(font_name, '', 12)
+    pdf.cell(0, 10, f"Дата на генериране: {datetime.now().strftime('%Y-%m-%d %H:%M')}", 0, 1, 'C')
+    pdf.ln(15)
+    
+    # Добавете останалото съдържание тук...
+    # (това е само пример - добавете реалното съдържание на отчета)
+    pdf.set_font(font_name, 'B', 14)
+    pdf.cell(0, 10, "Параметри на конструкцията:", 0, 1)
+    pdf.set_font(font_name, '', 12)
+    
+    # Добавяне на данни за пластовете
+    for i, layer in enumerate(st.session_state.layers_data):
+        Ee_val = round(layer['Ee']) if 'Ee' in layer else '-'
+        Ei_val = round(layer['Ei']) if 'Ei' in layer else '-'
+        Ed_val = round(layer['Ed']) if 'Ed' in layer else '-'
+        h_val = layer.get('h', '-')
+        
+        pdf.cell(0, 10, f"Пласт {i+1}: Ei={Ei_val} MPa, Ee={Ee_val} MPa, Ed={Ed_val} MPa, h={h_val} cm", 0, 1)
+    
+    # Други данни...
+    pdf.ln(10)
+    pdf.cell(0, 10, f"Диаметър D: {st.session_state.final_D} cm", 0, 1)
+    pdf.cell(0, 10, f"Осов товар: {st.session_state.axle_load} kN", 0, 1)
+    
+    # Топлинни параметри
+    pdf.ln(10)
+    pdf.set_font(font_name, 'B', 14)
+    pdf.cell(0, 10, "Топлинни параметри:", 0, 1)
+    pdf.set_font(font_name, '', 12)
+    pdf.cell(0, 10, f"λоп = {lambda_op} kcal/mhg, λзп = {lambda_zp} kcal/mhg", 0, 1)
+    pdf.cell(0, 10, f"Дълбочина на замръзване z = {z_value:.2f} cm", 0, 1)
+    
+    # Проверка на изискванията
+    pdf.ln(10)
+    pdf.set_font(font_name, 'B', 14)
+    pdf.cell(0, 10, "Проверка на изискванията:", 0, 1)
+    pdf.set_font(font_name, '', 12)
+    if all('h' in layer for layer in st.session_state.layers_data):
+        sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
+        if z_value > sum_h:
+            pdf.cell(0, 10, "✅ Условието е изпълнено: z > Σh", 0, 1)
+            pdf.cell(0, 10, "Конструкцията удовлетворява изискванията!", 0, 1)
+        else:
+            pdf.cell(0, 10, "❌ Условието НЕ е изпълнено: z ≤ Σh", 0, 1)
+            pdf.cell(0, 10, "Конструкцията НЕ удовлетворява изискванията!", 0, 1)
+    
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+        pdf_path = tmpfile.name
+        pdf.output(pdf_path)
+    return pdf_path
