@@ -501,3 +501,42 @@ st.image("5.3. Фиг.png", width=800)
 st.image("5.2. Таблица.png", width=800)
 st.image("5.1. Таблица.png", width=800)
 
+# Добавете този код след последната картинка (преди края на файла)
+
+st.markdown("---")
+st.subheader("Параметър λ за всеки пласт")
+
+# Инициализация на λ стойностите в session_state, ако все още не съществуват
+if "lambda_values" not in st.session_state:
+    st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
+
+# Създаване на две колони
+col_lambda1, col_lambda2 = st.columns(2)
+
+with col_lambda1:
+    st.markdown("**Дебелина на пластовете (h):**")
+    for i, layer in enumerate(st.session_state.layers_data):
+        h_val = layer.get('h', '-')
+        st.text(f"Пласт {i+1}: {h_val if h_val == '-' else f'{h_val:.2f}'} cm")
+
+with col_lambda2:
+    st.markdown("**Стойност на λ:**")
+    for i in range(st.session_state.num_layers):
+        # Въвеждане на λ стойност с callback функция за автоматично запазване
+        new_lambda = st.number_input(
+            f"λ за пласт {i+1}:",
+            min_value=0.0,
+            max_value=1.0,
+            step=0.01,
+            value=st.session_state.lambda_values[i],
+            key=f"lambda_{i}",
+            on_change=lambda i=i: st.session_state.update({"lambda_values": st.session_state.lambda_values})
+        )
+        st.session_state.lambda_values[i] = new_lambda
+
+# Показване на текущите λ стойности
+st.markdown("**Текущи стойности на λ:**")
+for i, lambda_val in enumerate(st.session_state.lambda_values):
+    st.write(f"Пласт {i+1}: λ = {lambda_val:.2f}")
+
+st.markdown("---")
