@@ -62,6 +62,9 @@ if "final_D" not in st.session_state:
 # Инициализация на calculation_messages
 if "calculation_messages" not in st.session_state:
     st.session_state.calculation_messages = {}
+# Инициализация на lambda_values (ТУК Е ЕДИНСТВЕНОТО МЯСТО ЗА НЕЯ!)
+if "lambda_values" not in st.session_state:
+    st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
 
 def reset_calculations_from_layer(layer_idx):
     for i in range(layer_idx, st.session_state.num_layers):
@@ -506,9 +509,6 @@ st.image("5.1. Таблица.png", width=800)
 st.markdown("---")
 st.subheader("Редактиране на пластове")
 
-# Инициализация на стойностите
-if "lambda_values" not in st.session_state:
-    st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
 
 # Създаваме табличен изглед
 for i in range(st.session_state.num_layers):
