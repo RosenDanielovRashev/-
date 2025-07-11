@@ -536,7 +536,7 @@ fig.update_layout(
 
 # Определи фиксиран мащаб на основната ос (например 0 до 2)
 xaxis_min = 0
-xaxis_max = 1.5
+xaxis_max = 1.6
 
 # Добавяне на невидим trace, за да се покаже втората ос x2
 fig.add_trace(go.Scatter(
