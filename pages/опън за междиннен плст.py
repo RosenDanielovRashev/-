@@ -398,3 +398,7 @@ if layer_idx in st.session_state.layer_results:
 
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
+
+    # Линк към предишната страница
+    st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
+        
