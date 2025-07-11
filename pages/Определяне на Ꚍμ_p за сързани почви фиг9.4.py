@@ -5,7 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
-
 st.markdown("""
     <style>
         .streamlit-expanderHeader {
@@ -222,7 +221,7 @@ Fi_values = []
 n = 3  # Стойност по подразбиране
 
 # Проверка за данни в session_state
-session_data_available = all(key in st.session_state for key in ['fig9_4_h']) and \
+session_data_available = all(key in st.session_state for key in ['fig9_4_h', 'fig9_4_fi']) and \
                          'layers_data' in st.session_state and \
                          len(st.session_state.layers_data) > 0
 
@@ -230,9 +229,10 @@ session_data_available = all(key in st.session_state for key in ['fig9_4_h']) an
 if session_data_available:
     try:
         n = len(st.session_state.fig9_4_h)
-        h_values = st.session_state.fig9_4_h
+        h_values = [round(float(h), 2) for h in st.session_state.fig9_4_h]
         Ed_values = [round(layer["Ed"]) for layer in st.session_state.layers_data]
         Ei_values = [round(layer["Ei"]) for layer in st.session_state.layers_data]
+        Fi_values = st.session_state.fig9_4_fi[:n]  # Взимаме само необходимия брой
         
         D_options = [32.04, 34.0, 33.0]
         
@@ -268,7 +268,7 @@ if session_data_available:
             with cols[0]:
                 default_h = float(h_values[i]) if i < len(h_values) else 4.0
                 h_val = st.number_input(f"h{to_subscript(i+1)}", value=default_h, step=0.1, key=f"auto_h_{i}")
-                h_values_edited.append(h_val)
+                h_values_edited.append(round(h_val, 2))
             with cols[1]:
                 default_ei = int(Ei_values[i]) if i < len(Ei_values) else 1000
                 ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=default_ei, step=1, key=f"auto_Ei_{i}")
@@ -278,7 +278,7 @@ if session_data_available:
                 ed_val = st.number_input(f"Ed{to_subscript(i+1)}", value=default_ed, step=1, key=f"auto_Ed_{i}")
                 Ed_values_edited.append(ed_val)
             with cols[3]:
-                default_fi = 15  # Стойност по подразбиране за Fi
+                default_fi = Fi_values[i] if i < len(Fi_values) else 15
                 fi_val = st.number_input(f"Fi{to_subscript(i+1)}", value=default_fi, step=1, key=f"auto_Fi_{i}")
                 Fi_values_edited.append(fi_val)
         
@@ -286,6 +286,7 @@ if session_data_available:
         Ei_values = Ei_values_edited
         Ed_values = Ed_values_edited
         Fi_values = Fi_values_edited
+        st.session_state.fig9_4_fi = Fi_values  # Запазване във session state
 
     except Exception as e:
         st.error(f"Грешка при зареждане на данните: {str(e)}")
@@ -317,7 +318,7 @@ if not session_data_available:
     for i in range(n):
         with cols[0]:
             h = st.number_input(f"h{to_subscript(i+1)}", value=4.0, step=0.1, key=f"h_{i}")
-            h_values.append(h)
+            h_values.append(round(h, 2))
         with cols[1]:
             Ei_val = st.number_input(f"Ei{to_subscript(i+1)}", value=1000, step=1, key=f"Ei_{i}")
             Ei_values.append(Ei_val)
@@ -327,6 +328,7 @@ if not session_data_available:
         with cols[3]:
             Fi_val = st.number_input(f"Fi{to_subscript(i+1)}", value=15, step=1, key=f"Fi_{i}")
             Fi_values.append(Fi_val)
+    st.session_state.fig9_4_fi = Fi_values  # Запазване във session state
 
 # Избор на пласт за проверка
 st.markdown("### Избери пласт за проверка")
@@ -338,7 +340,7 @@ Eo = round(Ed_values[layer_idx])
 st.markdown(f"**Eo = Ed{to_subscript(layer_idx+1)} = {Eo}**")
 
 # Изчисляване на H и Esr за избрания пласт (с закръгляне)
-h_array = np.array(h_values[:layer_idx+1])
+h_array = np.array([round(h, 2) for h in h_values[:layer_idx+1]])
 Ei_rounded = [round(val) for val in Ei_values[:layer_idx+1]]  # Закръглени Ei стойности
 E_array = np.array(Ei_rounded)
 
@@ -351,16 +353,16 @@ Esr = round(Esr)  # Закръгляне до цяло число
 st.latex(r"H = \sum_{i=1}^n h_i")
 h_terms = " + ".join([f"h_{to_subscript(i+1)}" for i in range(layer_idx+1)])
 st.latex(r"H = " + h_terms)
-st.write(f"H = {H:.3f}")
+st.write(f"H = {H:.2f}")
 
 st.latex(r"Esr = \frac{\sum_{i=1}^n (E_i \cdot h_i)}{\sum_{i=1}^n h_i}")
 numerator = " + ".join([f"{Ei_rounded[i]} \cdot {h_values[i]}" for i in range(layer_idx+1)])
 denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx+1)])
-formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.3f}}}{{{H:.3f}}} = {Esr}"
+formula_with_values = rf"Esr = \frac{{{numerator}}}{{{denominator}}} = \frac{{{weighted_sum:.2f}}}{{{H:.2f}}} = {Esr}"
 st.latex(formula_with_values)
 
 ratio = H / D if D != 0 else 0
-st.latex(r"\frac{H}{D} = \frac{" + f"{H:.3f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
+st.latex(r"\frac{H}{D} = \frac{" + f"{H:.2f}" + "}{" + f"{D}" + "} = " + f"{ratio:.3f}")
 
 st.latex(r"\frac{Esr}{E_o} = \frac{" + f"{Esr}" + "}{" + f"{Eo}" + "} = " + f"{Esr / Eo:.3f}")
 Esr_over_Eo = Esr / Eo if Eo != 0 else 0
@@ -586,13 +588,18 @@ if 'x_orange' in locals() and x_orange is not None:
     # Определяне на p според осовия товар
     p_value = 0.620 if axle_load == 100 else 0.633
     tau_mu = sigma_r * p_value  # Ꚍμ = (Ꚍμ/p) * p
+    
+    # Показване на стойността на p преди формулата
+    st.markdown(f"**p = {p_value} MPa (за осов товар {axle_load} kN)**")
     st.markdown(f"**Ꚍμ/p = {sigma_r}**")
     st.markdown(f"**Ꚍμ = (Ꚍμ/p) × p = {sigma_r} × {p_value} = {tau_mu:.6f} MPa**")
 else:
+    # Показване на стойността на p преди формулата
+    p_value = 0.620 if axle_load == 100 else 0.633
+    st.markdown(f"**p = {p_value} MPa (за осов товар {axle_load} kN)**")
     st.markdown("**Ꚍμ/p = -** (Няма изчислена стойност)")
     # Задаваме стойности по подразбиране, за да избегнем грешки по-нататък
     sigma_r = 0.0
-    p_value = 0.620 if axle_load == 100 else 0.633
     tau_mu = 0.0
 
 # Изчисляване и визуализация на τb за текущия пласт
@@ -602,7 +609,7 @@ st.subheader("Изчисление на активно напрежение на
 tau_b_fig, tau_b = plot_tau_b(Fi_values[layer_idx], H)
 if tau_b_fig is not None and tau_b is not None:
     st.markdown(f"**За пласт {layer_idx+1}:**")
-    st.markdown(f"- H = {H:.3f}")
+    st.markdown(f"- H = {H:.2f}")
     st.markdown(f"- ϕ = {Fi_values[layer_idx]}")
     st.markdown(f"**τb = {tau_b:.6f}**")
     st.pyplot(tau_b_fig)
