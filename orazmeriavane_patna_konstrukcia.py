@@ -496,6 +496,6 @@ else:
 st.markdown("---")
 st.subheader("Навигация към другите модули:")
 # Изображение 
-st.image("5.2. Фиг.png", caption="Допустими опънни напрежения", width=800)
-st.image("5.3. Фиг.png", caption="Допустими опънни напрежения", width=800)
-st.image("5.2. Таблица.png", caption="Допустими опънни напрежения", width=800)
+st.image("5.2. Фиг.png", width=800)
+st.image("5.3. Фиг.png", width=800)
+st.image("5.2. Таблица.png", width=800)
