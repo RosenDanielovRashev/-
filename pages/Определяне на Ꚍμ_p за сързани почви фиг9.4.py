@@ -675,25 +675,23 @@ f = 0.65
 K = (K1 * K2) / (d * f) * (1 / K3)
 tau_dop = K * C
 
-# Лявата страна: p * ( (Ꚍμ/p) + τb ) = p * (sigma_r + tau_b)
-left_side = p_value * (sigma_r + tau_b)
+# КОРИГИРАНО: Лявата страна: τμ + τb вместо p*(τμ/p + τb)
+left_side = tau_mu + tau_b
 right_side = tau_dop
 
-# Динамични LaTeX формули
+# КОРИГИРАНИ LaTeX формули
 formula_k = fr"""
 K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} = 
 \frac{{{K1:.2f} \cdot {K2:.2f}}}{{1.15 \cdot 0.65}} \cdot \frac{{1}}{{{K3:.2f}}} = {K:.3f}
 """
 
-# Пълно заместване в основната формула
 main_formula = fr"""
-p \cdot \left( \frac{{\tau_{{\mu}}}}{{p}} + \tau_b \right) \leq K \cdot C \\
-{p_value:.3f} \cdot \left( {sigma_r:.6f} + {tau_b:.6f} \right) = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
+\tau_{{\mu}} + \tau_b \leq K \cdot C \\
+{tau_mu:.6f} + {tau_b:.6f} = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
 """
 
-
 st.latex(formula_k)
-st.latex(main_formula)  # Основната формула със заместени стойности
+st.latex(main_formula)
 
 # Проверка на условието
 if left_side <= right_side:
