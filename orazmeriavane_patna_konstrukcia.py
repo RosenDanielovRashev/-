@@ -506,46 +506,120 @@ st.image("5.1. Таблица.png", width=800)
 st.markdown("---")
 st.subheader("Редактиране на пластове")
 
-# [Останалата част от кода остава същата до изчислението на z...]
+# Инициализация на стойностите
+if "lambda_values" not in st.session_state:
+    st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
 
-# Проверка z vs сума на дебелините
-if all('h' in layer for layer in st.session_state.layers_data):
-    sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
-    
-    st.markdown("---")
-    st.subheader("Проверка на изискванията")
-    
-    col1, col2 = st.columns(2)
+# Създаваме табличен изглед
+for i in range(st.session_state.num_layers):
+    col1, col2, col3 = st.columns([2, 3, 3])
     
     with col1:
-        st.metric("Сума на дебелините (Σh)", f"{sum_h:.2f} cm")
+        st.markdown(f"**Пласт {i+1}**")
     
     with col2:
-        st.metric("Изчислена дълбочина (z)", f"{z_value:.2f} cm")
+        if 'h' in st.session_state.layers_data[i]:
+            new_h = st.number_input(
+                "Дебелина (cm)",
+                min_value=0.1,
+                step=0.1,
+                value=float(st.session_state.layers_data[i]['h']),
+                key=f"h_edit_{i}_unique_{st.session_state.layers_data[i].get('h', 0)}",
+                label_visibility="collapsed"
+            )
+            st.session_state.layers_data[i]['h'] = new_h
+        else:
+            st.markdown("Дебелина: -")
     
-    if z_value > sum_h:
-        st.success("✅ Условието е изпълнено: z > Σh")
-        st.markdown("""
-        <div style="background-color:#e8f5e9; padding:10px; border-radius:5px; border-left:4px solid #2e7d32;">
-        <span style="color:#2e7d32; font-weight:bold;">Конструкцията удовлетворява изискванията!</span><br>
-        Замръзващата дълбочина (z) е по-голяма от общата дебелина на пластовете.
-        </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.error("❌ Условието НЕ е изпълнено: z ≤ Σh")
-        st.markdown("""
-        <div style="background-color:#ffebee; padding:10px; border-radius:5px; border-left:4px solid #c62828;">
-        <span style="color:#c62828; font-weight:bold;">Конструкцията НЕ удовлетворява изискванията!</span><br>
-        Замръзващата дълбочина (z) трябва да бъде по-голяма от общата дебелина на пластовете.
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Препоръки за коригиране
-        st.markdown("""
-        **Препоръки:**
-        - Увеличете дебелините на някои от пластовете
-        - Използвайте материали с по-ниски λ коефициенти
-        - Прегледайте избраните стойности за λоп и λзп
-        """)
+    with col3:
+        st.session_state.lambda_values[i] = st.number_input(
+            "λ коефициент",
+            min_value=0.0,
+            max_value=1.0,
+            step=0.01,
+            value=st.session_state.lambda_values[i],
+            key=f"lambda_{i}_unique_{st.session_state.lambda_values[i]}",
+            label_visibility="collapsed"
+        )
+
+# Топлинни параметри
+st.markdown("---")
+st.subheader("Топлинни параметри")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    lambda_op = st.number_input(
+        "λоп (kcal/mhg)",
+        min_value=0.1,
+        step=0.1,
+        value=2.5,
+        key="lambda_op_input"
+    )
+    st.markdown("""
+    <span style="font-size: small; color: #666;">
+    Коефициент на топлопроводност в открито поле.<br>
+    2.50 kcal/mhg за І климат. зона<br>
+    2.20 kcal/mhg за ІІ климат. зона<br>
+    (фиг.5.3)
+    </span>
+    """, unsafe_allow_html=True)
+
+with col2:
+    lambda_zp = st.number_input(
+        "λзп (kcal/mhg)",
+        min_value=0.1,
+        step=0.1,
+        value=2.5,
+        key="lambda_zp_input"
+    )
+    st.markdown("""
+    <span style="font-size: small; color: #666;">
+    Коефициент на топлопроводност под настилката.<br>
+    Зависи от топлинната съпротивляемост<br>
+    (таблица 5.2)
+    </span>
+    """, unsafe_allow_html=True)
+
+# Изчисления
+if lambda_op > 0:
+    m_value = lambda_zp / lambda_op
+    st.latex(rf"m = \frac{{\lambda_{{зп}}}}{{\lambda_{{оп}}}} = \frac{{{lambda_zp:.2f}}}{{{lambda_op:.2f}}} = {m_value:.2f}")
+    
+    # Добавяне на z1 и z
+    z1 = st.number_input(
+        "z₁ (cm)",
+        min_value=1,
+        step=1,
+        value=100,
+        key="z1_input"
+    )
+    st.markdown("""
+    <span style="font-size: small; color: #666;">
+    Замръзваща дълбочина на почвата в открито поле.<br>
+    Определя се от карта с изохети (фиг.5.2)
+    </span>
+    """, unsafe_allow_html=True)
+    
+    z_value = z1 * m_value
+    st.latex(rf"z = z_1 \cdot m = {z1} \cdot {m_value:.2f} = {z_value:.2f}\ \text{{cm}}")
+else:
+    st.warning("λоп не може да бъде 0")
+
+# Изчисление на R₀
+st.markdown("---")
+st.subheader("Изчисление на R₀")
+
+if all('h' in layer for layer in st.session_state.layers_data):
+    sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
+    sum_lambda = sum(st.session_state.lambda_values)
+    R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
+    
+    st.latex(rf"""
+    R_0 = \frac{{\sum_{{i=0}}^n h_i}}{{\sum_{{i=0}}^n \lambda_i}} = 
+    \frac{{{sum_h:.2f}}}{{{sum_lambda:.2f}}} = {R0:.2f}\ \text{{cm}}
+    """)
+else:
+    st.warning("Моля, задайте дебелини за всички пластове преди изчисление")
 
 st.markdown("---")
