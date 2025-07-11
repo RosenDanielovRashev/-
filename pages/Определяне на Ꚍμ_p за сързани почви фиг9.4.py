@@ -685,9 +685,10 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 \frac{{{K1:.2f} \cdot {K2:.2f}}}{{1.15 \cdot 0.65}} \cdot \frac{{1}}{{{K3:.2f}}} = {K:.3f}
 """
 
+# Пълно заместване в основната формула
 main_formula = fr"""
-\left( \tau_{{\mu}}' + \tau_b \right) \leq K \cdot C \\ 
-{sigma_r:.6f} + ({tau_b:.6f}) = {left_side / p_value:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side / p_value:.6f}
+\left( \frac{{\tau_{{\mu}}}}{{p}} + \tau_b \right) \leq \frac{{K \cdot C}}{{p}} \\
+{sigma_r:.6f} + ({tau_b:.6f}) = {left_side / p_value:.6f} \leq \frac{{{K:.3f} \cdot {C:.2f}}}{{{p_value:.3f}}} = {right_side / p_value:.6f}
 """
 
 st.latex(formula_k)
