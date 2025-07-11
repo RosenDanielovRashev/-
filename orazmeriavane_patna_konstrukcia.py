@@ -504,32 +504,38 @@ st.image("5.1. Таблица.png", width=800)
 # Добавете този код след последната картинка (преди края на файла)
 
 st.markdown("---")
-st.subheader("Параметри на пластовете")
+st.subheader("Редактиране на пластове")
 
-# Инициализация на λ стойностите
+# Инициализация на стойностите
 if "lambda_values" not in st.session_state:
     st.session_state.lambda_values = [0.5 for _ in range(st.session_state.num_layers)]
 
-# Създаваме табличен изглед с 3 колони
-cols = st.columns([2, 3, 3])
-
-with cols[0]:
-    st.markdown("**Пласт**")
-    for i in range(st.session_state.num_layers):
-        st.markdown(f"Пласт {i+1}")
-
-with cols[1]:
-    st.markdown("**Дебелина (cm)**")
-    for i, layer in enumerate(st.session_state.layers_data):
-        h_val = layer.get('h', '-')
-        st.markdown(f"{h_val if h_val == '-' else f'{h_val:.1f}'}")
-
-with cols[2]:
-    st.markdown("**Коефициент λ**")
-    for i in range(st.session_state.num_layers):
-        # Използваме форматен стринг за по-добро подравняване
+# Създаваме табличен изглед
+for i in range(st.session_state.num_layers):
+    col1, col2, col3 = st.columns([2, 3, 3])
+    
+    with col1:
+        st.markdown(f"**Пласт {i+1}**")
+    
+    with col2:
+        # Редактиране на дебелината h
+        if 'h' in st.session_state.layers_data[i]:
+            new_h = st.number_input(
+                "Дебелина (cm)",
+                min_value=0.1,
+                step=0.1,
+                value=float(st.session_state.layers_data[i]['h']),
+                key=f"h_edit_{i}",
+                label_visibility="collapsed"
+            )
+            st.session_state.layers_data[i]['h'] = new_h
+        else:
+            st.markdown("Дебелина: -")
+    
+    with col3:
+        # Редактиране на λ
         st.session_state.lambda_values[i] = st.number_input(
-            f"λ_{i+1}",
+            "λ коефициент",
             min_value=0.0,
             max_value=1.0,
             step=0.01,
@@ -537,17 +543,5 @@ with cols[2]:
             key=f"lambda_{i}",
             label_visibility="collapsed"
         )
-
-# Визуализация на текущите стойности в подреден контейнер
-with st.expander("Текущи параметри", expanded=True):
-    for i in range(st.session_state.num_layers):
-        h_val = st.session_state.layers_data[i].get('h', '-')
-        h_display = f"{h_val:.1f} cm" if h_val != '-' else '-'
-        
-        st.markdown(f"""
-        **Пласт {i+1}:**  
-        - Дебелина: {h_display}  
-        - λ: {st.session_state.lambda_values[i]:.2f}
-        """)
 
 st.markdown("---")
