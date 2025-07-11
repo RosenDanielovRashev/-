@@ -566,6 +566,7 @@ fig.update_layout(
         ticks="outside",
         tickvals=np.linspace(xaxis_min, xaxis_max, 11),
         ticktext=[f"{(0.20 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],
+        ticklabeloverflow="allow",
         title='φ',
         fixedrange=True,
         showticklabels=True,
@@ -665,7 +666,7 @@ with cols[3]:
     C = st.number_input("C", 
                        value=layer_values['C'], 
                        step=0.1, 
-                       format="%.2f",
+                       format="%.3f",
                        key=f"C_{layer_idx}",
                        on_change=lambda: layer_values.update({'C': st.session_state[f"C_{layer_idx}"]}))
 
