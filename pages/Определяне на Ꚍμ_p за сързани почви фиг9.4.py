@@ -687,8 +687,7 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 
 # Пълно заместване в основната формула
 main_formula = fr"""
-p \cdot \left( \frac{{\tau_{{\mu}}}}{{p}} + \tau_b \right) \leq K \cdot C \\
-{p_value:.3f} \cdot \left( {sigma_r:.6f} + {tau_b:.6f} \right) = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
+\:\frac{\tau _{\mu }}{p}\:+\:\tau _b\:\:\le \:K\:\cdot \:C\:
 """
 
 st.latex(formula_k)
