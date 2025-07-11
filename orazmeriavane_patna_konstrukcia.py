@@ -479,6 +479,17 @@ if all_data_ready:
             st.session_state.axle_load_value3 = st.session_state.axle_load
             st.success("✅ Данните за фиг.9.5 са готови!")
             st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.5.py", label="Към Ꚍμ_p (фиг9.5)", icon="📈")
+        
+        # Нов бутон под първия
+        if st.button("📊 Изпрати към 'Ꚍμ_p (фиг9.7)'", type="primary", use_container_width=True, key="to_fig9_7"):
+            st.session_state.fig9_7_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_7_h = [layer["h"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_7_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
+            st.session_state.fig9_7_D = st.session_state.final_D
+            st.session_state.fig9_7_last_Ed = st.session_state.layers_data[-1]["Ed"]
+            st.session_state.axle_load_value5 = st.session_state.axle_load
+            st.success("✅ Данните за фиг.9.7 са готови!")
+            st.page_link("pages/Определяне на Ꚍμ_p за несързани почви фиг9.7.py", label="Към Ꚍμ_p (фиг9.7)", icon="📈")
 else:
     st.warning("ℹ️ Моля, попълнете данните за всички пластове преди да продължите")
     
