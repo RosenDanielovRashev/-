@@ -525,7 +525,7 @@ for i in range(st.session_state.num_layers):
                 min_value=0.1,
                 step=0.1,
                 value=float(st.session_state.layers_data[i]['h']),
-                key=f"h_edit_{i}_unique_{st.session_state.layers_data[i].get('h', 0)}",  # Уникален ключ
+                key=f"h_edit_{i}_unique_{st.session_state.layers_data[i].get('h', 0)}",
                 label_visibility="collapsed"
             )
             st.session_state.layers_data[i]['h'] = new_h
@@ -540,9 +540,52 @@ for i in range(st.session_state.num_layers):
             max_value=1.0,
             step=0.01,
             value=st.session_state.lambda_values[i],
-            key=f"lambda_{i}_unique_{st.session_state.lambda_values[i]}",  # Уникален ключ
+            key=f"lambda_{i}_unique_{st.session_state.lambda_values[i]}",
             label_visibility="collapsed"
         )
+
+# Добавяне на новите параметри
+st.markdown("---")
+st.subheader("Топлинни параметри")
+
+# Въвеждане на λоп
+lambda_op = st.number_input(
+    "λоп (коефициент на топлопроводност на почвата в открито поле)",
+    min_value=0.1,
+    step=0.1,
+    value=2.5,
+    key="lambda_op_input"
+)
+st.markdown("""
+<span style="font-size: small; color: #666;">
+– коефициент на топлопроводност на почвата в условия на открито поле. 
+Приема се средно 2,50 kcal/mhg за Іва климатична зона, съответно 2,2 kcal/mhg за ІІра 
+климатична зона. Климатичните зони се определят от фиг. 5.3.
+</span>
+""", unsafe_allow_html=True)
+
+# Въвеждане на λзп
+lambda_zp = st.number_input(
+    "λзп (коефициент на топлопроводност под настилката)",
+    min_value=0.1,
+    step=0.1,
+    value=2.5,
+    key="lambda_zp_input"
+)
+st.markdown("""
+<span style="font-size: small; color: #666;">
+коефициент на топлопроводност на почвата, непосредствено под настилката.
+При равни други условия зависи от топлинната съпротивляемост на
+настилката, в съгласие с данните от таблица 5.2.
+</span>
+""", unsafe_allow_html=True)
+
+# Изчисление на m
+if lambda_op > 0:
+    m_value = lambda_zp / lambda_op
+    st.latex(rf"m = \frac{{\lambda_{{зп}}}}{{\lambda_{{оп}}}} = \frac{{{lambda_zp}}}{{{lambda_op}}} = {m_value:.2f}")
+else:
+    st.warning("λоп не може да бъде 0")
 
 # Изчисление на R₀
 st.markdown("---")
