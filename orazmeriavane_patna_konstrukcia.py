@@ -447,6 +447,7 @@ if all_data_ready:
             st.session_state.fig9_4_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
             st.session_state.fig9_4_D = st.session_state.final_D
             st.session_state.fig9_4_last_Ed = st.session_state.layers_data[-1]["Ed"]
+            st.session_state.axle_load_value2 = st.session_state.axle_load
             st.success("✅ Данните за фиг.9.4 са готови!")
             st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.4.py", label="Към Ꚍμ_p (фиг9.4)", icon="📈")
     
