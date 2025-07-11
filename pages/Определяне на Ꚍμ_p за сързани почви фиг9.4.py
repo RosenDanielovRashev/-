@@ -247,6 +247,15 @@ if session_data_available:
         st.session_state.fig9_4_D = selected_d
         D = selected_d
         
+        # Добавяне на избор за осов товар
+        axle_load_options = [100, 115]
+        if 'axle_load' in st.session_state:
+            current_axle = st.session_state.axle_load
+        else:
+            current_axle = 100
+        axle_load = st.selectbox("Осова товарност (kN)", options=axle_load_options, index=axle_load_options.index(current_axle))
+        st.session_state.axle_load = axle_load
+        
         st.markdown("### Автоматично заредени данни за пластовете")
         cols = st.columns(4)  # Променено от 3 на 4 колони
         
@@ -289,6 +298,15 @@ if not session_data_available:
     selected_d = st.selectbox("Избери D", options=D_options, index=0)
     st.session_state.fig9_4_D = selected_d
     D = selected_d
+    
+    # Добавяне на избор за осов товар
+    axle_load_options = [100, 115]
+    if 'axle_load' in st.session_state:
+        current_axle = st.session_state.axle_load
+    else:
+        current_axle = 100
+    axle_load = st.selectbox("Осова товарност (kN)", options=axle_load_options, index=axle_load_options.index(current_axle))
+    st.session_state.axle_load = axle_load
     
     st.markdown("### Въведи стойности за всеки пласт")
     h_values = []
@@ -564,9 +582,18 @@ st.plotly_chart(fig, use_container_width=True)
 if 'x_orange' in locals() and x_orange is not None:
     sigma_r = round(x_orange / 10, 3)
     x_val = round(x_orange, 3)
+    
+    # Определяне на p според осовия товар
+    p_value = 0.620 if axle_load == 100 else 0.633
+    tau_mu = sigma_r * p_value  # Ꚍμ = (Ꚍμ/p) * p
     st.markdown(f"**Ꚍμ/p = {sigma_r}**")
+    st.markdown(f"**Ꚍμ = (Ꚍμ/p) × p = {sigma_r} × {p_value} = {tau_mu:.6f} MPa**")
 else:
     st.markdown("**Ꚍμ/p = -** (Няма изчислена стойност)")
+    # Задаваме стойности по подразбиране, за да избегнем грешки по-нататък
+    sigma_r = 0.0
+    p_value = 0.620 if axle_load == 100 else 0.633
+    tau_mu = 0.0
 
 # Изчисляване и визуализация на τb за текущия пласт
 st.divider()
@@ -581,8 +608,6 @@ if tau_b_fig is not None and tau_b is not None:
     st.pyplot(tau_b_fig)
 else:
     st.error("Неуспешно изчисление на τb")
-
-# Останалият код остава същият до...
 
 st.image("9.8 Таблица.png", width=600)
 
@@ -643,17 +668,9 @@ f = 0.65
 K = (K1 * K2) / (d * f) * (1 / K3)
 tau_dop = K * C
 
-# Останалият код остава същият до..
-
-# Останалият код остава същият до...
-
-# Проверка дали sigma_r и tau_b са дефинирани
-sigma_r_val = sigma_r if 'sigma_r' in locals() else 0.0
-tau_b_val = tau_b if 'tau_b' in locals() else 0.0
-
-# Изчисляване на лявата и дясната страна
-left_side = sigma_r_val + tau_b_val
-right_side = K * C
+# Лявата страна: p * ( (Ꚍμ/p) + τb ) = p * (sigma_r + tau_b)
+left_side = p_value * (sigma_r + tau_b)
+right_side = tau_dop
 
 # Динамични LaTeX формули
 formula_k = fr"""
@@ -663,14 +680,12 @@ K = \frac{{K_1 \cdot K_2}}{{d \cdot f}} \cdot \frac{{1}}{{K_3}} =
 
 # Пълно заместване в основната формула
 main_formula = fr"""
-\tau_{{\mu}} + \tau_b \leq K \cdot C = \tau_{{доп}} \\
-{sigma_r_val:.6f} + ({tau_b_val:.6f}) = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
+p \cdot \left( \frac{{\tau_{{\mu}}}}{{p}} + \tau_b \right) \leq K \cdot C \\
+{p_value:.3f} \cdot \left( {sigma_r:.6f} + {tau_b:.6f} \right) = {left_side:.6f} \leq {K:.3f} \cdot {C:.2f} = {right_side:.6f}
 """
-
 
 st.latex(formula_k)
 st.latex(main_formula)  # Основната формула със заместени стойности
-
 
 # Проверка на условието
 if left_side <= right_side:
