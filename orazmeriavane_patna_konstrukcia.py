@@ -685,11 +685,10 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         
         # Създаване на PDF обект с поддръжка на кирилица
         pdf = PDF()
-        pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-        pdf.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
-        pdf.add_font('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
+        pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
+        pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
+        pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
         pdf.set_font('DejaVu', '', 12)
-        
         pdf.add_page()
         
         # Заглавие
