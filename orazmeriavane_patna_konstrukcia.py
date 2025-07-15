@@ -653,16 +653,13 @@ if all('h' in layer for layer in st.session_state.layers_data):
         """)
 
 # Функция за конвертиране на Plotly фигура в изображение
-# Updated fig_to_image function
 def fig_to_image(fig):
     try:
-        # Try using Kaleido if available
         img_bytes = pio.to_image(fig, format="png", width=800, height=600)
         return Image.open(BytesIO(img_bytes))
     except Exception as e:
         st.error(f"Грешка при генериране на изображение: {e}")
         st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
-        # Return a blank placeholder image
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
         
 # Генериране на PDF отчет
@@ -670,7 +667,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     class PDF(FPDF):
         def __init__(self):
             super().__init__()
-            self.temp_font_files = []  # Запазване на пътищата към временните файлове
+            self.temp_font_files = []
             
         def header(self):
             self.set_font('DejaVu', 'B', 15)
@@ -683,7 +680,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
             
         def add_font_from_bytes(self, family, style, font_bytes):
-            """Добавя шрифт от байтове чрез временен файл"""
             with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
                 tmp_file.write(font_bytes)
                 tmp_file_path = tmp_file.name
@@ -691,7 +687,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 self.add_font(family, style, tmp_file_path)
                 
         def cleanup_fonts(self):
-            """Изтрива временните шрифтови файлове"""
             for file_path in self.temp_font_files:
                 try:
                     os.unlink(file_path)
@@ -701,26 +696,47 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     pdf = PDF()
     
     try:
-        # Load local font files
-        font_dir = "main/fonts/"
-        with open(font_dir + "DejaVuSans.ttf", "rb") as f:
+        # Определяне на основната директория
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        font_dir = os.path.join(base_dir, "main", "fonts")
+        
+        # Проверка дали директорията съществува
+        if not os.path.exists(font_dir):
+            st.error(f"Директорията за шрифтове не съществува: {font_dir}")
+            st.info("Моля, създайте папка 'main/fonts' и добавете шрифтовете там")
+            return b""
+        
+        # Пътища към файловете
+        sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
+        bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+        italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+        
+        # Проверка за съществуване на файловете
+        missing_fonts = []
+        if not os.path.exists(sans_path): missing_fonts.append("DejaVuSans.ttf")
+        if not os.path.exists(bold_path): missing_fonts.append("DejaVuSans-Bold.ttf")
+        if not os.path.exists(italic_path): missing_fonts.append("DejaVuSans-Oblique.ttf")
+        
+        if missing_fonts:
+            st.error(f"Липсващи шрифтове: {', '.join(missing_fonts)}")
+            return b""
+        
+        # Зареждане на шрифтове
+        with open(sans_path, "rb") as f:
             dejavu_sans = BytesIO(f.read())
-        with open(font_dir + "DejaVuSans-Bold.ttf", "rb") as f:
+        with open(bold_path, "rb") as f:
             dejavu_bold = BytesIO(f.read())
-        with open(font_dir + "DejaVuSans-Oblique.ttf", "rb") as f:
+        with open(italic_path, "rb") as f:
             dejavu_italic = BytesIO(f.read())
         
-        # Добавяне на шрифтове чрез временни файлове
         pdf.add_font_from_bytes('DejaVu', '', dejavu_sans.getvalue())
         pdf.add_font_from_bytes('DejaVu', 'B', dejavu_bold.getvalue())
         pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic.getvalue())
     except Exception as e:
-        st.error(f"Грешка при зареждане на шрифтове: {e}")
-        st.error("Моля, уверете се че файловете за шрифтовете са в папка main/fonts/")
-        return b""  # Връщане на празен byte string при грешка
+        st.error(f"Критична грешка при зареждане на шрифтове: {e}")
+        return b""
 
     pdf.set_font('DejaVu', '', 12)
-    
     pdf.add_page()
     
     # Заглавие
@@ -914,7 +930,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     # Добавете тук другите раздели (фиг9.4, фиг9.6 и т.н.) по същия начин
     
     pdf.cleanup_fonts()
-    return pdf.output(dest='S').encode('utf-8')
+ return pdf.output(dest='S').encode('utf-8')
 
 # Генериране на отчет
 st.markdown("---")
@@ -947,21 +963,31 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
             include_intermediate
         )
         
-        # Създаване на временен файл
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-            tmpfile.write(pdf_bytes)
-            tmpfile.flush()
+        if pdf_bytes:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                tmpfile.write(pdf_bytes)
+                tmpfile.flush()
             
-        # Показване на бутон за сваляне
-        with open(tmpfile.name, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-            download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="patna_konstrukcia_report.pdf">Свали PDF отчет</a>'
-            st.markdown(download_link, unsafe_allow_html=True)
-            st.success("✅ PDF отчетът е успешно генериран!")
+            with open(tmpfile.name, "rb") as f:
+                base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+                download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="patna_konstrukcia_report.pdf">Свали PDF отчет</a>'
+                st.markdown(download_link, unsafe_allow_html=True)
+                st.success("✅ PDF отчетът е успешно генериран!")
+        else:
+            st.error("Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
 
-# Добавяне на информация за шрифтовете
+# Информация за шрифтовете
 st.markdown("""
 <div class="info-box">
-    <strong>Информация:</strong> Шрифтовете се зареждат локално от папка main/fonts/
+    <strong>Информация за шрифтовете:</strong>
+    <ul>
+        <li>Шрифтовете се зареждат от: <code>main/fonts/</code></li>
+        <li>Необходими файлове: 
+            <code>DejaVuSans.ttf</code>, 
+            <code>DejaVuSans-Bold.ttf</code>, 
+            <code>DejaVuSans-Oblique.ttf</code>
+        </li>
+        <li>Абсолютен път към шрифтове: <code>{}</code></li>
+    </ul>
 </div>
-""", unsafe_allow_html=True)
+""".format(os.path.join(os.path.dirname(os.path.abspath(__file__)), "main", "fonts")), unsafe_allow_html=True)
