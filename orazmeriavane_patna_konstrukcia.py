@@ -685,9 +685,9 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         
         # Създаване на PDF обект с поддръжка на кирилица
         pdf = PDF()
-        pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-        pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
-        pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
+        pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+        pdf.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
+        pdf.add_font('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
         pdf.set_font('DejaVu', '', 12)
         
         pdf.add_page()
@@ -761,6 +761,72 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
             
             pdf.ln(10)
             
+            # Графики от основната страница
+            if 'hD_point' in st.session_state.layers_data[0] and 'Ed' in st.session_state.layers_data[0]:
+                pdf.set_font('DejaVu', 'B', 14)
+                pdf.cell(0, 10, 'Графики за пластовете', 0, 1)
+                
+                # Създаване на временни файлове за графиките
+                for i, layer in enumerate(st.session_state.layers_data):
+                    if 'hD_point' in layer and 'Ed' in layer and 'Ei' in layer:
+                        fig = go.Figure()
+                        for value, group in data.groupby("Ee_over_Ei"):
+                            group_sorted = group.sort_values("h_over_D")
+                            fig.add_trace(go.Scatter(
+                                x=group_sorted["h_over_D"],
+                                y=group_sorted["Ed_over_Ei"],
+                                mode='lines',
+                                name=f"Ee/Ei = {value:.2f}"
+                            ))
+                        
+                        hD_point = layer['hD_point']
+                        EdEi_point = layer['Ed'] / layer['Ei']
+                        
+                        if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
+                            fig.add_trace(go.Scatter(
+                                x=[hD_point, hD_point],
+                                y=[layer['y_low'], layer['y_high']],
+                                mode='lines',
+                                line=dict(color='purple', dash='dash'),
+                                name=f"Интерполация Ee/Ei: {layer['low_iso']:.2f} - {layer['high_iso']:.2f}"
+                            ))
+                            fig.add_trace(go.Scatter(
+                                x=[hD_point],
+                                y=[EdEi_point],
+                                mode='markers',
+                                marker=dict(color='red', size=12),
+                                name='Резултат'
+                            ))
+                        
+                        fig.update_layout(
+                            title=f"Графика за пласт {i+1}",
+                            xaxis_title="h / D",
+                            yaxis_title="Ed / Ei",
+                            legend_title="Изолинии"
+                        )
+                        
+                        # Запазване на графиката като временен файл
+                        img_path = f"plot_layer_{i}.png"
+                        fig.write_image(img_path)
+                        
+                        # Добавяне на изображението в PDF
+                        pdf.image(img_path, x=10, w=190)
+                        pdf.ln(5)
+                        os.remove(img_path)
+            
+            # Картинки от основната страница
+            image_files = ["5.2. Фиг.png", "5.3. Фиг.png", "5.2. Таблица.png", "5.1. Таблица.png"]
+            pdf.set_font('DejaVu', 'B', 14)
+            pdf.cell(0, 10, 'Референтни изображения', 0, 1)
+            
+            for img_file in image_files:
+                if os.path.exists(img_file):
+                    try:
+                        pdf.image(img_file, x=10, w=190)
+                        pdf.ln(5)
+                    except:
+                        pdf.cell(0, 10, f'Грешка при добавяне на {img_file}', 0, 1)
+            
             # Топлинни параметри
             if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
                 lambda_op = st.session_state.lambda_op_input
@@ -801,25 +867,24 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                         pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                         pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
-        # Добавете другите раздели тук по същия начин...
-        # Можете да добавите специфично съдържание за всяка страница
+        # Добавяне на другите страници според избора
+        # Тук можете да добавите съдържание от другите страници, ако е необходимо
         
-        return pdf.output(dest='S')
+        return pdf.output(dest='S').encode('latin1')
     
     # Генериране и сваляне на PDF
     try:
-        pdf_bytes = generate_pdf_report()
-        
-        # Създаване на временен файл
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-            tmpfile.write(pdf_bytes)
-            tmpfile.flush()
+        with st.spinner('Генериране на PDF отчет...'):
+            pdf_bytes = generate_pdf_report()
             
-        # Показване на бутон за сваляне
-        with open(tmpfile.name, "rb") as f:
-            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-            download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="patna_konstrukcia_report.pdf">Свали PDF отчет</a>'
-            st.markdown(download_link, unsafe_allow_html=True)
+            # Показване на бутон за сваляне
+            st.success("PDF отчетът е генериран успешно!")
+            st.download_button(
+                label="📥 Свали PDF отчет",
+                data=pdf_bytes,
+                file_name="patna_konstrukcia_report.pdf",
+                mime="application/pdf"
+            )
         
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {str(e)}")
@@ -834,5 +899,6 @@ st.markdown("""
         <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf">DejaVuSans-Bold.ttf</a></li>
         <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf">DejaVuSans-Oblique.ttf</a></li>
     </ul>
+    Също така се уверете, че имате инсталиран пакета <code>plotly</code> за експорт на графики.
 </div>
 """, unsafe_allow_html=True)
