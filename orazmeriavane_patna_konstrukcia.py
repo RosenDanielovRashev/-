@@ -672,32 +672,40 @@ with col3:
 if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"):
     # Функция за създаване на PDF
     def generate_pdf_report():
-        pdf = FPDF()
+        class PDF(FPDF):
+            def header(self):
+                self.set_font('DejaVu', 'B', 15)
+                self.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
+                self.ln(5)
+                
+            def footer(self):
+                self.set_y(-15)
+                self.set_font('DejaVu', 'I', 8)
+                self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+        
+        # Създаване на PDF обект с поддръжка на кирилица
+        pdf = PDF()
+        pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
+        pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
+        pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
+        pdf.set_font('DejaVu', '', 12)
         pdf.add_page()
         
-        # Добавяне на шрифт с поддръжка на кирилица (Arial Unicode MS или подобен)
-        try:
-            pdf.add_font('ArialUnicode', '', 'arial-unicode-ms.ttf', uni=True)
-            pdf.set_font('ArialUnicode', '', 12)
-        except:
-            # Ако няма кирилски шрифт, използваме стандартен
-            pdf.set_font('Arial', '', 12)
-        
         # Заглавие
-        pdf.set_font('Arial', 'B', 16)
+        pdf.set_font('DejaVu', 'B', 16)
         pdf.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
         pdf.ln(10)
         
         # Дата
-        pdf.set_font('Arial', '', 12)
+        pdf.set_font('DejaVu', '', 12)
         today = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
         pdf.cell(0, 10, f'Дата: {today}', 0, 1)
         pdf.ln(5)
         
         # Списък с избрани страници
-        pdf.set_font('Arial', 'B', 14)
+        pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, 'Включени раздели:', 0, 1)
-        pdf.set_font('Arial', '', 12)
+        pdf.set_font('DejaVu', '', 12)
         
         included_sections = []
         if include_main: included_sections.append("Основна страница")
@@ -713,9 +721,9 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         
         # Основна страница
         if include_main:
-            pdf.set_font('Arial', 'B', 14)
+            pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 10, 'Основна страница - Оразмеряване', 0, 1)
-            pdf.set_font('Arial', '', 12)
+            pdf.set_font('DejaVu', '', 12)
             
             # Общи параметри
             pdf.cell(0, 10, f'Брой пластове: {st.session_state.num_layers}', 0, 1)
@@ -728,11 +736,9 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
             headers = ["Пласт", "Ei (MPa)", "Ee (MPa)", "Ed (MPa)", "h (cm)", "λ"]
             
             # Хедър на таблицата
-            pdf.set_font('Arial', 'B', 12)
             for i, header in enumerate(headers):
                 pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
             pdf.ln()
-            pdf.set_font('Arial', '', 12)
             
             # Данни за редовете
             for i in range(st.session_state.num_layers):
@@ -754,6 +760,72 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
             
             pdf.ln(10)
             
+            # Графики от основната страница
+            if 'hD_point' in st.session_state.layers_data[0] and 'Ed' in st.session_state.layers_data[0]:
+                pdf.set_font('DejaVu', 'B', 14)
+                pdf.cell(0, 10, 'Графики за пластовете', 0, 1)
+                
+                # Създаване на временни файлове за графиките
+                for i, layer in enumerate(st.session_state.layers_data):
+                    if 'hD_point' in layer and 'Ed' in layer and 'Ei' in layer:
+                        fig = go.Figure()
+                        for value, group in data.groupby("Ee_over_Ei"):
+                            group_sorted = group.sort_values("h_over_D")
+                            fig.add_trace(go.Scatter(
+                                x=group_sorted["h_over_D"],
+                                y=group_sorted["Ed_over_Ei"],
+                                mode='lines',
+                                name=f"Ee/Ei = {value:.2f}"
+                            ))
+                        
+                        hD_point = layer['hD_point']
+                        EdEi_point = layer['Ed'] / layer['Ei']
+                        
+                        if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
+                            fig.add_trace(go.Scatter(
+                                x=[hD_point, hD_point],
+                                y=[layer['y_low'], layer['y_high']],
+                                mode='lines',
+                                line=dict(color='purple', dash='dash'),
+                                name=f"Интерполация Ee/Ei: {layer['low_iso']:.2f} - {layer['high_iso']:.2f}"
+                            ))
+                            fig.add_trace(go.Scatter(
+                                x=[hD_point],
+                                y=[EdEi_point],
+                                mode='markers',
+                                marker=dict(color='red', size=12),
+                                name='Резултат'
+                            ))
+                        
+                        fig.update_layout(
+                            title=f"Графика за пласт {i+1}",
+                            xaxis_title="h / D",
+                            yaxis_title="Ed / Ei",
+                            legend_title="Изолинии"
+                        )
+                        
+                        # Запазване на графиката като временен файл
+                        img_path = f"plot_layer_{i}.png"
+                        fig.write_image(img_path)
+                        
+                        # Добавяне на изображението в PDF
+                        pdf.image(img_path, x=10, w=190)
+                        pdf.ln(5)
+                        os.remove(img_path)
+            
+            # Картинки от основната страница
+            image_files = ["5.2. Фиг.png", "5.3. Фиг.png", "5.2. Таблица.png", "5.1. Таблица.png"]
+            pdf.set_font('DejaVu', 'B', 14)
+            pdf.cell(0, 10, 'Референтни изображения', 0, 1)
+            
+            for img_file in image_files:
+                if os.path.exists(img_file):
+                    try:
+                        pdf.image(img_file, x=10, w=190)
+                        pdf.ln(5)
+                    except:
+                        pdf.cell(0, 10, f'Грешка при добавяне на {img_file}', 0, 1)
+            
             # Топлинни параметри
             if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
                 lambda_op = st.session_state.lambda_op_input
@@ -762,9 +834,9 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                 z1 = st.session_state.get('z1_input', 100)
                 z_value = z1 * m_value
                 
-                pdf.set_font('Arial', 'B', 14)
+                pdf.set_font('DejaVu', 'B', 14)
                 pdf.cell(0, 10, 'Топлинни параметри', 0, 1)
-                pdf.set_font('Arial', '', 12)
+                pdf.set_font('DejaVu', '', 12)
                 pdf.cell(0, 10, f'λоп = {lambda_op} kcal/mhg', 0, 1)
                 pdf.cell(0, 10, f'λзп = {lambda_zp} kcal/mhg', 0, 1)
                 pdf.cell(0, 10, f'm = λзп / λоп = {lambda_zp} / {lambda_op} = {m_value:.2f}', 0, 1)
@@ -782,30 +854,22 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                     pdf.ln(10)
                 
                 # Проверка
-                pdf.set_font('Arial', 'B', 14)
+                pdf.set_font('DejaVu', 'B', 14)
                 pdf.cell(0, 10, 'Проверка на изискванията', 0, 1)
-                pdf.set_font('Arial', '', 12)
+                pdf.set_font('DejaVu', '', 12)
                 
                 if all('h' in layer for layer in st.session_state.layers_data):
                     if z_value > sum_h:
-                        pdf.cell(0, 10, 'Условието е изпълнено: z > Σh', 0, 1)
+                        pdf.cell(0, 10, '✅ Условието е изпълнено: z > Σh', 0, 1)
                         pdf.cell(0, 10, f'z = {z_value:.2f} cm > Σh = {sum_h:.2f} cm', 0, 1)
                     else:
-                        pdf.cell(0, 10, 'Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
+                        pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                         pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
-        # Създаване на временен файл
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-        pdf.output(temp_file.name)
+        # Добавяне на другите страници според избора
+        # Тук можете да добавите съдържание от другите страници, ако е необходимо
         
-        # Четене на съдържанието на файла
-        with open(temp_file.name, "rb") as f:
-            pdf_bytes = f.read()
-        
-        # Изтриване на временния файл
-        os.unlink(temp_file.name)
-        
-        return pdf_bytes
+        return pdf.output(dest='S').encode('latin1')
     
     # Генериране и сваляне на PDF
     try:
@@ -824,9 +888,16 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {str(e)}")
 
+# Добавяне на информация за шрифтовете
 st.markdown("""
 <div class="warning-box">
-    <strong>Важно:</strong> За оптимално показване на кирилица в PDF, препоръчваме да използвате 
-    шрифт с поддръжка на кирилица (като Arial Unicode MS) в системата си.
+    <strong>Важно:</strong> За правилно генериране на PDF файлове на кирилица, 
+    моля добавете следните файлове в същата директория като приложението:
+    <ul>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf">DejaVuSans.ttf</a></li>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf">DejaVuSans-Bold.ttf</a></li>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf">DejaVuSans-Oblique.ttf</a></li>
+    </ul>
+    Също така се уверете, че имате инсталиран пакета <code>plotly</code> за експорт на графики.
 </div>
 """, unsafe_allow_html=True)
