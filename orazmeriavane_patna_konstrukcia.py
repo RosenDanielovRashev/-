@@ -698,7 +698,13 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     try:
         # Определяне на основната директория
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        font_dir = os.path.join(base_dir, "main", "fonts")
+        font_dir = os.path.join(base_dir, "fonts")
+        
+        # Проверка дали директорията съществува
+        if not os.path.exists(font_dir):
+            st.error(f"Директорията за шрифтове не съществува: {font_dir}")
+            st.info("Моля, създайте папка 'fonts' и добавете шрифтовете там")
+            return b""
         
         # Проверка дали директорията съществува
         if not os.path.exists(font_dir):
