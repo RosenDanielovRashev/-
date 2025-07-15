@@ -707,12 +707,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             st.info("Моля, създайте папка 'fonts' и добавете шрифтовете там")
             return b""
         
-        # Проверка дали директорията съществува
-        if not os.path.exists(font_dir):
-            st.error(f"Директорията за шрифтове не съществува: {font_dir}")
-            st.info("Моля, създайте папка 'main/fonts' и добавете шрифтовете там")
-            return b""
-        
         # Пътища към файловете
         sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
         bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
@@ -815,32 +809,32 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         
         pdf.ln(10)
         
-        # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
-
         # Диаграми за всички пластове
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Диаграми и изчисления за пластове', 0, 1)
-        pdf.set_font('DejaVu', '', 12)
-        
         for i in range(st.session_state.num_layers):
+            # Добавяне на нова страница за всеки пласт
+            pdf.add_page()
+            
             layer = st.session_state.layers_data[i]
             
             # Добавяне на заглавие за пласта
-            pdf.set_font('DejaVu', 'B', 12)
-            pdf.cell(0, 10, f'Пласт {i+1}', 0, 1)
-            pdf.set_font('DejaVu', '', 10)
+            pdf.set_font('DejaVu', 'B', 16)
+            pdf.cell(0, 10, f'Пласт {i+1}', 0, 1, 'C')
+            pdf.ln(10)
             
             # Добавяне на основните параметри
+            pdf.set_font('DejaVu', 'B', 12)
+            pdf.cell(0, 10, 'Основни параметри:', 0, 1)
+            pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 10, f'Ei = {layer.get("Ei", "-")} MPa', 0, 1)
             pdf.cell(0, 10, f'Ee = {layer.get("Ee", "-")} MPa', 0, 1)
             pdf.cell(0, 10, f'Ed = {layer.get("Ed", "-")} MPa', 0, 1)
             pdf.cell(0, 10, f'h = {layer.get("h", "-")} cm', 0, 1)
             pdf.cell(0, 10, f'λ = {st.session_state.lambda_values[i]}', 0, 1)
-            pdf.ln(5)
+            pdf.ln(10)
             
             # Добавяне на изчисленията, ако са налични
             if i in st.session_state.calculation_messages:
-                pdf.set_font('DejaVu', 'B', 10)
+                pdf.set_font('DejaVu', 'B', 12)
                 pdf.cell(0, 10, 'Изчисления:', 0, 1)
                 pdf.set_font('DejaVu', '', 10)
                 
@@ -848,12 +842,15 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 calculation_lines = st.session_state.calculation_messages[i].split('\n')
                 for line in calculation_lines:
                     if line.strip():  # Пропускаме празните редове
-                        pdf.cell(0, 10, line.strip(), 0, 1)
-            
-            pdf.ln(5)
+                        pdf.multi_cell(0, 10, line.strip())
+                
+                pdf.ln(10)
             
             # Добавяне на диаграмата, ако е налична
             if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
+                pdf.set_font('DejaVu', 'B', 12)
+                pdf.cell(0, 10, 'Диаграма:', 0, 1)
+                
                 # Създаване на фигура
                 fig = go.Figure()
                 for value, group in data.groupby("Ee_over_Ei"):
@@ -901,22 +898,20 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 pdf.image(img_path, x=10, w=190)
                 pdf.ln(5)
                 os.remove(img_path)
-            
-            # Добавяне на разделител между пластовете
-            pdf.set_draw_color(200, 200, 200)
-            pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-            pdf.ln(10)
         
-        # Топлинни параметри
+        # Добавяне на топлинните параметри на нова страница
         if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
+            pdf.add_page()
+            pdf.set_font('DejaVu', 'B', 16)
+            pdf.cell(0, 10, 'Топлинни параметри', 0, 1, 'C')
+            pdf.ln(10)
+            
             lambda_op = st.session_state.lambda_op_input
             lambda_zp = st.session_state.lambda_zp_input
             m_value = lambda_zp / lambda_op
             z1 = st.session_state.get('z1_input', 100)
             z_value = z1 * m_value
             
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, 'Топлинни параметри', 0, 1)
             pdf.set_font('DejaVu', '', 12)
             pdf.cell(0, 10, f'λоп = {lambda_op} kcal/mhg', 0, 1)
             pdf.cell(0, 10, f'λзп = {lambda_zp} kcal/mhg', 0, 1)
@@ -946,31 +941,8 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 else:
                     pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                     pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
-        
-        # Добавяне на изображения от основната страница
-        image_urls = [
-            "https://raw.githubusercontent.com/.../5.2.Фиг.png",
-            "https://raw.githubusercontent.com/.../5.3.Фиг.png",
-            "https://raw.githubusercontent.com/.../5.2.Таблица.png",
-            "https://raw.githubusercontent.com/.../5.1.Таблица.png"
-        ]
-        
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Допълнителни диаграми и таблици', 0, 1)
-        pdf.set_font('DejaVu', '', 12)
-        
-        for i, url in enumerate(image_urls):
-            try:
-                img = download_image(url)
-                img_path = f"image_{i}.png"
-                img.save(img_path)
-                pdf.image(img_path, x=10, w=190)
-                pdf.ln(5)
-                os.remove(img_path)
-            except:
-                pdf.cell(0, 10, f'Грешка при зареждане на изображение {i+1}', 0, 1)
     
-    # Добавете тук другите раздели (фиг9.4, фиг9.6 и т.н.) по същия начин
+    # Добавете тук другите раздели (фиг9.4, фиг9.6 и т.н.) по същия начи
     
     pdf.cleanup_fonts()
     return pdf.output(dest='S')
