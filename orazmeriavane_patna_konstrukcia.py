@@ -936,7 +936,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     # Добавете тук другите раздели (фиг9.4, фиг9.6 и т.н.) по същия начин
     
     pdf.cleanup_fonts()
-    return pdf.output(dest='S').encode('utf-8')
+    return pdf.output(dest='S')
 
 # Генериране на отчет
 st.markdown("---")
