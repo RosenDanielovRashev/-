@@ -675,9 +675,9 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     class PDF(FPDF):
         def __init__(self):
             super().__init__()
-            self.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
-            self.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
-            self.add_font('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
+            self.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
+            self.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
+            self.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
         
         def header(self):
             self.set_font('DejaVu', 'B', 15)
