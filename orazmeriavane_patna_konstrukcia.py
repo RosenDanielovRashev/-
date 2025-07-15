@@ -675,6 +675,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     class PDF(FPDF):
         def __init__(self):
             super().__init__()
+            self.temp_font_files = []  # Запазване на пътищата към временните файлове
             
         def header(self):
             self.set_font('DejaVu', 'B', 15)
@@ -685,31 +686,39 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             self.set_y(-15)
             self.set_font('DejaVu', 'I', 8)
             self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+            
+        def add_font_from_bytes(self, family, style, font_bytes):
+            """Добавя шрифт от байтове чрез временен файл"""
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+                tmp_file.write(font_bytes)
+                tmp_file_path = tmp_file.name
+                self.temp_font_files.append(tmp_file_path)
+                self.add_font(family, style, tmp_file_path)
                 
+        def cleanup_fonts(self):
+            """Изтрива временните шрифтови файлове"""
+            for file_path in self.temp_font_files:
+                try:
+                    os.unlink(file_path)
+                except Exception as e:
+                    st.error(f"Грешка при изтриване на временен файл: {e}")
+
     pdf = PDF()
     
-    # Определяне на пътя до шрифтовете
-    font_dir = "fonts"
-    sans_font_path = os.path.join(font_dir, "DejaVuSans.ttf")
-    bold_font_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
-    italic_font_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
-    
-    # Проверка за съществуване на шрифтовете
-    if not os.path.exists(sans_font_path):
-        st.error(f"Файлът со шрифт '{sans_font_path}' не съществува.")
-        return b""
-    if not os.path.exists(bold_font_path):
-        st.error(f"Файлът со шрифт '{bold_font_path}' не съществува.")
-        return b""
-    if not os.path.exists(italic_font_path):
-        st.error(f"Файлът со шрифт '{italic_font_path}' не съществува.")
-        return b""
-    
-    # Добавяне на шрифтовете
-    pdf.add_font('DejaVu', '', sans_font_path)
-    pdf.add_font('DejaVu', 'B', bold_font_path)
-    pdf.add_font('DejaVu', 'I', italic_font_path)
-    
+    try:
+        # Download fonts at runtime
+        dejavu_sans = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf")
+        dejavu_bold = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf")
+        dejavu_italic = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf")
+        
+        # Добавяне на шрифтове чрез временни файлове
+        pdf.add_font_from_bytes('DejaVu', '', dejavu_sans.getvalue())
+        pdf.add_font_from_bytes('DejaVu', 'B', dejavu_bold.getvalue())
+        pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic.getvalue())
+    except Exception as e:
+        st.error(f"Грешка при зареждане на шрифтове: {e}")
+        return b""  # Връщане на празен byte string при грешка
+
     pdf.set_font('DejaVu', '', 12)
     
     pdf.add_page()
@@ -878,11 +887,34 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 else:
                     pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                     pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
+        
+        # Добавяне на изображения от основната страница
+        image_urls = [
+            "https://raw.githubusercontent.com/.../5.2.Фиг.png",
+            "https://raw.githubusercontent.com/.../5.3.Фиг.png",
+            "https://raw.githubusercontent.com/.../5.2.Таблица.png",
+            "https://raw.githubusercontent.com/.../5.1.Таблица.png"
+        ]
+        
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, 'Допълнителни диаграми и таблици', 0, 1)
+        pdf.set_font('DejaVu', '', 12)
+        
+        for i, url in enumerate(image_urls):
+            try:
+                img = download_image(url)
+                img_path = f"image_{i}.png"
+                img.save(img_path)
+                pdf.image(img_path, x=10, w=190)
+                pdf.ln(5)
+                os.remove(img_path)
+            except:
+                pdf.cell(0, 10, f'Грешка при зареждане на изображение {i+1}', 0, 1)
     
-    # Добавяне на другите раздели тук...
-    # [Кодът за фиг9.4, фиг9.6 и т.н. ще бъде подобен]
+    # Добавете тук другите раздели (фиг9.4, фиг9.6 и т.н.) по същия начин
     
-    return pdf.output(dest='S').encode('latin1')
+    pdf.cleanup_fonts()
+    return pdf.output(dest='S').encode('utf-8')
 
 # Генериране на отчет
 st.markdown("---")
