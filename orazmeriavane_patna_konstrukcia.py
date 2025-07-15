@@ -666,18 +666,26 @@ def fig_to_image(fig):
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
         
 # Функция за сваляне на изображение от URL
-def download_image(url):
+def download_font(url):
     response = requests.get(url)
-    return Image.open(BytesIO(response.content))
+    return BytesIO(response.content)
 
 # Генериране на PDF отчет
 def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig97, include_tension, include_intermediate):
     class PDF(FPDF):
         def __init__(self):
             super().__init__()
-            self.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-            self.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
-            self.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
+            try:
+                # Download fonts at runtime
+                dejavu_sans = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf")
+                dejavu_bold = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf")
+                dejavu_italic = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf")
+                
+                self.add_font('DejaVu', '', fdata=dejavu_sans.getvalue())
+                self.add_font('DejaVu', 'B', fdata=dejavu_bold.getvalue())
+                self.add_font('DejaVu', 'I', fdata=dejavu_italic.getvalue())
+            except Exception as e:
+                st.error(f"Грешка при зареждане на шрифтове: {e}")
         
         def header(self):
             self.set_font('DejaVu', 'B', 15)
@@ -688,11 +696,8 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             self.set_y(-15)
             self.set_font('DejaVu', 'I', 8)
             self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
-    
+
     pdf = PDF()
-    pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-    pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
-    pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
     pdf.set_font('DejaVu', '', 12)
     
     pdf.add_page()
