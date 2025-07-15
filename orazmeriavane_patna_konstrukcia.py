@@ -649,6 +649,7 @@ if all('h' in layer for layer in st.session_state.layers_data):
         """)
 
 # Заменете целия раздел за PDF отчет с този код:
+
 st.markdown("---")
 st.subheader("Генериране на отчет")
 
@@ -681,38 +682,32 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                 self.set_y(-15)
                 self.set_font('DejaVu', 'I', 8)
                 self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
-
+        
         # Създаване на PDF обект с поддръжка на кирилица
         pdf = PDF()
-        try:
-            pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-            pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
-            pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
-        except:
-            st.warning("Шрифтовете DejaVu не са намерени. Използва се стандартен шрифт.")
-            pdf.add_font('Arial', '', 'arial.ttf', uni=True)
-            pdf.add_font('Arial', 'B', 'arialbd.ttf', uni=True)
-            pdf.add_font('Arial', 'I', 'ariali.ttf', uni=True)
-
+        pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
+        pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
+        pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
         pdf.set_font('DejaVu', '', 12)
+        
         pdf.add_page()
-
+        
         # Заглавие
         pdf.set_font('DejaVu', 'B', 16)
         pdf.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
         pdf.ln(10)
-
+        
         # Дата
         pdf.set_font('DejaVu', '', 12)
         today = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
         pdf.cell(0, 10, f'Дата: {today}', 0, 1)
         pdf.ln(5)
-
+        
         # Списък с избрани страници
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, 'Включени раздели:', 0, 1)
         pdf.set_font('DejaVu', '', 12)
-
+        
         included_sections = []
         if include_main: included_sections.append("Основна страница")
         if include_fig94: included_sections.append("Ꚍμ/p (фиг9.4)")
@@ -720,54 +715,52 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         if include_fig97: included_sections.append("Ꚍμ/p (фиг9.7)")
         if include_tension: included_sections.append("Опън в покритието")
         if include_intermediate: included_sections.append("Опън в междинен пласт")
-
+        
         for section in included_sections:
             pdf.cell(0, 10, f'• {section}', 0, 1)
         pdf.ln(10)
-
+        
         # Основна страница
         if include_main:
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 10, 'Основна страница - Оразмеряване', 0, 1)
             pdf.set_font('DejaVu', '', 12)
-
+            
             # Общи параметри
             pdf.cell(0, 10, f'Брой пластове: {st.session_state.num_layers}', 0, 1)
             pdf.cell(0, 10, f'D: {st.session_state.final_D} cm', 0, 1)
             pdf.cell(0, 10, f'Осова тежест: {st.session_state.axle_load} kN', 0, 1)
             pdf.ln(5)
-
+            
             # Данни за пластовете
             col_widths = [20, 30, 30, 30, 30, 30]
             headers = ["Пласт", "Ei (MPa)", "Ee (MPa)", "Ed (MPa)", "h (cm)", "λ"]
-
+            
             # Хедър на таблицата
-            pdf.set_font('DejaVu', 'B', 10)
             for i, header in enumerate(headers):
                 pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
             pdf.ln()
-
+            
             # Данни за редовете
-            pdf.set_font('DejaVu', '', 10)
             for i in range(st.session_state.num_layers):
                 layer = st.session_state.layers_data[i]
                 lambda_val = st.session_state.lambda_values[i]
-
+                
                 Ei_val = round(layer.get('Ei', 0)) if 'Ei' in layer else '-'
                 Ee_val = round(layer.get('Ee', 0)) if 'Ee' in layer else '-'
                 Ed_val = round(layer.get('Ed', 0)) if 'Ed' in layer else '-'
-                h_val = f"{layer.get('h', '-'):.2f}" if layer.get('h') is not None else '-'
-
+                h_val = layer.get('h', '-')
+                
                 pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
                 pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
                 pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
                 pdf.cell(col_widths[3], 10, str(Ed_val), 1, 0, 'C')
                 pdf.cell(col_widths[4], 10, str(h_val), 1, 0, 'C')
-                pdf.cell(col_widths[5], 10, f"{lambda_val:.2f}", 1, 0, 'C')
+                pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
                 pdf.ln()
-
+            
             pdf.ln(10)
-
+            
             # Топлинни параметри
             if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
                 lambda_op = st.session_state.lambda_op_input
@@ -775,7 +768,7 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                 m_value = lambda_zp / lambda_op
                 z1 = st.session_state.get('z1_input', 100)
                 z_value = z1 * m_value
-
+                
                 pdf.set_font('DejaVu', 'B', 14)
                 pdf.cell(0, 10, 'Топлинни параметри', 0, 1)
                 pdf.set_font('DejaVu', '', 12)
@@ -785,21 +778,21 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                 pdf.cell(0, 10, f'z₁ = {z1} cm (дълбочина на замръзване в открито поле)', 0, 1)
                 pdf.cell(0, 10, f'z = z₁ * m = {z1} * {m_value:.2f} = {z_value:.2f} cm', 0, 1)
                 pdf.ln(10)
-
+                
                 # R₀ изчисление
                 if all('h' in layer for layer in st.session_state.layers_data):
                     sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
                     sum_lambda = sum(st.session_state.lambda_values)
                     R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
-
+                    
                     pdf.cell(0, 10, f'R₀ = Σh / Σλ = {sum_h:.2f} / {sum_lambda:.2f} = {R0:.2f} cm', 0, 1)
                     pdf.ln(10)
-
+                
                 # Проверка
                 pdf.set_font('DejaVu', 'B', 14)
                 pdf.cell(0, 10, 'Проверка на изискванията', 0, 1)
                 pdf.set_font('DejaVu', '', 12)
-
+                
                 if all('h' in layer for layer in st.session_state.layers_data):
                     if z_value > sum_h:
                         pdf.cell(0, 10, '✅ Условието е изпълнено: z > Σh', 0, 1)
@@ -807,31 +800,39 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                     else:
                         pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                         pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
-
-        return pdf.output(dest='S')  # Връщаме като bytearray
-
+        
+        # Добавете другите раздели тук по същия начин...
+        # Можете да добавите специфично съдържание за всяка страница
+        
+        return pdf.output(dest='S')
+    
     # Генериране и сваляне на PDF
     try:
-        with st.spinner('Генериране на PDF отчет...'):
-            pdf_data = generate_pdf_report()
-
-            # Показване на бутон за сваляне
-            st.success("PDF отчетът е генериран успешно!")
-            st.download_button(
-                label="📥 Свали PDF отчет",
-                data=pdf_data,
-                file_name=f"patna_konstrukcia_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
-                mime="application/pdf"
-            )
-
+        pdf_bytes = generate_pdf_report()
+        
+        # Създаване на временен файл
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+            tmpfile.write(pdf_bytes)
+            tmpfile.flush()
+            
+        # Показване на бутон за сваляне
+        with open(tmpfile.name, "rb") as f:
+            base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+            download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="patna_konstrukcia_report.pdf">Свали PDF отчет</a>'
+            st.markdown(download_link, unsafe_allow_html=True)
+        
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {str(e)}")
-        st.error("Уверете се, че имате инсталирани кирилски шрифтове (DejaVu или Arial Unicode)")
 
 # Добавяне на информация за шрифтовете
 st.markdown("""
 <div class="warning-box">
     <strong>Важно:</strong> За правилно генериране на PDF файлове на кирилица, 
-    моля инсталирайте кирилски шрифтове като DejaVu или Arial Unicode на вашата система.
+    моля добавете следните файлове в същата директория като приложението:
+    <ul>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf">DejaVuSans.ttf</a></li>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf">DejaVuSans-Bold.ttf</a></li>
+        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf">DejaVuSans-Oblique.ttf</a></li>
+    </ul>
 </div>
 """, unsafe_allow_html=True)
