@@ -673,6 +673,12 @@ def download_image(url):
 # Генериране на PDF отчет
 def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig97, include_tension, include_intermediate):
     class PDF(FPDF):
+        def __init__(self):
+            super().__init__()
+            self.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+            self.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
+            self.add_font('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
+        
         def header(self):
             self.set_font('DejaVu', 'B', 15)
             self.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
