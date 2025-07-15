@@ -649,7 +649,6 @@ if all('h' in layer for layer in st.session_state.layers_data):
         """)
 
 # Заменете целия раздел за PDF отчет с този код:
-
 st.markdown("---")
 st.subheader("Генериране на отчет")
 
@@ -809,7 +808,8 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                         pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                         pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
 
-        return pdf.output(dest='S')  # Без .encode()
+        pdf_data = pdf.output(dest='S')
+        return pdf_data.encode('latin1')
 
     # Генериране и сваляне на PDF
     try:
