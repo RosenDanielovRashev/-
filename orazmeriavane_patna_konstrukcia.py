@@ -8,6 +8,7 @@ import tempfile
 from datetime import datetime
 import base64  # Добавено за PDF генериране
 
+
 st.set_page_config(layout="wide")
 
 st.markdown(
