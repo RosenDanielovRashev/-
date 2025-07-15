@@ -902,10 +902,10 @@ for i in range(st.session_state.num_layers):
         pdf.ln(5)
         os.remove(img_path)
     
-    # Добавяне на разделител между пластовете
-    pdf.set_draw_color(200, 200, 200)
-    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-    pdf.ln(10)
+        # Добавяне на разделител между пластовете
+        pdf.set_draw_color(200, 200, 200)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(10)
         
         # Топлинни параметри
         if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
