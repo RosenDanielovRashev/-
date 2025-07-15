@@ -665,11 +665,6 @@ def fig_to_image(fig):
         # Return a blank placeholder image
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
         
-# Функция за сваляне на изображение от URL
-def download_font(url):
-    response = requests.get(url)
-    return BytesIO(response.content)
-
 # Генериране на PDF отчет
 def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig97, include_tension, include_intermediate):
     class PDF(FPDF):
@@ -706,10 +701,14 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     pdf = PDF()
     
     try:
-        # Download fonts at runtime
-        dejavu_sans = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf")
-        dejavu_bold = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf")
-        dejavu_italic = download_font("https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf")
+        # Load local font files
+        font_dir = "main/fonts/"
+        with open(font_dir + "DejaVuSans.ttf", "rb") as f:
+            dejavu_sans = BytesIO(f.read())
+        with open(font_dir + "DejaVuSans-Bold.ttf", "rb") as f:
+            dejavu_bold = BytesIO(f.read())
+        with open(font_dir + "DejaVuSans-Oblique.ttf", "rb") as f:
+            dejavu_italic = BytesIO(f.read())
         
         # Добавяне на шрифтове чрез временни файлове
         pdf.add_font_from_bytes('DejaVu', '', dejavu_sans.getvalue())
@@ -717,6 +716,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic.getvalue())
     except Exception as e:
         st.error(f"Грешка при зареждане на шрифтове: {e}")
+        st.error("Моля, уверете се че файловете за шрифтовете са в папка main/fonts/")
         return b""  # Връщане на празен byte string при грешка
 
     pdf.set_font('DejaVu', '', 12)
@@ -961,13 +961,7 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
 
 # Добавяне на информация за шрифтовете
 st.markdown("""
-<div class="warning-box">
-    <strong>Важно:</strong> За правилно генериране на PDF файлове на кирилица, 
-    моля добавете следните файлове в същата директория като приложението:
-    <ul>
-        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf">DejaVuSans.ttf</a></li>
-        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf">DejaVuSans-Bold.ttf</a></li>
-        <li><a href="https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf">DejaVuSans-Oblique.ttf</a></li>
-    </ul>
+<div class="info-box">
+    <strong>Информация:</strong> Шрифтовете се зареждат локално от папка main/fonts/
 </div>
 """, unsafe_allow_html=True)
