@@ -685,9 +685,9 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         # Създаване на PDF обект с поддръжка на кирилица
         pdf = PDF()
         try:
-            pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-            pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
-            pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
+            pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+            pdf.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
+            pdf.add_font('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
         except:
             st.warning("Шрифтовете DejaVu не са намерени. Използва се стандартен шрифт.")
             pdf.add_font('Arial', '', 'arial.ttf', uni=True)
@@ -808,19 +808,18 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                         pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                         pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
 
-        pdf_data = pdf.output(dest='S')
-        return pdf_data.encode('latin1')
+        return pdf.output(dest='S')  # Връщаме като bytearray
 
     # Генериране и сваляне на PDF
     try:
         with st.spinner('Генериране на PDF отчет...'):
-            pdf_bytes = generate_pdf_report()
+            pdf_data = generate_pdf_report()
 
             # Показване на бутон за сваляне
             st.success("PDF отчетът е генериран успешно!")
             st.download_button(
                 label="📥 Свали PDF отчет",
-                data=pdf_bytes,
+                data=pdf_data,
                 file_name=f"patna_konstrukcia_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                 mime="application/pdf"
             )
