@@ -653,10 +653,18 @@ if all('h' in layer for layer in st.session_state.layers_data):
         """)
 
 # Функция за конвертиране на Plotly фигура в изображение
+# Updated fig_to_image function
 def fig_to_image(fig):
-    img_bytes = pio.to_image(fig, format="png", width=800, height=600)
-    return Image.open(BytesIO(img_bytes))
-
+    try:
+        # Try using Kaleido if available
+        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+        return Image.open(BytesIO(img_bytes))
+    except Exception as e:
+        st.error(f"Грешка при генериране на изображение: {e}")
+        st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
+        # Return a blank placeholder image
+        return Image.new('RGB', (800, 600), color=(255, 255, 255))
+        
 # Функция за сваляне на изображение от URL
 def download_image(url):
     response = requests.get(url)
