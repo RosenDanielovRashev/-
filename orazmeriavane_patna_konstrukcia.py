@@ -685,9 +685,16 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         
         # Създаване на PDF обект с поддръжка на кирилица
         pdf = PDF()
-        pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
-        pdf.add_font('DejaVu', 'B', 'fonts/DejaVuSans-Bold.ttf', uni=True)
-        pdf.add_font('DejaVu', 'I', 'fonts/DejaVuSans-Oblique.ttf', uni=True)
+        try:
+            pdf.add_font('DejaVu', '', 'DejaVuSans.ttf', uni=True)
+            pdf.add_font('DejaVu', 'B', 'DejaVuSans-Bold.ttf', uni=True)
+            pdf.add_font('DejaVu', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
+        except:
+            st.warning("Шрифтовете DejaVu не са намерени. Използва се стандартен шрифт.")
+            pdf.add_font('Arial', '', 'arial.ttf', uni=True)
+            pdf.add_font('Arial', 'B', 'arialbd.ttf', uni=True)
+            pdf.add_font('Arial', 'I', 'ariali.ttf', uni=True)
+            
         pdf.set_font('DejaVu', '', 12)
         pdf.add_page()
         
@@ -736,11 +743,13 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
             headers = ["Пласт", "Ei (MPa)", "Ee (MPa)", "Ed (MPa)", "h (cm)", "λ"]
             
             # Хедър на таблицата
+            pdf.set_font('DejaVu', 'B', 10)
             for i, header in enumerate(headers):
                 pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
             pdf.ln()
             
             # Данни за редовете
+            pdf.set_font('DejaVu', '', 10)
             for i in range(st.session_state.num_layers):
                 layer = st.session_state.layers_data[i]
                 lambda_val = st.session_state.lambda_values[i]
@@ -748,36 +757,17 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                 Ei_val = round(layer.get('Ei', 0)) if 'Ei' in layer else '-'
                 Ee_val = round(layer.get('Ee', 0)) if 'Ee' in layer else '-'
                 Ed_val = round(layer.get('Ed', 0)) if 'Ed' in layer else '-'
-                h_val = layer.get('h', '-')
+                h_val = f"{layer.get('h', '-'):.2f}" if layer.get('h') is not None else '-'
                 
                 pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
                 pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
                 pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
                 pdf.cell(col_widths[3], 10, str(Ed_val), 1, 0, 'C')
                 pdf.cell(col_widths[4], 10, str(h_val), 1, 0, 'C')
-                pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
+                pdf.cell(col_widths[5], 10, f"{lambda_val:.2f}", 1, 0, 'C')
                 pdf.ln()
             
             pdf.ln(10)
-            
-            # Текстова репрезентация на графиките
-            for i, layer in enumerate(st.session_state.layers_data):
-                if 'hD_point' in layer and 'Ed' in layer and 'Ei' in layer:
-                    pdf.set_font('DejaVu', 'B', 12)
-                    pdf.cell(0, 10, f'Данни за пласт {i+1}:', 0, 1)
-                    pdf.set_font('DejaVu', '', 10)
-                    
-                    hD_point = layer['hD_point']
-                    EdEi_point = layer['Ed'] / layer['Ei']
-                    
-                    pdf.cell(0, 10, f'- h/D = {hD_point:.4f}', 0, 1)
-                    pdf.cell(0, 10, f'- Ed/Ei = {EdEi_point:.4f}', 0, 1)
-                    
-                    if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
-                        pdf.cell(0, 10, f'- Интерполация между Ee/Ei = {layer["low_iso"]:.4f} и Ee/Ei = {layer["high_iso"]:.4f}', 0, 1)
-                        pdf.cell(0, 10, f'- Стойности на изолиниите: y_low = {layer["y_low"]:.4f}, y_high = {layer["y_high"]:.4f}', 0, 1)
-                    
-                    pdf.ln(5)
             
             # Топлинни параметри
             if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
@@ -819,10 +809,7 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
                         pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                         pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
-        # Добавяне на другите страници според избора
-        # Тук можете да добавите съдържание от другите страници, ако е необходимо
-        
-        return pdf.output(dest='S')
+        return pdf.output(dest='S').encode('latin-1')
     
     # Генериране и сваляне на PDF
     try:
@@ -834,22 +821,18 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
             st.download_button(
                 label="📥 Свали PDF отчет",
                 data=pdf_bytes,
-                file_name="patna_konstrukcia_report.pdf",
+                file_name=f"patna_konstrukcia_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf",
                 mime="application/pdf"
             )
         
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {str(e)}")
+        st.error("Уверете се, че имате инсталирани кирилски шрифтове (DejaVu или Arial Unicode)")
 
 # Добавяне на информация за шрифтовете
 st.markdown("""
 <div class="warning-box">
     <strong>Важно:</strong> За правилно генериране на PDF файлове на кирилица, 
-    моля добавете следните файлове в поддиректория 'fonts' в същата директория като приложението:
-    <ul>
-        <li>DejaVuSans.ttf</li>
-        <li>DejaVuSans-Bold.ttf</li>
-        <li>DejaVuSans-Oblique.ttf</li>
-    </ul>
+    моля инсталирайте кирилски шрифтове като DejaVu или Arial Unicode на вашата система.
 </div>
 """, unsafe_allow_html=True)
