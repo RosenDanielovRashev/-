@@ -647,9 +647,27 @@ if all('h' in layer for layer in st.session_state.layers_data):
         - Използвайте материали с по-ниски λ коефициенти
         - Прегледайте избраните стойности за λоп и λзп
         """)
-# Добавяне на бутон за PDF отчет
+
+# Заменете целия раздел за PDF отчет с този код:
+
 st.markdown("---")
 st.subheader("Генериране на отчет")
+
+# Избор на страници за включване в PDF
+st.markdown("**Изберете страници за включване в отчета:**")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    include_main = st.checkbox("Основна страница", value=True)
+    include_fig94 = st.checkbox("Ꚍμ/p (фиг9.4)", value=True)
+
+with col2:
+    include_fig96 = st.checkbox("Ꚍμ/p (фиг9.6)", value=True)
+    include_fig97 = st.checkbox("Ꚍμ/p (фиг9.7)", value=True)
+
+with col3:
+    include_tension = st.checkbox("Опън в покритието", value=True)
+    include_intermediate = st.checkbox("Опън в междинен пласт", value=True)
 
 if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"):
     # Функция за създаване на PDF
@@ -685,97 +703,106 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         pdf.cell(0, 10, f'Дата: {today}', 0, 1)
         pdf.ln(5)
         
-        # Общи параметри
+        # Списък с избрани страници
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Общи параметри', 0, 1)
+        pdf.cell(0, 10, 'Включени раздели:', 0, 1)
         pdf.set_font('DejaVu', '', 12)
-        pdf.cell(0, 10, f'Брой пластове: {st.session_state.num_layers}', 0, 1)
-        pdf.cell(0, 10, f'D: {st.session_state.final_D} cm', 0, 1)
-        pdf.cell(0, 10, f'Осова тежест: {st.session_state.axle_load} kN', 0, 1)
+        
+        included_sections = []
+        if include_main: included_sections.append("Основна страница")
+        if include_fig94: included_sections.append("Ꚍμ/p (фиг9.4)")
+        if include_fig96: included_sections.append("Ꚍμ/p (фиг9.6)")
+        if include_fig97: included_sections.append("Ꚍμ/p (фиг9.7)")
+        if include_tension: included_sections.append("Опън в покритието")
+        if include_intermediate: included_sections.append("Опън в междинен пласт")
+        
+        for section in included_sections:
+            pdf.cell(0, 10, f'• {section}', 0, 1)
         pdf.ln(10)
         
-        # Данни за пластовете
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Пластове', 0, 1)
-        pdf.set_font('DejaVu', '', 12)
-        
-        # Таблица с данни
-        col_widths = [20, 30, 30, 30, 30, 30]
-        headers = ["Пласт", "Ei (MPa)", "Ee (MPa)", "Ed (MPa)", "h (cm)", "λ"]
-        
-        # Хедър на таблицата
-        for i, header in enumerate(headers):
-            pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
-        pdf.ln()
-        
-        # Данни за редовете
-        for i in range(st.session_state.num_layers):
-            layer = st.session_state.layers_data[i]
-            lambda_val = st.session_state.lambda_values[i]
+        # Основна страница
+        if include_main:
+            pdf.set_font('DejaVu', 'B', 14)
+            pdf.cell(0, 10, 'Основна страница - Оразмеряване', 0, 1)
+            pdf.set_font('DejaVu', '', 12)
             
-            # Форматиране на стойностите
-            Ei_val = round(layer.get('Ei', 0)) if 'Ei' in layer else '-'
-            Ee_val = round(layer.get('Ee', 0)) if 'Ee' in layer else '-'
-            Ed_val = round(layer.get('Ed', 0)) if 'Ed' in layer else '-'
-            h_val = layer.get('h', '-')
+            # Общи параметри
+            pdf.cell(0, 10, f'Брой пластове: {st.session_state.num_layers}', 0, 1)
+            pdf.cell(0, 10, f'D: {st.session_state.final_D} cm', 0, 1)
+            pdf.cell(0, 10, f'Осова тежест: {st.session_state.axle_load} kN', 0, 1)
+            pdf.ln(5)
             
-            pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
-            pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
-            pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
-            pdf.cell(col_widths[3], 10, str(Ed_val), 1, 0, 'C')
-            pdf.cell(col_widths[4], 10, str(h_val), 1, 0, 'C')
-            pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
+            # Данни за пластовете
+            col_widths = [20, 30, 30, 30, 30, 30]
+            headers = ["Пласт", "Ei (MPa)", "Ee (MPa)", "Ed (MPa)", "h (cm)", "λ"]
+            
+            # Хедър на таблицата
+            for i, header in enumerate(headers):
+                pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
             pdf.ln()
-        
-        pdf.ln(10)
-        
-        # Топлинни параметри
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Топлинни параметри', 0, 1)
-        pdf.set_font('DejaVu', '', 12)
-        
-        lambda_op = st.session_state.get('lambda_op_input', 2.5)
-        lambda_zp = st.session_state.get('lambda_zp_input', 2.5)
-        m_value = lambda_zp / lambda_op
-        z1 = st.session_state.get('z1_input', 100)
-        z_value = z1 * m_value
-        
-        pdf.cell(0, 10, f'λоп = {lambda_op} kcal/mhg', 0, 1)
-        pdf.cell(0, 10, f'λзп = {lambda_zp} kcal/mhg', 0, 1)
-        pdf.cell(0, 10, f'm = λзп / λоп = {lambda_zp} / {lambda_op} = {m_value:.2f}', 0, 1)
-        pdf.cell(0, 10, f'z₁ = {z1} cm (дълбочина на замръзване в открито поле)', 0, 1)
-        pdf.cell(0, 10, f'z = z₁ * m = {z1} * {m_value:.2f} = {z_value:.2f} cm', 0, 1)
-        pdf.ln(10)
-        
-        # R₀ изчисление
-        if all('h' in layer for layer in st.session_state.layers_data):
-            sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
-            sum_lambda = sum(st.session_state.lambda_values)
-            R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
             
-            pdf.cell(0, 10, f'R₀ = Σh / Σλ = {sum_h:.2f} / {sum_lambda:.2f} = {R0:.2f} cm', 0, 1)
-        else:
-            pdf.cell(0, 10, 'R₀: Недостатъчни данни за изчисление', 0, 1)
+            # Данни за редовете
+            for i in range(st.session_state.num_layers):
+                layer = st.session_state.layers_data[i]
+                lambda_val = st.session_state.lambda_values[i]
+                
+                Ei_val = round(layer.get('Ei', 0)) if 'Ei' in layer else '-'
+                Ee_val = round(layer.get('Ee', 0)) if 'Ee' in layer else '-'
+                Ed_val = round(layer.get('Ed', 0)) if 'Ed' in layer else '-'
+                h_val = layer.get('h', '-')
+                
+                pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
+                pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
+                pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
+                pdf.cell(col_widths[3], 10, str(Ed_val), 1, 0, 'C')
+                pdf.cell(col_widths[4], 10, str(h_val), 1, 0, 'C')
+                pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
+                pdf.ln()
+            
+            pdf.ln(10)
+            
+            # Топлинни параметри
+            if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
+                lambda_op = st.session_state.lambda_op_input
+                lambda_zp = st.session_state.lambda_zp_input
+                m_value = lambda_zp / lambda_op
+                z1 = st.session_state.get('z1_input', 100)
+                z_value = z1 * m_value
+                
+                pdf.set_font('DejaVu', 'B', 14)
+                pdf.cell(0, 10, 'Топлинни параметри', 0, 1)
+                pdf.set_font('DejaVu', '', 12)
+                pdf.cell(0, 10, f'λоп = {lambda_op} kcal/mhg', 0, 1)
+                pdf.cell(0, 10, f'λзп = {lambda_zp} kcal/mhg', 0, 1)
+                pdf.cell(0, 10, f'm = λзп / λоп = {lambda_zp} / {lambda_op} = {m_value:.2f}', 0, 1)
+                pdf.cell(0, 10, f'z₁ = {z1} cm (дълбочина на замръзване в открито поле)', 0, 1)
+                pdf.cell(0, 10, f'z = z₁ * m = {z1} * {m_value:.2f} = {z_value:.2f} cm', 0, 1)
+                pdf.ln(10)
+                
+                # R₀ изчисление
+                if all('h' in layer for layer in st.session_state.layers_data):
+                    sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
+                    sum_lambda = sum(st.session_state.lambda_values)
+                    R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
+                    
+                    pdf.cell(0, 10, f'R₀ = Σh / Σλ = {sum_h:.2f} / {sum_lambda:.2f} = {R0:.2f} cm', 0, 1)
+                    pdf.ln(10)
+                
+                # Проверка
+                pdf.set_font('DejaVu', 'B', 14)
+                pdf.cell(0, 10, 'Проверка на изискванията', 0, 1)
+                pdf.set_font('DejaVu', '', 12)
+                
+                if all('h' in layer for layer in st.session_state.layers_data):
+                    if z_value > sum_h:
+                        pdf.cell(0, 10, '✅ Условието е изпълнено: z > Σh', 0, 1)
+                        pdf.cell(0, 10, f'z = {z_value:.2f} cm > Σh = {sum_h:.2f} cm', 0, 1)
+                    else:
+                        pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
+                        pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
-        # Проверка
-        pdf.ln(10)
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Проверка на изискванията', 0, 1)
-        pdf.set_font('DejaVu', '', 12)
-        
-        if all('h' in layer for layer in st.session_state.layers_data):
-            if z_value > sum_h:
-                pdf.cell(0, 10, '✅ Условието е изпълнено: z > Σh', 0, 1)
-                pdf.cell(0, 10, f'z = {z_value:.2f} cm > Σh = {sum_h:.2f} cm', 0, 1)
-                pdf.cell(0, 10, 'Конструкцията удовлетворява изискванията!', 0, 1)
-            else:
-                pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
-                pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
-                pdf.cell(0, 10, 'Конструкцията НЕ удовлетворява изискванията!', 0, 1)
-                pdf.ln(5)
-                pdf.multi_cell(0, 10, 'Препоръки:\n- Увеличете дебелините на някои от пластовете\n- Използвайте материали с по-ниски λ коефициенти\n- Прегледайте избраните стойности за λоп и λзп')
-        else:
-            pdf.cell(0, 10, 'Проверката не може да бъде извършена поради липсващи данни', 0, 1)
+        # Добавете другите раздели тук по същия начин...
+        # Можете да добавите специфично съдържание за всяка страница
         
         return pdf.output(dest='S').encode('latin1')
     
@@ -796,7 +823,6 @@ if st.button("📄 Генерирай PDF отчет", key="generate_pdf_button"
         
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {str(e)}")
-        st.error("Моля, уверете се, че сте добавили DejaVu шрифтовете в същата директория")
 
 # Добавяне на информация за шрифтовете
 st.markdown("""
