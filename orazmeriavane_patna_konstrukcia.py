@@ -702,7 +702,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     
     try:
         # Load local font files
-        font_dir = "main/fonts"
+        font_dir = "main/fonts/"
         with open(font_dir + "DejaVuSans.ttf", "rb") as f:
             dejavu_sans = BytesIO(f.read())
         with open(font_dir + "DejaVuSans-Bold.ttf", "rb") as f:
