@@ -814,61 +814,95 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         
         pdf.ln(10)
         
-        # Диаграми за всички пластове
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Диаграми за пластове', 0, 1)
-        pdf.set_font('DejaVu', '', 12)
+# Диаграми за всички пластове
+pdf.set_font('DejaVu', 'B', 14)
+pdf.cell(0, 10, 'Диаграми и изчисления за пластове', 0, 1)
+pdf.set_font('DejaVu', '', 12)
+
+for i in range(st.session_state.num_layers):
+    layer = st.session_state.layers_data[i]
+    
+    # Добавяне на заглавие за пласта
+    pdf.set_font('DejaVu', 'B', 12)
+    pdf.cell(0, 10, f'Пласт {i+1}', 0, 1)
+    pdf.set_font('DejaVu', '', 10)
+    
+    # Добавяне на основните параметри
+    pdf.cell(0, 10, f'Ei = {layer.get("Ei", "-")} MPa', 0, 1)
+    pdf.cell(0, 10, f'Ee = {layer.get("Ee", "-")} MPa', 0, 1)
+    pdf.cell(0, 10, f'Ed = {layer.get("Ed", "-")} MPa', 0, 1)
+    pdf.cell(0, 10, f'h = {layer.get("h", "-")} cm', 0, 1)
+    pdf.cell(0, 10, f'λ = {st.session_state.lambda_values[i]}', 0, 1)
+    pdf.ln(5)
+    
+    # Добавяне на изчисленията, ако са налични
+    if i in st.session_state.calculation_messages:
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.cell(0, 10, 'Изчисления:', 0, 1)
+        pdf.set_font('DejaVu', '', 10)
         
-        for i in range(st.session_state.num_layers):
-            layer = st.session_state.layers_data[i]
-            if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
-                # Създаване на фигура
-                fig = go.Figure()
-                for value, group in data.groupby("Ee_over_Ei"):
-                    group_sorted = group.sort_values("h_over_D")
-                    fig.add_trace(go.Scatter(
-                        x=group_sorted["h_over_D"],
-                        y=group_sorted["Ed_over_Ei"],
-                        mode='lines',
-                        name=f"Ee/Ei = {value:.2f}"
-                    ))
-                
-                hD_point = layer['hD_point']
-                EdEi_point = layer['Ed'] / layer['Ei']
-                
-                if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
-                    # Добавяне на интерполационна линия
-                    fig.add_trace(go.Scatter(
-                        x=[hD_point, hD_point],
-                        y=[layer['y_low'], layer['y_high']],
-                        mode='lines',
-                        line=dict(color='purple', dash='dash'),
-                        name=f"Интерполация Ee/Ei: {layer['low_iso']:.2f} - {layer['high_iso']:.2f}"
-                    ))
-                    fig.add_trace(go.Scatter(
-                        x=[hD_point],
-                        y=[EdEi_point],
-                        mode='markers',
-                        marker=dict(color='red', size=12),
-                        name='Резултат'
-                    ))
-                
-                fig.update_layout(
-                    title=f"Ed / Ei в зависимост от h / D за пласт {i+1}",
-                    xaxis_title="h / D",
-                    yaxis_title="Ed / Ei",
-                    legend_title="Изолинии",
-                    width=800,
-                    height=600
-                )
-                
-                # Конвертиране на фигурата в изображение и добавяне към PDF
-                img = fig_to_image(fig)
-                img_path = f"plot_layer_{i}.png"
-                img.save(img_path)
-                pdf.image(img_path, x=10, w=190)
-                pdf.ln(5)
-                os.remove(img_path)
+        # Разделяме съобщението на редове и ги добавяме едно по едно
+        calculation_lines = st.session_state.calculation_messages[i].split('\n')
+        for line in calculation_lines:
+            if line.strip():  # Пропускаме празните редове
+                pdf.cell(0, 10, line.strip(), 0, 1)
+    
+    pdf.ln(5)
+    
+        # Добавяне на диаграмата, ако е налична
+        if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
+            # Създаване на фигура
+            fig = go.Figure()
+            for value, group in data.groupby("Ee_over_Ei"):
+                group_sorted = group.sort_values("h_over_D")
+                fig.add_trace(go.Scatter(
+                    x=group_sorted["h_over_D"],
+                    y=group_sorted["Ed_over_Ei"],
+                    mode='lines',
+                    name=f"Ee/Ei = {value:.2f}"
+                ))
+            
+            hD_point = layer['hD_point']
+            EdEi_point = layer['Ed'] / layer['Ei']
+            
+            if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
+                # Добавяне на интерполационна линия
+                fig.add_trace(go.Scatter(
+                    x=[hD_point, hD_point],
+                    y=[layer['y_low'], layer['y_high']],
+                    mode='lines',
+                    line=dict(color='purple', dash='dash'),
+                    name=f"Интерполация Ee/Ei: {layer['low_iso']:.2f} - {layer['high_iso']:.2f}"
+                ))
+                fig.add_trace(go.Scatter(
+                    x=[hD_point],
+                    y=[EdEi_point],
+                    mode='markers',
+                    marker=dict(color='red', size=12),
+                    name='Резултат'
+                ))
+            
+            fig.update_layout(
+                title=f"Ed / Ei в зависимост от h / D за пласт {i+1}",
+                xaxis_title="h / D",
+                yaxis_title="Ed / Ei",
+                legend_title="Изолинии",
+                width=800,
+                height=600
+            )
+            
+            # Конвертиране на фигурата в изображение и добавяне към PDF
+            img = fig_to_image(fig)
+            img_path = f"plot_layer_{i}.png"
+            img.save(img_path)
+            pdf.image(img_path, x=10, w=190)
+            pdf.ln(5)
+            os.remove(img_path)
+        
+        # Добавяне на разделител между пластовете
+        pdf.set_draw_color(200, 200, 200)
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(10)
         
         # Топлинни параметри
         if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
