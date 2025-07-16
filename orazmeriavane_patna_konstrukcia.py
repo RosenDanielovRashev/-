@@ -13,7 +13,6 @@ from PIL import Image
 import requests
 from io import BytesIO
 import plotly.express as px
-import plotly.io as pio
 
 st.set_page_config(layout="wide")
 
@@ -870,17 +869,26 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             f.write(f"<html><body>{html_content}</body></html>")
         
         # Конвертиране на HTML в изображение
-        fig = go.Figure()  # вместо това създай фигура с твои данни
-        fig.add_trace(go.Scatter(x=[1,2,3], y=[4,5,6]))  # пример
-        
-        img_bytes = pio.to_image(fig, format="png", width=800, height=600, scale=2)
-        img = Image.open(BytesIO(img_bytes))
-        
-        temp_img_path = "temp_plot.png"
-        img.save(temp_img_path)
-        pdf.image(temp_img_path, x=10, w=190)
-        os.remove(temp_img_path)
-
+        try:
+            # Опит за конвертиране с imgkit, ако е инсталиран
+            import imgkit
+            img_path = "layer_cards.png"
+            imgkit.from_file(html_path, img_path, options={
+                'width': '500',
+                'disable-smart-width': '',
+                'quality': '100'
+            })
+            
+            # Добавяне на изображението към PDF
+            if os.path.exists(img_path):
+                pdf.image(img_path, x=10, w=190)
+                pdf.ln(10)
+                os.remove(img_path)
+        except ImportError:
+            pdf.set_font('DejaVu', 'B', 12)
+            pdf.cell(0, 8, "HTML представяне на пластовете (изображението не е генерирано)", 0, 1)
+            pdf.set_font('DejaVu', '', 10)
+            pdf.multi_cell(0, 8, html_content.replace('<', '[').replace('>', ']'))      
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
