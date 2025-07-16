@@ -778,7 +778,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.ln(5)  # малко разстояние преди легендата
         
         pdf.set_font('DejaVu', 'B', 10)
-        pdf.cell(0, 8, '🧾 Легенда:', 0, 1)
+        pdf.cell(0, 8, ' Легенда:', 0, 1)
         
         pdf.set_font('DejaVu', '', 10)
         pdf.cell(0, 8, 'Ed – Модул на еластичност на повърхността под пласта', 0, 1)
