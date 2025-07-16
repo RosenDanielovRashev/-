@@ -821,62 +821,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.ln(8)
         
         # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
-        # В секцията след таблицата с пластовете и преди диаграмите
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, 'Визуализация на пластовете', 0, 1)
-        pdf.ln(5)
-        
-        # Начална позиция за визуализацията
-        start_y = pdf.get_y()
-        box_height = 20  # Височина на всеки пласт
-        spacing = 10     # Разстояние между пластовете
-        
-        for i, layer in enumerate(st.session_state.layers_data):
-            # Извличане на данните
-            Ee_val = int(round(layer.get('Ee', 0))) if 'Ee' in layer else '-'
-            Ei_val = int(round(layer.get('Ei', 0))) if 'Ei' in layer else '-'
-            Ed_val = int(round(layer.get('Ed', 0))) if 'Ed' in layer else '-'
-            h_val = round(layer.get('h', 0), 2) if 'h' in layer else '-'
-            
-            # Координати за текущия пласт
-            y_position = start_y + i * (box_height + spacing)
-            
-            # Рисуване на пласта като правоъгълник
-            pdf.set_draw_color(64, 128, 128)  # Тъмно синьо-зелен
-            pdf.set_line_width(0.5)
-            pdf.rect(20, y_position, 170, box_height)
-            
-            # Текст в пласта
-            pdf.set_font('DejaVu', 'B', 12)
-            pdf.set_xy(20, y_position - 5)
-            pdf.cell(0, 10, f"Пласт {i+1}", 0, 0, 'L')
-            
-            pdf.set_font('DejaVu', '', 10)
-            pdf.set_xy(20, y_position + 2)
-            pdf.cell(0, 10, f"Ee = {Ee_val} MPa", 0, 0, 'L')
-            
-            pdf.set_xy(20, y_position + 8)
-            pdf.cell(0, 10, f"Ei = {Ei_val} MPa", 0, 0, 'L')
-            
-            pdf.set_xy(20, y_position + 14)
-            pdf.cell(0, 10, f"h = {h_val} cm", 0, 0, 'L')
-            
-            # Ed само за последния пласт
-            if i == len(st.session_state.layers_data) - 1 and Ed_val != '-':
-                pdf.set_xy(100, y_position + 8)
-                pdf.cell(0, 10, f"Ed = {Ed_val} MPa", 0, 0, 'L')
-            
-            # Разделител между пластовете
-            if i < len(st.session_state.layers_data) - 1:
-                pdf.set_draw_color(150, 150, 150)
-                pdf.line(20, y_position + box_height + spacing/2, 
-                        190, y_position + box_height + spacing/2)
-                pdf.set_font('DejaVu', 'B', 10)
-                pdf.set_xy(90, y_position + box_height + spacing/2 - 3)
-                pdf.cell(0, 10, "---", 0, 0, 'C')
-        
-        # Актуализиране на Y позицията
-        pdf.set_y(start_y + len(st.session_state.layers_data) * (box_height + spacing) + 10)
+      
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
