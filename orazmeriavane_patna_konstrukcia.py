@@ -761,9 +761,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     if include_intermediate: included_sections.append("Опън в междинен пласт")
     
     
-    pdf.ln(8)
-    
-    
     # Основна страница
     if include_main:
         pdf.set_font('DejaVu', 'B', 14)
