@@ -961,28 +961,26 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                     pdf.cell(0, 8, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
         # Добавяне на изображения от основната страница
-        image_urls = [
-            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.2.Фиг.png",
-            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.3.Фиг.png",
-            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.2.Таблица.png",
-            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.1.Таблица.png"
-        ]      
-
-        
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 8, 'Допълнителни диаграми и таблици', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
-        for i, url in enumerate(image_urls):
-            try:
-                img = download_image(url)
-                img_path = f"image_{i}.png"
-                img.save(img_path)
-                pdf.image(img_path, x=10, w=190)
-                pdf.ln(5)
-                os.remove(img_path)
-            except:
-                pdf.cell(0, 8, f'Грешка при зареждане на изображение {i+1}', 0, 1)
+        local_images = [
+            "5.2. Фиг.png",
+            "5.3. Фиг.png",
+            "5.2. Таблица.png",
+            "5.1. Таблица.png"
+        ]
+        
+        for img_file in local_images:
+            if os.path.exists(img_file):
+                try:
+                    pdf.image(img_file, x=10, w=190)
+                    pdf.ln(5)
+                except:
+                    pdf.cell(0, 8, f'Грешка при вмъкване на {img_file}', 0, 1)
+            else:
+                pdf.cell(0, 8, f'Липсващ файл: {img_file}', 0, 1)
     
     # Добавете тук другите раздели (фиг9.4, фиг9.6 и т.н.) по същия начин
     
