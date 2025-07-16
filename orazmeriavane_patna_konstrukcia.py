@@ -821,7 +821,74 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.ln(8)
         
         # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
-      
+
+        # Добавяне на HTML представянето като изображение
+        html_content = """
+        <div style="font-family: Arial, sans-serif; max-width: 400px; margin: 0 auto; text-align: center;">
+            <div style="position: relative; width: 400px; height: 80px; background-color: #e0f7fa; border: 2px solid #26c6da; border-radius: 8px; margin: 15px auto 40px auto; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 18px; color: #006064;">
+                    Ei = 2500 MPa
+                </div>
+                <div style="position: absolute; top: -20px; right: 10px; font-size: 14px; color: #00838f; font-weight: bold;">
+                    Ee = 150 MPa
+                </div>
+                <div style="position: absolute; bottom: -20px; right: 10px; font-size: 14px; color: #2e7d32; font-weight: bold;">
+                    Ed = 131 MPa
+                </div>
+                <div style="position: absolute; top: 50%; left: 8px; transform: translateY(-50%); font-size: 14px; color: #d84315; font-weight: bold;">
+                    h = 4.00 cm
+                </div>
+                <div style="position: absolute; top: -20px; left: 10px; font-size: 14px; color: #5d4037; font-weight: bold;">
+                    Пласт 1
+                </div>
+            </div>
+        
+            <div style="position: relative; width: 400px; height: 80px; background-color: #e0f7fa; border: 2px solid #26c6da; border-radius: 8px; margin: 15px auto 40px auto; padding: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; font-size: 18px; color: #006064;">
+                    Ei = 3000 MPa
+                </div>
+                <div style="position: absolute; top: -20px; right: 10px; font-size: 14px; color: #00838f; font-weight: bold;">
+                    Ee = 131 MPa
+                </div>
+                <div style="position: absolute; bottom: -20px; right: 10px; font-size: 14px; color: #2e7d32; font-weight: bold;">
+                    Ed = 50 MPa
+                </div>
+                <div style="position: absolute; top: 50%; left: 8px; transform: translateY(-50%); font-size: 14px; color: #d84315; font-weight: bold;">
+                    h = 13.37 cm
+                </div>
+                <div style="position: absolute; top: -20px; left: 10px; font-size: 14px; color: #5d4037; font-weight: bold;">
+                    Пласт 2
+                </div>
+            </div>
+        </div>
+        """
+        
+        # Създаване на временен HTML файл
+        html_path = "layer_cards.html"
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(f"<html><body>{html_content}</body></html>")
+        
+        # Конвертиране на HTML в изображение
+        try:
+            # Опит за конвертиране с imgkit, ако е инсталиран
+            import imgkit
+            img_path = "layer_cards.png"
+            imgkit.from_file(html_path, img_path, options={
+                'width': '500',
+                'disable-smart-width': '',
+                'quality': '100'
+            })
+            
+            # Добавяне на изображението към PDF
+            if os.path.exists(img_path):
+                pdf.image(img_path, x=10, w=190)
+                pdf.ln(10)
+                os.remove(img_path)
+        except ImportError:
+            pdf.set_font('DejaVu', 'B', 12)
+            pdf.cell(0, 8, "HTML представяне на пластовете (изображението не е генерирано)", 0, 1)
+            pdf.set_font('DejaVu', '', 10)
+            pdf.multi_cell(0, 8, html_content.replace('<', '[').replace('>', ']'))      
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
