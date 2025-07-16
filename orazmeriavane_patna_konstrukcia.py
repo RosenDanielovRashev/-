@@ -808,7 +808,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
             pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
             pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
-            pdf.cell(col_widths[3], 10, str(Ed_val), 1, 0, 'C')
+            pdf.cell(col_widths[3], 10, str(round(Ed_val, 0)), 1, 0, 'C')
             pdf.cell(col_widths[4], 10, str(round(h_val, 2)), 1, 0, 'C')
             pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
             pdf.ln()
