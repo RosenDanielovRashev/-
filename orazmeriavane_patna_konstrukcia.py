@@ -821,6 +821,12 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.ln(8)
         
         # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
+        # Функция за дясно подравнен текст
+        def draw_text_right_aligned(pdf, text, x_right, y, font=('DejaVu', 'I', 8)):
+            pdf.set_font(*font)
+            text_width = pdf.get_string_width(text)
+            pdf.text(x_right - text_width, y, text)
+
         # Визуално представяне на пластовете
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 8, 'Визуално представяне на пластовете', 0, 1)
