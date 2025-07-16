@@ -748,18 +748,18 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     
     # Заглавие
     pdf.set_font('DejaVu', 'B', 16)
-    pdf.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
-    pdf.ln(10)
+    pdf.cell(0, 8, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
+    pdf.ln(8)
     
     # Дата
     pdf.set_font('DejaVu', '', 12)
     today = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-    pdf.cell(0, 10, f'Дата: {today}', 0, 1)
+    pdf.cell(0, 8, f'Дата: {today}', 0, 1)
     pdf.ln(5)
     
     # Списък с избрани страници
     pdf.set_font('DejaVu', 'B', 14)
-    pdf.cell(0, 10, 'Включени раздели:', 0, 1)
+    pdf.cell(0, 8, 'Включени раздели:', 0, 1)
     pdf.set_font('DejaVu', '', 12)
     
     included_sections = []
@@ -771,19 +771,19 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     if include_intermediate: included_sections.append("Опън в междинен пласт")
     
     for section in included_sections:
-        pdf.cell(0, 10, f'• {section}', 0, 1)
-    pdf.ln(10)
+        pdf.cell(0, 8, f'• {section}', 0, 1)
+    pdf.ln(8)
     
     # Основна страница
     if include_main:
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Основна страница - Оразмеряване', 0, 1)
+        pdf.cell(0, 8, 'Основна страница - Оразмеряване', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         # Общи параметри
-        pdf.cell(0, 10, f'Брой пластове: {st.session_state.num_layers}', 0, 1)
-        pdf.cell(0, 10, f'D: {st.session_state.final_D} cm', 0, 1)
-        pdf.cell(0, 10, f'Осова тежест: {st.session_state.axle_load} kN', 0, 1)
+        pdf.cell(0, 8, f'Брой пластове: {st.session_state.num_layers}', 0, 1)
+        pdf.cell(0, 8, f'D: {st.session_state.final_D} cm', 0, 1)
+        pdf.cell(0, 8, f'Осова тежест: {st.session_state.axle_load} kN', 0, 1)
         pdf.ln(5)
         
         # Данни за пластовете
@@ -813,13 +813,13 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
             pdf.ln()
         
-        pdf.ln(10)
+        pdf.ln(8)
         
         # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Диаграми и изчисления за пластове', 0, 1)
+        pdf.cell(0, 8, 'Диаграми и изчисления за пластове', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         for i in range(st.session_state.num_layers):
@@ -829,28 +829,28 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             
             # Добавяне на заглавие за пласта
             pdf.set_font('DejaVu', 'B', 12)
-            pdf.cell(0, 10, f'Пласт {i+1}', 0, 1)
+            pdf.cell(0, 8, f'Пласт {i+1}', 0, 1)
             pdf.set_font('DejaVu', '', 10)
             
             # Добавяне на основните параметри
-            pdf.cell(0, 10, f'Ei = {layer.get("Ei", "-")} MPa', 0, 1)
-            pdf.cell(0, 10, f'Ee = {layer.get("Ee", "-")} MPa', 0, 1)
-            pdf.cell(0, 10, f'Ed = {layer.get("Ed", "-")} MPa', 0, 1)
-            pdf.cell(0, 10, f'h = {layer.get("h", "-")} cm', 0, 1)
-            pdf.cell(0, 10, f'λ = {st.session_state.lambda_values[i]}', 0, 1)
+            pdf.cell(0, 8, f'Ei = {layer.get("Ei", "-")} MPa', 0, 1)
+            pdf.cell(0, 8, f'Ee = {layer.get("Ee", "-")} MPa', 0, 1)
+            pdf.cell(0, 8, f'Ed = {layer.get("Ed", "-")} MPa', 0, 1)
+            pdf.cell(0, 8, f'h = {layer.get("h", "-")} cm', 0, 1)
+            pdf.cell(0, 8, f'λ = {st.session_state.lambda_values[i]}', 0, 1)
             pdf.ln(5)
             
             # Добавяне на изчисленията, ако са налични
             if i in st.session_state.calculation_messages:
                 pdf.set_font('DejaVu', 'B', 10)
-                pdf.cell(0, 10, 'Изчисления:', 0, 1)
+                pdf.cell(0, 8, 'Изчисления:', 0, 1)
                 pdf.set_font('DejaVu', '', 10)
                 
                 # Разделяме съобщението на редове и ги добавяме едно по едно
                 calculation_lines = st.session_state.calculation_messages[i].split('\n')
                 for line in calculation_lines:
                     if line.strip():  # Пропускаме празните редове
-                        pdf.cell(0, 10, line.strip(), 0, 1)
+                        pdf.cell(0, 8, line.strip(), 0, 1)
             
             pdf.ln(5)
             
@@ -911,7 +911,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             # Добавяне на разделител между пластовете
             pdf.set_draw_color(200, 200, 200)
             pdf.line(10, pdf.get_y(), 200, pdf.get_y())
-            pdf.ln(10)
+            pdf.ln(8)
         
         # Топлинни параметри
         if 'lambda_op_input' in st.session_state and 'lambda_zp_input' in st.session_state:
@@ -922,14 +922,14 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             z_value = z1 * m_value
             
             pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, 'Топлинни параметри', 0, 1)
+            pdf.cell(0, 8, 'Топлинни параметри', 0, 1)
             pdf.set_font('DejaVu', '', 12)
-            pdf.cell(0, 10, f'λоп = {lambda_op} kcal/mhg', 0, 1)
-            pdf.cell(0, 10, f'λзп = {lambda_zp} kcal/mhg', 0, 1)
-            pdf.cell(0, 10, f'm = λзп / λоп = {lambda_zp} / {lambda_op} = {m_value:.2f}', 0, 1)
-            pdf.cell(0, 10, f'z₁ = {z1} cm (дълбочина на замръзване в открито поле)', 0, 1)
-            pdf.cell(0, 10, f'z = z₁ * m = {z1} * {m_value:.2f} = {z_value:.2f} cm', 0, 1)
-            pdf.ln(10)
+            pdf.cell(0, 8, f'λоп = {lambda_op} kcal/mhg', 0, 1)
+            pdf.cell(0, 8, f'λзп = {lambda_zp} kcal/mhg', 0, 1)
+            pdf.cell(0, 8, f'm = λзп / λоп = {lambda_zp} / {lambda_op} = {m_value:.2f}', 0, 1)
+            pdf.cell(0, 8, f'z₁ = {z1} cm (дълбочина на замръзване в открито поле)', 0, 1)
+            pdf.cell(0, 8, f'z = z₁ * m = {z1} * {m_value:.2f} = {z_value:.2f} cm', 0, 1)
+            pdf.ln(8)
             
             # R₀ изчисление
             if all('h' in layer for layer in st.session_state.layers_data):
@@ -937,21 +937,21 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 sum_lambda = sum(st.session_state.lambda_values)
                 R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
                 
-                pdf.cell(0, 10, f'R₀ = Σh / Σλ = {sum_h:.2f} / {sum_lambda:.2f} = {R0:.2f} cm', 0, 1)
-                pdf.ln(10)
+                pdf.cell(0, 8, f'R₀ = Σh / Σλ = {sum_h:.2f} / {sum_lambda:.2f} = {R0:.2f} cm', 0, 1)
+                pdf.ln(8)
             
             # Проверка
             pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, 'Проверка на изискванията', 0, 1)
+            pdf.cell(0, 8, 'Проверка на изискванията', 0, 1)
             pdf.set_font('DejaVu', '', 12)
             
             if all('h' in layer for layer in st.session_state.layers_data):
                 if z_value > sum_h:
-                    pdf.cell(0, 10, '✅ Условието е изпълнено: z > Σh', 0, 1)
-                    pdf.cell(0, 10, f'z = {z_value:.2f} cm > Σh = {sum_h:.2f} cm', 0, 1)
+                    pdf.cell(0, 8, '✅ Условието е изпълнено: z > Σh', 0, 1)
+                    pdf.cell(0, 8, f'z = {z_value:.2f} cm > Σh = {sum_h:.2f} cm', 0, 1)
                 else:
-                    pdf.cell(0, 10, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
-                    pdf.cell(0, 10, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
+                    pdf.cell(0, 8, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
+                    pdf.cell(0, 8, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
         # Добавяне на изображения от основната страница
         image_urls = [
@@ -962,7 +962,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         ]
         
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Допълнителни диаграми и таблици', 0, 1)
+        pdf.cell(0, 8, 'Допълнителни диаграми и таблици', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         for i, url in enumerate(image_urls):
@@ -974,7 +974,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 pdf.ln(5)
                 os.remove(img_path)
             except:
-                pdf.cell(0, 10, f'Грешка при зареждане на изображение {i+1}', 0, 1)
+                pdf.cell(0, 8, f'Грешка при зареждане на изображение {i+1}', 0, 1)
     
     # Добавете тук другите раздели (фиг9.4, фиг9.6 и т.н.) по същия начин
     
