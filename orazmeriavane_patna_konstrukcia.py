@@ -670,11 +670,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             super().__init__()
             self.temp_font_files = []
             
-        def header(self):
-            self.set_font('DejaVu', 'B', 15)
-            self.cell(0, 10, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
-            self.ln(5)
-            
         def footer(self):
             self.set_y(-15)
             self.set_font('DejaVu', 'I', 8)
