@@ -765,8 +765,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     if include_tension: included_sections.append("Опън в покритието")
     if include_intermediate: included_sections.append("Опън в междинен пласт")
     
-    for section in included_sections:
-        pdf.cell(0, 8, f'• {section}', 0, 1)
+    
     pdf.ln(8)
     
     
