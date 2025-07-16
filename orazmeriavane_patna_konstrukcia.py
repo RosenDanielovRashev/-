@@ -961,12 +961,13 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                     pdf.cell(0, 8, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
         # Добавяне на изображения от основната страница
-        image_urls = [
-            "https://raw.githubusercontent.com/.../5.2.Фиг.png",
-            "https://raw.githubusercontent.com/.../5.3.Фиг.png",
-            "https://raw.githubusercontent.com/.../5.2.Таблица.png",
-            "https://raw.githubusercontent.com/.../5.1.Таблица.png"
+        image_paths = [
+            "main/5.2.Фиг.png",
+            "main/5.3.Фиг.png",
+            "main/5.2.Таблица.png",
+            "main/5.1.Таблица.png"
         ]
+
         
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 8, 'Допълнителни диаграми и таблици', 0, 1)
