@@ -302,9 +302,9 @@ class PDF(FPDF):
             except Exception:
                 pass
 
-def generate_tension_report():
- pdf = PDF()
-    
+    def generate_tension_report():
+     pdf = PDF()
+        
     # Зареждане на шрифтове
     try:
         font_dir = "fonts"
