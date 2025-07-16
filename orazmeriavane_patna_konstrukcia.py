@@ -975,7 +975,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         for img_file in local_images:
             if os.path.exists(img_file):
                 try:
-                    pdf.image(img_file, x=6, w=100)
+                    pdf.image(img_file, x=8, w=140)
                     pdf.ln(5)
                 except:
                     pdf.cell(0, 8, f'Грешка при вмъкване на {img_file}', 0, 1)
