@@ -743,7 +743,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     
     # Заглавие
     pdf.set_font('DejaVu', 'B', 16)
-    pdf.cell(0, 8, 'ОТЧЕТ ЗА ПЪТНА КОНСТРУКЦИЯ', 0, 1, 'C')
+    pdf.cell(0, 8, 'Оразмеряване на пътната конструкция', 0, 1, 'C')
     pdf.ln(8)
     
     # Дата
@@ -767,7 +767,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     # Основна страница
     if include_main:
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, 'Оразмеряване на пътната конструкция ', 0, 1)
+        pdf.cell(0, 8, '', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         # Общи параметри
