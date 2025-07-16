@@ -277,7 +277,7 @@ st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмер�
 # =====================================================================
 
 
-# Клас за персонализиран PDF с български шрифтове
+# Коригиран PDF клас и функция за генериране на отчет
 class PDF(FPDF):
     def __init__(self):
         super().__init__()
@@ -302,35 +302,17 @@ class PDF(FPDF):
             except Exception:
                 pass
 
-    def add_plotly_figure(self, fig, title=None, width=180):
-        """Добавя Plotly фигура към PDF"""
-        if title:
-            self.set_font('DejaVu', 'B', 12)
-            self.cell(0, 8, title, 0, 1)
-            self.ln(2)
-        
-        # Запазване на фигурата като временен файл
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
-            fig.write_image(tmpfile.name, scale=2)
-            self.image(tmpfile.name, x=10, w=width)
-            os.unlink(tmpfile.name)
-
-# Функция за генериране на PDF отчет
 def generate_tension_report():
-    # Създаване на PDF документ
     pdf = PDF()
     
     # Зареждане на шрифтове
     try:
-        # Зареждане на шрифтове от локална папка
         font_dir = "fonts"
         dejavu_sans = open(os.path.join(font_dir, "DejaVuSans.ttf"), "rb").read()
         dejavu_bold = open(os.path.join(font_dir, "DejaVuSans-Bold.ttf"), "rb").read()
-        dejavu_italic = open(os.path.join(font_dir, "DejaVuSans-Oblique.ttf"), "rb").read()
         
         pdf.add_font_from_bytes('DejaVu', '', dejavu_sans)
         pdf.add_font_from_bytes('DejaVu', 'B', dejavu_bold)
-        pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic)
     except Exception as e:
         st.error(f"Грешка при зареждане на шрифтове: {str(e)}")
         return None
@@ -346,13 +328,12 @@ def generate_tension_report():
     # Дата
     pdf.set_font('DejaVu', '', 12)
     today = datetime.now().strftime("%d.%m.%Y %H:%M")
-    pdf.cell(0, 8, f'Дата: {today}', 0, 1)
+    pdf.cell(0, 8, f'Дата: {today}', 0, 1, 'L')  # Явно задаване на подравняване 'L' за ляво
     pdf.ln(10)
     
     # Параметри на пластовете
     pdf.set_font('DejaVu', 'B', 14)
-    pdf.cell(0, 8, '1. Параметри на пластовете', 0, 1)
-    pdf.set_font('DejaVu', '', 12)
+    pdf.cell(0, 8, 'Параметри на пластовете', 0, 1, 'L')
     
     # Извличане на данни от session state
     D = st.session_state.get("final_D", 34.0)
@@ -486,7 +467,11 @@ def generate_tension_report():
         pdf.image(img_path, x=10, w=190)
     
     pdf.cleanup_fonts()
-    return pdf.output(dest='S').encode('latin1')
+    pdf_data = pdf.output(dest='S')
+    if isinstance(pdf_data, str):
+        pdf_data = pdf_data.encode('latin1')
+    return pdf_data
+
 
 # Добавяне на бутон за генериране на PDF
 st.markdown("---")
