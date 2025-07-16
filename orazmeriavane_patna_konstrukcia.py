@@ -751,7 +751,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     pdf.set_font('DejaVu', '', 12)
     today = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
     pdf.cell(0, 8, f'Дата: {today}', 0, 1)
-    pdf.ln(5)
     
     included_sections = []
     if include_main: included_sections.append("Основна страница")
