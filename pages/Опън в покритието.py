@@ -286,7 +286,7 @@ class PDF(FPDF):
     def footer(self):
         self.set_y(-15)
         self.set_font('DejaVu', 'I', 8)
-        self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+        self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, align='C')
         
     def add_font_from_bytes(self, family, style, font_bytes):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
@@ -322,18 +322,18 @@ def generate_tension_report():
     
     # Заглавие
     pdf.set_font('DejaVu', 'B', 16)
-    pdf.cell(0, 10, 'Изчисление на опън в покритието', 0, 1, 'C')
+    pdf.cell(0, 10, 'Изчисление на опън в покритието', 0, 1, align='C')
     pdf.ln(5)
     
     # Дата
     pdf.set_font('DejaVu', '', 12)
     today = datetime.now().strftime("%d.%m.%Y %H:%M")
-    pdf.cell(0, 8, f'Дата: {today}', 0, 1, 'L')  # Явно задаване на подравняване 'L' за ляво
+    pdf.cell(0, 8, f'Дата: {today}', 0, 1, align='L')  # Явно задаване на подравняване 'L' за ляво
     pdf.ln(10)
     
     # Параметри на пластовете
     pdf.set_font('DejaVu', 'B', 14)
-    pdf.cell(0, 8, 'Параметри на пластовете', 0, 1, 'L')
+    pdf.cell(0, 8, 'Параметри на пластовете', 0, 1, align='L')
     
     # Извличане на данни от session state
     D = st.session_state.get("final_D", 34.0)
@@ -348,19 +348,19 @@ def generate_tension_report():
     
     # Хедъри на таблицата
     for i, header in enumerate(headers):
-        pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
+        pdf.cell(col_widths[i], 10, header, 1, 0, align='C')
     pdf.ln()
     
     # Данни за пластовете
     for i in range(len(Ei_list)):
-        pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
-        pdf.cell(col_widths[1], 10, str(Ei_list[i]), 1, 0, 'C')
-        pdf.cell(col_widths[2], 10, str(hi_list[i]), 1, 0, 'C')
+        pdf.cell(col_widths[0], 10, str(i+1), 1, 0, align='C')
+        pdf.cell(col_widths[1], 10, str(Ei_list[i]), 1, 0, align='C')
+        pdf.cell(col_widths[2], 10, str(hi_list[i]), 1, 0, align='C')
         # Показва Ed само за последния пласт
         if i == len(Ei_list) - 1:
-            pdf.cell(col_widths[3], 10, str(round(Ed)), 1, 0, 'C')
+            pdf.cell(col_widths[3], 10, str(round(Ed)), 1, 0, align='C')
         else:
-            pdf.cell(col_widths[3], 10, "-", 1, 0, 'C')
+            pdf.cell(col_widths[3], 10, "-", 1, 0, align='C')
         pdf.ln()
     
     pdf.ln(10)
