@@ -895,7 +895,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 
                 # НОВО: Обновяване на стила за цветна диаграма
                 fig.update_layout(
-                    title=f"Ed / Ei в зависимост от h / D за пласт {i+1}",
+                    title=f"За пласт {i+1}",
                     xaxis_title="h / D",
                     yaxis_title="Ed / Ei",
                     showlegend=False,
