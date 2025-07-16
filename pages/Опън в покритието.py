@@ -303,7 +303,7 @@ class PDF(FPDF):
                 pass
 
 def generate_tension_report():
-    pdf = PDF()
+ pdf = PDF()
     
     # Зареждане на шрифтове
     try:
@@ -328,7 +328,7 @@ def generate_tension_report():
     # Дата
     pdf.set_font('DejaVu', '', 12)
     today = datetime.now().strftime("%d.%m.%Y %H:%M")
-    pdf.cell(0, 8, f'Дата: {today}', 0, 1, 'L')  # Явно задаване на подравняване 'L' за ляво
+    pdf.cell(0, 8, f'Дата: {today}', 0, 1, 'L')  # Коригирано подравняване
     pdf.ln(10)
     
     # Параметри на пластовете
