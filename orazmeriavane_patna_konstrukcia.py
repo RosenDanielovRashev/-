@@ -961,11 +961,8 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                     pdf.cell(0, 8, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
         
         # Добавяне на изображения от основната страница
-        image_paths = [
-            "5.2.Фиг.png",
-            "5.3.Фиг.png",
-            "5.2.Таблица.png",
-            "5.1.Таблица.png"
+        image_urls = [
+            "https://github.com/RosenDanielovRashev/-/blob/main/5.1. Таблица.png"
         ]
 
         
