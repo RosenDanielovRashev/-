@@ -829,63 +829,59 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         # Начална позиция по Y
         y_start = pdf.get_y()
         
-        # Размери
+        # Размери и настройки
         layer_height = 20  # mm
         layer_width = 180  # mm
         padding = 2        # mm
         text_padding = 5   # mm
+        x_start = 10       # Начална позиция по X
         
-        # Рисуване на пластовете отгоре надолу
         for i in range(st.session_state.num_layers):
             layer = st.session_state.layers_data[i]
-            
+        
             # Координати
-            x = 10
-            y = y_start + i * (layer_height + padding + 10)  # +10 за текста
-            
-            # Ee стойност (над пласта) - позиционирана в дясно
+            x = x_start
+            y = y_start + i * (layer_height + padding + 10)  # +10 за текста над пласта
+        
+            # Ee стойност над пласта
             if i == 0:
-                # Първи пласт - използваме собствената Ee стойност
-                pdf.set_font('DejaVu', 'I', 8)
-                ee_text = f"Ee = {int(round(layer.get('Ee', 0)))} MPa"
-                pdf.text(x + layer_width - pdf.get_string_width(ee_text) - text_padding, y - 2, ee_text)
+                ee_value = int(round(layer.get('Ee', 0)))
             else:
-                # Следващи пластове - Ee е Ed от предишния пласт
-                prev_layer = st.session_state.layers_data[i-1]
-                if 'Ed' in prev_layer:
-                    pdf.set_font('DejaVu', 'I', 8)
-                    ee_text = f"Ee = {int(round(prev_layer['Ed']))} MPa"
-                    pdf.text(x + layer_width - pdf.get_string_width(ee_text) - text_padding, y - 2, ee_text)
-            
-            # Рисуване на пласта
+                prev_layer = st.session_state.layers_data[i - 1]
+                ee_value = int(round(prev_layer.get('Ed', 0)))
+            ee_text = f"Ee = {ee_value} MPa"
+            draw_text_right_aligned(pdf, ee_text, x + layer_width - text_padding, y - 2)
+        
+            # Рисуване на правоъгълник за пласта
             pdf.set_fill_color(224, 247, 250)  # светлосиньо
-            pdf.rect(x, y, layer_width, layer_height, style='F')
-            pdf.rect(x, y, layer_width, layer_height)
-            
-            # Текст за пласта
+            pdf.rect(x, y, layer_width, layer_height, style='F')  # запълнен
+            pdf.rect(x, y, layer_width, layer_height)             # рамка
+        
+            # Текстове вътре в пласта
             pdf.set_font('DejaVu', '', 10)
+        
             pdf.set_xy(x + text_padding, y + 5)
-            pdf.cell(30, 5, f"Пласт {i+1}")
-            
+            pdf.cell(30, 5, f"Пласт {i + 1}")
+        
             pdf.set_xy(x + 40, y + 5)
-            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0))} MPa")
-            
+            ei_value = int(round(layer.get('Ei', 0)))
+            pdf.cell(50, 5, f"Ei = {ei_value} MPa")
+        
             pdf.set_xy(x + 100, y + 5)
             if 'h' in layer:
                 pdf.cell(40, 5, f"h = {round(layer['h'], 2)} cm")
-            
-            # Ed стойност (под пласта) - позиционирана в дясно
-            if 'Ed' in layer:
-                pdf.set_font('DejaVu', 'I', 8)
-                ed_text = f"Ed = {int(round(layer['Ed']))} MPa"
-                pdf.text(x + layer_width - pdf.get_string_width(ed_text) - text_padding, y + layer_height + 5, ed_text)
-            
-            # Ако е последния пласт, добавяме Ed най-отдолу - позиционирана в дясно
-            if i == st.session_state.num_layers - 1 and 'Ed' in layer:
-                pdf.set_font('DejaVu', 'I', 8)
-                final_ed_text = f"Краен Ed = {int(round(layer['Ed']))} MPa"
-                pdf.text(x + layer_width - pdf.get_string_width(final_ed_text) - text_padding, y + layer_height + 15, final_ed_text)
         
+            # Ed стойност под пласта
+            if 'Ed' in layer:
+                ed_value = int(round(layer['Ed']))
+                ed_text = f"Ed = {ed_value} MPa"
+                draw_text_right_aligned(pdf, ed_text, x + layer_width - text_padding, y + layer_height + 5)
+        
+            # Краен Ed ако е последния пласт
+            if i == st.session_state.num_layers - 1 and 'Ed' in layer:
+                final_ed_text = f"Краен Ed = {ed_value} MPa"
+                draw_text_right_aligned(pdf, final_ed_text, x + layer_width - text_padding, y + layer_height + 15)
+                
         # Основа
         y_base = y_start + st.session_state.num_layers * (layer_height + padding + 10)
         pdf.rect(10, y_base, layer_width, 10)
