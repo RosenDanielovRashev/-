@@ -877,10 +877,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 ed_value = int(round(layer['Ed']))
                 ed_text = f"Ed = {ed_value} MPa"
                 draw_text_right_aligned(pdf, ed_text, x + layer_width - text_padding, y + layer_height + 5)
-        
-            # Краен Ed ако е последния пласт
-            if i == st.session_state.num_layers - 1 and 'Ed' in layer:
-            
+
         
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
