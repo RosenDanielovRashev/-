@@ -962,7 +962,10 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         
         # Добавяне на изображения от основната страница
         image_urls = [
-            "https://github.com/RosenDanielovRashev/-/blob/main/5.1. Таблица.png"
+            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.2.Фиг.png",
+            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.3.Фиг.png",
+            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.2.Таблица.png",
+            "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.1.Таблица.png"
         ]
 
         
