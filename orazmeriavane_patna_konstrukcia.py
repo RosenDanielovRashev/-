@@ -1,3 +1,4 @@
+
 import streamlit as st 
 import pandas as pd 
 import numpy as np 
@@ -664,58 +665,7 @@ def fig_to_image(fig):
         st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
         
-# Добавяне на нова функция за визуално представяне на пластовете
-def create_layers_visualization():
-    fig = go.Figure()
-    
-    # Обратен ред за визуализация (първи пласт най-отдолу)
-    reversed_layers = list(reversed(st.session_state.layers_data))
-    reversed_lambdas = list(reversed(st.session_state.lambda_values))
-    
-    y_base = 0
-    colors = px.colors.sequential.Blues  # Цветова скала
-    
-    for i, layer in enumerate(reversed_layers):
-        h = layer.get('h', 0)
-        Ei = layer.get('Ei', 0)
-        Ee = layer.get('Ee', 0)
-        Ed = layer.get('Ed', 0)
-        lambda_val = reversed_lambdas[i]
-        
-        # Определяне на цвета
-        color_idx = min(i, len(colors)-1)
-        
-        fig.add_trace(go.Bar(
-            y=[f"Пласт {len(reversed_layers)-i}"],
-            x=[h],
-            base=[y_base],
-            orientation='h',
-            marker=dict(color=colors[color_idx]),
-            name=f"Пласт {len(reversed_layers)-i}",
-            hoverinfo='text',
-            hovertext=f"<b>Пласт {len(reversed_layers)-i}</b><br>" +
-                     f"h: {h:.2f} cm<br>" +
-                     f"Ei: {Ei:.0f} MPa<br>" +
-                     f"Ee: {Ee:.0f} MPa<br>" +
-                     f"Ed: {Ed:.0f} MPa<br>" +
-                     f"λ: {lambda_val}"
-        ))
-        
-        y_base += h
-    
-    fig.update_layout(
-        title="Визуално представяне на пластовете",
-        barmode='stack',
-        height=500,
-        xaxis_title="Дебелина (cm)",
-        showlegend=False,
-        margin=dict(l=100, r=50, t=80, b=50),
-        hoverlabel=dict(bgcolor="white", font_size=12)
-    )
-    
-    return fig        
 # Генериране на PDF отчет
-
 def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig97, include_tension, include_intermediate):
     class PDF(FPDF):
         def __init__(self):
@@ -869,27 +819,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             pdf.ln()
         
         pdf.ln(8)
-
-        # Визуално представяне на пластовете
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, 'Визуално представяне на пластовете', 0, 1, 'C')
-        pdf.ln(5)
-        
-        # Генериране на визуализацията
-        layers_fig = create_layers_visualization()
-        layers_img = fig_to_image(layers_fig)
-        layers_img_path = "layers_visualization.png"
-        layers_img.save(layers_img_path)
-        
-        # Добавяне към PDF
-        pdf.image(layers_img_path, x=10, w=190)
-        pdf.ln(5)
-        
-        # Изтриване на временния файл
-        os.remove(layers_img_path)
-        
-        # Преди да затворите PDF, добавете малко място
-        pdf.ln(10)        
         
         # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
 
