@@ -821,6 +821,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.ln(8)
         
         # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
+      
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
