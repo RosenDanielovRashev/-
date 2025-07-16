@@ -866,7 +866,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             pdf.cell(30, 5, f"Пласт {i+1}")
             
             pdf.set_xy(x + 40, y + 5)
-            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0))} MPa")
+            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0)))} MPa")
             
             pdf.set_xy(x + 100, y + 5)
             if 'h' in layer:
@@ -891,8 +891,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         
         # Преместване курсора след визуализацията
         pdf.set_y(y_base + 15)
-        pdf.ln(10)  
-
+        pdf.ln(10)        
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
         pdf.set_font('DejaVu', '', 12)
