@@ -880,19 +880,8 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         
             # Краен Ed ако е последния пласт
             if i == st.session_state.num_layers - 1 and 'Ed' in layer:
-                final_ed_text = f"Краен Ed = {ed_value} MPa"
-                draw_text_right_aligned(pdf, final_ed_text, x + layer_width - text_padding, y + layer_height + 15)
-                
-        # Основа
-        y_base = y_start + st.session_state.num_layers * (layer_height + padding + 10)
-        pdf.rect(10, y_base, layer_width, 10)
-        pdf.set_font('DejaVu', '', 10)
-        pdf.set_xy(15, y_base + 3)
-        pdf.cell(30, 5, "Основа")
+            
         
-        # Преместване курсора след визуализацията
-        pdf.set_y(y_base + 15)
-        pdf.ln(10)        
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
         pdf.set_font('DejaVu', '', 12)
