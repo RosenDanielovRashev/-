@@ -383,6 +383,7 @@ if "hD_point" in layer_data and "Ed" in layer_data and "Ei" in layer_data:
         title="Ed / Ei в зависимост от h / D",
         xaxis_title="h / D",
         yaxis_title="Ed / Ei",
+        showlegend=False
         legend_title="Изолинии"
     )
     st.plotly_chart(fig, use_container_width=True, key=f"plot_{layer_idx}")
