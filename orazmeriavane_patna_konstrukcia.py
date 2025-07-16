@@ -802,8 +802,8 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             
             Ei_val = round(layer.get('Ei', 0)) if 'Ei' in layer else '-'
             Ee_val = round(layer.get('Ee', 0)) if 'Ee' in layer else '-'
-            Ed_val = round(layer.get('Ed', 0)) if 'Ed' in layer else '-'
-            h_val = layer.get('h', '-')
+            Ed_val = int(round(layer.get('Ed', 0))) if 'Ed' in layer else '-'
+            h_val = round(layer['h'], 2) if 'h' in layer else '-'
             
             pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
             pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
