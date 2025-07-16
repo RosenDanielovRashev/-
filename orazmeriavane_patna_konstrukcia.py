@@ -847,7 +847,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             if i == 0:
                 # Първи пласт - използваме собствената Ee стойност
                 pdf.set_font('DejaVu', 'I', 8)
-                pdf.text(x + text_padding, y - 2, f"Ee = {int(round(layer.get('Ee', 0))} MPa")
+                pdf.text(x + text_padding, y - 2, f"Ee = {int(round(layer.get('Ee', 0)))} MPa")
             else:
                 # Следващи пластове - Ee е Ed от предишния пласт
                 prev_layer = st.session_state.layers_data[i-1]
