@@ -833,57 +833,65 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         layer_height = 20  # mm
         layer_width = 180  # mm
         padding = 2        # mm
+        text_padding = 5   # mm
         
-        # Рисуване на пластовете отдолу нагоре
-        for i in range(st.session_state.num_layers-1, -1, -1):
+        # Рисуване на пластовете отгоре надолу
+        for i in range(st.session_state.num_layers):
             layer = st.session_state.layers_data[i]
             
             # Координати
             x = 10
-            y = y_start + (st.session_state.num_layers - i - 1) * (layer_height + padding)
+            y = y_start + i * (layer_height + padding + 10)  # +10 за текста
             
-            # Цвят на пласта
+            # Ee стойност (над пласта)
+            if i == 0:
+                # Първи пласт - използваме собствената Ee стойност
+                pdf.set_font('DejaVu', 'I', 8)
+                pdf.text(x + text_padding, y - 2, f"Ee = {int(round(layer.get('Ee', 0))} MPa")
+            else:
+                # Следващи пластове - Ee е Ed от предишния пласт
+                prev_layer = st.session_state.layers_data[i-1]
+                if 'Ed' in prev_layer:
+                    pdf.set_font('DejaVu', 'I', 8)
+                    pdf.text(x + text_padding, y - 2, f"Ee = {int(round(prev_layer['Ed']))} MPa")
+            
+            # Рисуване на пласта
             pdf.set_fill_color(224, 247, 250)  # светлосиньо
             pdf.rect(x, y, layer_width, layer_height, style='F')
             pdf.rect(x, y, layer_width, layer_height)
             
             # Текст за пласта
-            pdf.set_xy(x + 5, y + 5)
+            pdf.set_font('DejaVu', '', 10)
+            pdf.set_xy(x + text_padding, y + 5)
             pdf.cell(30, 5, f"Пласт {i+1}")
             
             pdf.set_xy(x + 40, y + 5)
-            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0)))} MPa")
+            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0))} MPa")
             
             pdf.set_xy(x + 100, y + 5)
             if 'h' in layer:
                 pdf.cell(40, 5, f"h = {round(layer['h'], 2)} cm")
             
-            # Ee стойност (от предишния пласт)
-            if i > 0:
-                prev_layer = st.session_state.layers_data[i-1]
-                if 'Ed' in prev_layer:
-                    pdf.set_xy(x + 140, y - 5)
-                    pdf.set_font('DejaVu', 'I', 8)
-                    pdf.cell(40, 5, f"Ee = {int(round(prev_layer['Ed']))} MPa")
-                    pdf.set_font('DejaVu', '', 10)
-        
-        # Последен Ee (за повърхността)
-        if st.session_state.num_layers > 0:
-            first_layer = st.session_state.layers_data[0]
-            pdf.set_xy(150, y_start - 10)
-            pdf.set_font('DejaVu', 'I', 8)
-            pdf.cell(40, 5, f"Ee = {int(round(first_layer['Ee']))} MPa")
-            pdf.set_font('DejaVu', '', 10)
+            # Ed стойност (под пласта)
+            if 'Ed' in layer:
+                pdf.set_font('DejaVu', 'I', 8)
+                pdf.text(x + text_padding, y + layer_height + 5, f"Ed = {int(round(layer['Ed']))} MPa")
+            
+            # Ако е последния пласт, добавяме Ed най-отдолу
+            if i == st.session_state.num_layers - 1 and 'Ed' in layer:
+                pdf.set_font('DejaVu', 'I', 8)
+                pdf.text(x + text_padding, y + layer_height + 15, f"Краен Ed = {int(round(layer['Ed']))} MPa")
         
         # Основа
-        y_base = y_start + st.session_state.num_layers * (layer_height + padding)
+        y_base = y_start + st.session_state.num_layers * (layer_height + padding + 10)
         pdf.rect(10, y_base, layer_width, 10)
+        pdf.set_font('DejaVu', '', 10)
         pdf.set_xy(15, y_base + 3)
         pdf.cell(30, 5, "Основа")
         
         # Преместване курсора след визуализацията
         pdf.set_y(y_base + 15)
-        pdf.ln(10)      
+        pdf.ln(10)  
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
