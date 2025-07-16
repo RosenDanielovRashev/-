@@ -823,6 +823,8 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.set_font('DejaVu', '', 12)
         
         for i in range(st.session_state.num_layers):
+            if i > 0:
+                pdf.add_page()
             layer = st.session_state.layers_data[i]
             
             # Добавяне на заглавие за пласта
@@ -885,13 +887,17 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                         name='Резултат'
                     ))
                 
+                # НОВО: Обновяване на стила за цветна диаграма
                 fig.update_layout(
                     title=f"Ed / Ei в зависимост от h / D за пласт {i+1}",
                     xaxis_title="h / D",
                     yaxis_title="Ed / Ei",
                     legend_title="Изолинии",
                     width=800,
-                    height=600
+                    height=600,
+                    # Цветна палитра
+                    template="plotly_white",
+                    colorway=px.colors.qualitative.Plotly
                 )
                 
                 # Конвертиране на фигурата в изображение и добавяне към PDF
