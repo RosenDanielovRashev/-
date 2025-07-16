@@ -836,7 +836,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         y_start = pdf.get_y()
         
         # Размери и настройки
-        layer_height = 20  # mm
+        layer_height = 10  # mm
         layer_width = 180  # mm
         padding = 2        # mm
         text_padding = 5   # mm
