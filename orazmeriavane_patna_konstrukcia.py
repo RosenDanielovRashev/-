@@ -746,10 +746,10 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     # Заглавие
     pdf.set_font('DejaVu', 'B', 16)
     pdf.cell(0, 8, 'Оразмеряване на пътната конструкция', 0, 1, 'C')
-    
+    pdf.ln(5) 
     # Дата
     pdf.set_font('DejaVu', '', 12)
-    today = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+    today = datetime.now().strftime("%d.%m.%Y")
     pdf.cell(0, 8, f'Дата: {today}', 0, 1)
     
     included_sections = []
