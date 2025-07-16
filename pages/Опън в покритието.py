@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
+import base64
+import tempfile
+from datetime import datetime
+from fpdf import FPDF
+from PIL import Image
+import os
 
 
 st.title("Опън в покритието")
@@ -269,12 +275,6 @@ st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмер�
 # =====================================================================
 # ДОБАВЕН КОД ЗА PDF ГЕНЕРАЦИЯ
 # =====================================================================
-import base64
-import tempfile
-from datetime import datetime
-from fpdf import FPDF
-from PIL import Image
-import os
 
 # Клас за персонализиран PDF с български шрифтове
 class PDF(FPDF):
