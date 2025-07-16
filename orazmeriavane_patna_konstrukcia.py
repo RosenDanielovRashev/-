@@ -956,11 +956,11 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 if z_value > sum_h:
                     pdf.cell(0, 8, '✅ Условието е изпълнено: z > Σh', 0, 1)
                     pdf.cell(0, 8, f'z = {z_value:.2f} cm > Σh = {sum_h:.2f} cm', 0, 1)
-                    pdf.ln(20)
+                    pdf.ln(10)
                 else:
                     pdf.cell(0, 8, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                     pdf.cell(0, 8, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
-                    pdf.ln(20)
+                    pdf.ln(10)
         
         # Добавяне на изображения от основната страница
         pdf.set_font('DejaVu', 'B', 14)
