@@ -423,7 +423,10 @@ def generate_tension_report():
         pdf.image(img_path, x=10, w=190)
     
     pdf.cleanup_fonts()
-    return pdf.output(dest='S').encode('latin1')
+    pdf_data = pdf.output(dest='S')
+    if isinstance(pdf_data, str):
+        pdf_data = pdf_data.encode('latin1')
+    return pdf_data
 
 # Добавяне на бутон за генериране на PDF
 st.markdown("---")
