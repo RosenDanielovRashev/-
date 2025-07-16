@@ -962,10 +962,10 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         
         # Добавяне на изображения от основната страница
         image_paths = [
-            "main/5.2.Фиг.png",
-            "main/5.3.Фиг.png",
-            "main/5.2.Таблица.png",
-            "main/5.1.Таблица.png"
+            "5.2.Фиг.png",
+            "5.3.Фиг.png",
+            "5.2.Таблица.png",
+            "5.1.Таблица.png"
         ]
 
         
