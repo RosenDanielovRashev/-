@@ -843,17 +843,19 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             x = 10
             y = y_start + i * (layer_height + padding + 10)  # +10 за текста
             
-            # Ee стойност (над пласта)
+            # Ee стойност (над пласта) - позиционирана в дясно
             if i == 0:
                 # Първи пласт - използваме собствената Ee стойност
                 pdf.set_font('DejaVu', 'I', 8)
-                pdf.text(x + text_padding, y - 2, f"Ee = {int(round(layer.get('Ee', 0)))} MPa")
+                ee_text = f"Ee = {int(round(layer.get('Ee', 0)))} MPa"
+                pdf.text(x + layer_width - pdf.get_string_width(ee_text) - text_padding, y - 2, ee_text)
             else:
                 # Следващи пластове - Ee е Ed от предишния пласт
                 prev_layer = st.session_state.layers_data[i-1]
                 if 'Ed' in prev_layer:
                     pdf.set_font('DejaVu', 'I', 8)
-                    pdf.text(x + text_padding, y - 2, f"Ee = {int(round(prev_layer['Ed']))} MPa")
+                    ee_text = f"Ee = {int(round(prev_layer['Ed']))} MPa"
+                    pdf.text(x + layer_width - pdf.get_string_width(ee_text) - text_padding, y - 2, ee_text)
             
             # Рисуване на пласта
             pdf.set_fill_color(224, 247, 250)  # светлосиньо
@@ -866,21 +868,23 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             pdf.cell(30, 5, f"Пласт {i+1}")
             
             pdf.set_xy(x + 40, y + 5)
-            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0)))} MPa")
+            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0))} MPa")
             
             pdf.set_xy(x + 100, y + 5)
             if 'h' in layer:
                 pdf.cell(40, 5, f"h = {round(layer['h'], 2)} cm")
             
-            # Ed стойност (под пласта)
+            # Ed стойност (под пласта) - позиционирана в дясно
             if 'Ed' in layer:
                 pdf.set_font('DejaVu', 'I', 8)
-                pdf.text(x + text_padding, y + layer_height + 5, f"Ed = {int(round(layer['Ed']))} MPa")
+                ed_text = f"Ed = {int(round(layer['Ed']))} MPa"
+                pdf.text(x + layer_width - pdf.get_string_width(ed_text) - text_padding, y + layer_height + 5, ed_text)
             
-            # Ако е последния пласт, добавяме Ed най-отдолу
+            # Ако е последния пласт, добавяме Ed най-отдолу - позиционирана в дясно
             if i == st.session_state.num_layers - 1 and 'Ed' in layer:
                 pdf.set_font('DejaVu', 'I', 8)
-                pdf.text(x + text_padding, y + layer_height + 15, f"Краен Ed = {int(round(layer['Ed']))} MPa")
+                final_ed_text = f"Краен Ed = {int(round(layer['Ed']))} MPa"
+                pdf.text(x + layer_width - pdf.get_string_width(final_ed_text) - text_padding, y + layer_height + 15, final_ed_text)
         
         # Основа
         y_base = y_start + st.session_state.num_layers * (layer_height + padding + 10)
