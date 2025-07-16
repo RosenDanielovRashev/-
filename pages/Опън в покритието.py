@@ -8,9 +8,9 @@ from datetime import datetime
 from fpdf import FPDF
 from PIL import Image
 import os
+import io
+import kaleido 
 
-
-st.title("Опън в покритието")
 
 # Зареждане на данните
 @st.cache_data
@@ -276,6 +276,7 @@ st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмер�
 # ДОБАВЕН КОД ЗА PDF ГЕНЕРАЦИЯ
 # =====================================================================
 
+
 # Клас за персонализиран PDF с български шрифтове
 class PDF(FPDF):
     def __init__(self):
@@ -301,12 +302,25 @@ class PDF(FPDF):
             except Exception:
                 pass
 
+    def add_plotly_figure(self, fig, title=None, width=180):
+        """Добавя Plotly фигура към PDF"""
+        if title:
+            self.set_font('DejaVu', 'B', 12)
+            self.cell(0, 8, title, 0, 1)
+            self.ln(2)
+        
+        # Запазване на фигурата като временен файл
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmpfile:
+            fig.write_image(tmpfile.name, scale=2)
+            self.image(tmpfile.name, x=10, w=width)
+            os.unlink(tmpfile.name)
+
 # Функция за генериране на PDF отчет
 def generate_tension_report():
     # Създаване на PDF документ
     pdf = PDF()
     
-    # Зареждане на шрифтове (примерни, трябва да ги имате в папка fonts)
+    # Зареждане на шрифтове
     try:
         # Зареждане на шрифтове от локална папка
         font_dir = "fonts"
@@ -337,7 +351,7 @@ def generate_tension_report():
     
     # Параметри на пластовете
     pdf.set_font('DejaVu', 'B', 14)
-    pdf.cell(0, 8, 'Параметри на пластовете', 0, 1)
+    pdf.cell(0, 8, '1. Параметри на пластовете', 0, 1)
     pdf.set_font('DejaVu', '', 12)
     
     # Извличане на данни от session state
@@ -345,6 +359,7 @@ def generate_tension_report():
     Ei_list = st.session_state.get("Ei_list", [1000, 1000])
     hi_list = st.session_state.get("hi_list", [10, 10])
     Ed = st.session_state.get("final_Ed", 100)
+    axle_load = st.session_state.get("axle_load", 100)
     
     # Таблица с параметрите
     col_widths = [40, 40, 40, 40]
@@ -371,13 +386,13 @@ def generate_tension_report():
     
     # Изчислени параметри
     pdf.set_font('DejaVu', 'B', 14)
-    pdf.cell(0, 8, 'Изчислени величини', 0, 1)
+    pdf.cell(0, 8, '2. Изчислени величини', 0, 1)
     pdf.set_font('DejaVu', '', 12)
     
     H = sum(hi_list)
-    Esr = sum([Ei * hi for Ei, hi in zip(Ei_list, hi_list)]) / H
-    hD = H / D
-    Esr_Ed = Esr / Ed
+    Esr = sum([Ei * hi for Ei, hi in zip(Ei_list, hi_list)]) / H if H != 0 else 0
+    hD = H / D if D != 0 else 0
+    Esr_Ed = Esr / Ed if Ed != 0 else 0
     
     pdf.cell(0, 8, f'Диаметър (D): {D} cm', 0, 1)
     pdf.cell(0, 8, f'Сума на дебелините (H): {H:.2f} cm', 0, 1)
@@ -386,20 +401,39 @@ def generate_tension_report():
     pdf.cell(0, 8, f'H/D: {hD:.4f}', 0, 1)
     pdf.cell(0, 8, f'Esr/Ed: {Esr_Ed:.4f}', 0, 1)
     
+    # Формули за изчисление
+    pdf.ln(5)
+    pdf.set_font('DejaVu', 'B', 12)
+    pdf.cell(0, 8, 'Формули за изчисление:', 0, 1)
+    pdf.set_font('DejaVu', '', 10)
+    
+    # Формула за Esr
+    numerator_str = " + ".join([f"{Ei}×{hi}" for Ei, hi in zip(Ei_list, hi_list)])
+    denominator_str = " + ".join([f"{hi}" for hi in hi_list])
+    pdf.multi_cell(0, 6, f'Esr = (Σ(Ei × hi)) / (Σhi) = ({numerator_str}) / ({denominator_str}) = {Esr:.2f} MPa', 0, 1)
+    
+    # Формула за H
+    pdf.multi_cell(0, 6, f'H = Σhi = {denominator_str} = {H:.2f} cm', 0, 1)
+    
     # Резултати от номограмата
     if "final_sigma" in st.session_state:
         sigma_nomogram = st.session_state["final_sigma"]
-        axle_load = st.session_state.get("axle_load", 100)
-        p = 0.620 if axle_load == 100 else 0.633
+        p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
         
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, 'Резултати от номограмата', 0, 1)
+        pdf.cell(0, 8, '3. Резултати от номограмата', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         pdf.cell(0, 8, f'σR (номограма): {sigma_nomogram:.4f}', 0, 1)
         pdf.cell(0, 8, f'Осова тежест: {axle_load} kN → p = {p}', 0, 1)
-        pdf.cell(0, 8, f'Крайно σR = 1.15 * p * σR = 1.15 * {p} * {sigma_nomogram:.4f} = {1.15*p*sigma_nomogram:.4f} MPa', 0, 1)
+        
+        # Формула за крайно σR
+        pdf.ln(5)
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.cell(0, 8, 'Формула за крайно σR:', 0, 1)
+        pdf.set_font('DejaVu', '', 10)
+        pdf.multi_cell(0, 6, f'σR = 1.15 × p × σR(номограма) = 1.15 × {p} × {sigma_nomogram:.4f} = {1.15*p*sigma_nomogram:.4f} MPa', 0, 1)
         
         # Ръчно въведена стойност и проверка
         manual_sigma = st.session_state.get("manual_sigma_value", 1.2)
@@ -408,25 +442,51 @@ def generate_tension_report():
         
         pdf.ln(10)
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, 'Проверка спрямо допустимо напрежение', 0, 1)
+        pdf.cell(0, 8, '4. Проверка спрямо допустимо напрежение', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         pdf.cell(0, 8, f'Ръчно зададено допустимо напрежение: {manual_sigma} MPa', 0, 1)
         pdf.cell(0, 8, f'Сравнение: {sigma_final:.4f} MPa ≤ {manual_sigma} MPa → {check_status}', 0, 1)
     
-    # Добавяне на изображение (ако съществува)
+    # Добавяне на графиката от номограмата
+    if "final_sigma" in st.session_state:
+        # Създаване на фигурата
+        fig = go.Figure()
+        for val, group in data.groupby("Esr_over_Ed"):
+            fig.add_trace(go.Scatter(
+                x=group["H_over_D"],
+                y=group["sigma_R"],
+                mode='lines',
+                name=f"Esr/Ed = {val:.1f}"
+            ))
+        fig.add_trace(go.Scatter(
+            x=[H / D], y=[sigma_nomogram],
+            mode='markers',
+            marker=dict(size=8, color='red'),
+            name="Изчислена точка"
+        ))
+        fig.update_layout(
+            title="Номограма: σR срещу H/D",
+            xaxis_title="H / D",
+            yaxis_title="σR",
+            height=500,
+            width=700
+        )
+        
+        # Добавяне на фигурата към PDF
+        pdf.add_page()
+        pdf.add_plotly_figure(fig, title="Номограма: σR срещу H/D")
+    
+    # Добавяне на изображение с допустими напрежения
     img_path = "Допустими опънни напрежения.png"
     if os.path.exists(img_path):
         pdf.add_page()
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, 'Допустими опънни напрежения', 0, 1)
+        pdf.cell(0, 8, '5. Допустими опънни напрежения', 0, 1)
         pdf.image(img_path, x=10, w=190)
     
     pdf.cleanup_fonts()
-    pdf_data = pdf.output(dest='S')
-    if isinstance(pdf_data, str):
-        pdf_data = pdf_data.encode('latin1')
-    return pdf_data
+    return pdf.output(dest='S').encode('latin1')
 
 # Добавяне на бутон за генериране на PDF
 st.markdown("---")
@@ -434,16 +494,20 @@ st.subheader("Генериране на отчет")
 
 if st.button("📊 Генерирай PDF отчет", key="generate_pdf_button"):
     with st.spinner('Генерира се PDF отчет...'):
-        pdf_bytes = generate_tension_report()
-        
-        if pdf_bytes:
-            # Сваляне на файла
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-                tmpfile.write(pdf_bytes)
+        try:
+            pdf_bytes = generate_tension_report()
             
-            with open(tmpfile.name, "rb") as f:
-                base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-                download_link = f'<a href="data:application/pdf;base64,{base64_pdf}" download="opyn_v_pokritieto_report.pdf">⬇️ Свали PDF отчета</a>'
-                st.markdown(download_link, unsafe_allow_html=True)
-        else:
-            st.error("Грешка при генериране на PDF отчета")
+            if pdf_bytes:
+                # Сваляне на файла
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                    tmpfile.write(pdf_bytes)
+                
+                with open(tmpfile.name, "rb") as f:
+                    base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+                    download_link = f'<a href="data:application/pdf;base64,{base64_pdf}" download="opyn_v_pokritieto_report.pdf">⬇️ Свали PDF отчета</a>'
+                    st.markdown(download_link, unsafe_allow_html=True)
+                    st.success("PDF отчетът е генериран успешно!")
+            else:
+                st.error("Грешка при генериране на PDF отчета")
+        except Exception as e:
+            st.error(f"Възникна грешка: {str(e)}")
