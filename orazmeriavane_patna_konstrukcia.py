@@ -808,7 +808,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
             pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
             pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
-            pdf.cell(col_widths[3], 10, str(round(Ed_val, 0)), 1, 0, 'C')
+            pdf.cell(col_widths[3], 10, str(int(round(Ed_val))) if Ed_val != '-' else '-', 1, 0, 'C')
             pdf.cell(col_widths[4], 10, str(round(h_val, 2)), 1, 0, 'C')
             pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
             pdf.ln()
@@ -835,7 +835,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             # Добавяне на основните параметри
             pdf.cell(0, 8, f'Ei = {layer.get("Ei", "-")} MPa', 0, 1)
             pdf.cell(0, 8, f'Ee = {layer.get("Ee", "-")} MPa', 0, 1)
-            pdf.cell(0, 8, f'Ed = {layer.get("Ed", "-")} MPa', 0, 1)
+            pdf.cell(0, 8, f'Ed = {int(round(layer.get("Ed", 0)))} MPa' if 'Ed' in layer else 'Ed = -', 0, 1)
             pdf.cell(0, 8, f'h = {layer.get("h", "-")} cm', 0, 1)
             pdf.cell(0, 8, f'λ = {st.session_state.lambda_values[i]}', 0, 1)
             pdf.ln(5)
