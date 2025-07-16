@@ -263,3 +263,184 @@ else:
 
 # Линк към предишната страница
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
+
+# В края на файла Опън в покритието.py (след секцията за ръчно въвеждане)
+
+# =====================================================================
+# ДОБАВЕН КОД ЗА PDF ГЕНЕРАЦИЯ
+# =====================================================================
+import base64
+import tempfile
+from datetime import datetime
+from fpdf import FPDF
+from PIL import Image
+import os
+
+# Клас за персонализиран PDF с български шрифтове
+class PDF(FPDF):
+    def __init__(self):
+        super().__init__()
+        self.temp_font_files = []
+        
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('DejaVu', 'I', 8)
+        self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+        
+    def add_font_from_bytes(self, family, style, font_bytes):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+            tmp_file.write(font_bytes)
+            tmp_file_path = tmp_file.name
+            self.temp_font_files.append(tmp_file_path)
+            self.add_font(family, style, tmp_file_path)
+            
+    def cleanup_fonts(self):
+        for file_path in self.temp_font_files:
+            try:
+                os.unlink(file_path)
+            except Exception:
+                pass
+
+# Функция за генериране на PDF отчет
+def generate_tension_report():
+    # Създаване на PDF документ
+    pdf = PDF()
+    
+    # Зареждане на шрифтове (примерни, трябва да ги имате в папка fonts)
+    try:
+        # Зареждане на шрифтове от локална папка
+        font_dir = "fonts"
+        dejavu_sans = open(os.path.join(font_dir, "DejaVuSans.ttf"), "rb").read()
+        dejavu_bold = open(os.path.join(font_dir, "DejaVuSans-Bold.ttf"), "rb").read()
+        dejavu_italic = open(os.path.join(font_dir, "DejaVuSans-Oblique.ttf"), "rb").read()
+        
+        pdf.add_font_from_bytes('DejaVu', '', dejavu_sans)
+        pdf.add_font_from_bytes('DejaVu', 'B', dejavu_bold)
+        pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic)
+    except Exception as e:
+        st.error(f"Грешка при зареждане на шрифтове: {str(e)}")
+        return None
+
+    pdf.set_font('DejaVu', '', 12)
+    pdf.add_page()
+    
+    # Заглавие
+    pdf.set_font('DejaVu', 'B', 16)
+    pdf.cell(0, 10, 'Изчисление на опън в покритието', 0, 1, 'C')
+    pdf.ln(5)
+    
+    # Дата
+    pdf.set_font('DejaVu', '', 12)
+    today = datetime.now().strftime("%d.%m.%Y %H:%M")
+    pdf.cell(0, 8, f'Дата: {today}', 0, 1)
+    pdf.ln(10)
+    
+    # Параметри на пластовете
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 8, 'Параметри на пластовете', 0, 1)
+    pdf.set_font('DejaVu', '', 12)
+    
+    # Извличане на данни от session state
+    D = st.session_state.get("final_D", 34.0)
+    Ei_list = st.session_state.get("Ei_list", [1000, 1000])
+    hi_list = st.session_state.get("hi_list", [10, 10])
+    Ed = st.session_state.get("final_Ed", 100)
+    
+    # Таблица с параметрите
+    col_widths = [40, 40, 40, 40]
+    headers = ["Пласт", "Ei (MPa)", "hi (cm)", "Ed (MPa)"]
+    
+    # Хедъри на таблицата
+    for i, header in enumerate(headers):
+        pdf.cell(col_widths[i], 10, header, 1, 0, 'C')
+    pdf.ln()
+    
+    # Данни за пластовете
+    for i in range(len(Ei_list)):
+        pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
+        pdf.cell(col_widths[1], 10, str(Ei_list[i]), 1, 0, 'C')
+        pdf.cell(col_widths[2], 10, str(hi_list[i]), 1, 0, 'C')
+        # Показва Ed само за последния пласт
+        if i == len(Ei_list) - 1:
+            pdf.cell(col_widths[3], 10, str(round(Ed)), 1, 0, 'C')
+        else:
+            pdf.cell(col_widths[3], 10, "-", 1, 0, 'C')
+        pdf.ln()
+    
+    pdf.ln(10)
+    
+    # Изчислени параметри
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 8, 'Изчислени величини', 0, 1)
+    pdf.set_font('DejaVu', '', 12)
+    
+    H = sum(hi_list)
+    Esr = sum([Ei * hi for Ei, hi in zip(Ei_list, hi_list)]) / H
+    hD = H / D
+    Esr_Ed = Esr / Ed
+    
+    pdf.cell(0, 8, f'Диаметър (D): {D} cm', 0, 1)
+    pdf.cell(0, 8, f'Сума на дебелините (H): {H:.2f} cm', 0, 1)
+    pdf.cell(0, 8, f'Еквивалентен модул (Esr): {Esr:.2f} MPa', 0, 1)
+    pdf.cell(0, 8, f'Модул на основание (Ed): {Ed} MPa', 0, 1)
+    pdf.cell(0, 8, f'H/D: {hD:.4f}', 0, 1)
+    pdf.cell(0, 8, f'Esr/Ed: {Esr_Ed:.4f}', 0, 1)
+    
+    # Резултати от номограмата
+    if "final_sigma" in st.session_state:
+        sigma_nomogram = st.session_state["final_sigma"]
+        axle_load = st.session_state.get("axle_load", 100)
+        p = 0.620 if axle_load == 100 else 0.633
+        
+        pdf.ln(10)
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 8, 'Резултати от номограмата', 0, 1)
+        pdf.set_font('DejaVu', '', 12)
+        
+        pdf.cell(0, 8, f'σR (номограма): {sigma_nomogram:.4f}', 0, 1)
+        pdf.cell(0, 8, f'Осова тежест: {axle_load} kN → p = {p}', 0, 1)
+        pdf.cell(0, 8, f'Крайно σR = 1.15 * p * σR = 1.15 * {p} * {sigma_nomogram:.4f} = {1.15*p*sigma_nomogram:.4f} MPa', 0, 1)
+        
+        # Ръчно въведена стойност и проверка
+        manual_sigma = st.session_state.get("manual_sigma_value", 1.2)
+        sigma_final = 1.15 * p * sigma_nomogram
+        check_status = "УДОВЛЕТВОРЯВА" if sigma_final <= manual_sigma else "НЕ УДОВЛЕТВОРЯВА"
+        
+        pdf.ln(10)
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 8, 'Проверка спрямо допустимо напрежение', 0, 1)
+        pdf.set_font('DejaVu', '', 12)
+        
+        pdf.cell(0, 8, f'Ръчно зададено допустимо напрежение: {manual_sigma} MPa', 0, 1)
+        pdf.cell(0, 8, f'Сравнение: {sigma_final:.4f} MPa ≤ {manual_sigma} MPa → {check_status}', 0, 1)
+    
+    # Добавяне на изображение (ако съществува)
+    img_path = "Допустими опънни напрежения.png"
+    if os.path.exists(img_path):
+        pdf.add_page()
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 8, 'Допустими опънни напрежения', 0, 1)
+        pdf.image(img_path, x=10, w=190)
+    
+    pdf.cleanup_fonts()
+    return pdf.output(dest='S').encode('latin1')
+
+# Добавяне на бутон за генериране на PDF
+st.markdown("---")
+st.subheader("Генериране на отчет")
+
+if st.button("📊 Генерирай PDF отчет", key="generate_pdf_button"):
+    with st.spinner('Генерира се PDF отчет...'):
+        pdf_bytes = generate_tension_report()
+        
+        if pdf_bytes:
+            # Сваляне на файла
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                tmpfile.write(pdf_bytes)
+            
+            with open(tmpfile.name, "rb") as f:
+                base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+                download_link = f'<a href="data:application/pdf;base64,{base64_pdf}" download="opyn_v_pokritieto_report.pdf">⬇️ Свали PDF отчета</a>'
+                st.markdown(download_link, unsafe_allow_html=True)
+        else:
+            st.error("Грешка при генериране на PDF отчета")
