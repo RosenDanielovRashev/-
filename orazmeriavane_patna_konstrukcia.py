@@ -1,4 +1,3 @@
-
 import streamlit as st 
 import pandas as pd 
 import numpy as np 
@@ -12,6 +11,7 @@ from fpdf import FPDF
 from PIL import Image
 import requests
 from io import BytesIO
+import plotly.express as px
 
 st.set_page_config(layout="wide")
 
