@@ -966,7 +966,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.3.Фиг.png",
             "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.2.Таблица.png",
             "https://raw.githubusercontent.com/myuser/myrepo/main/path/5.1.Таблица.png"
-        ]
+        ]      
 
         
         pdf.set_font('DejaVu', 'B', 14)
