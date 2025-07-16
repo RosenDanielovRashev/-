@@ -767,7 +767,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     
     for section in included_sections:
         
-    pdf.ln(8)
+    
     
     # Основна страница
     if include_main:
