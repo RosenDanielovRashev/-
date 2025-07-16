@@ -757,11 +757,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     pdf.cell(0, 8, f'Дата: {today}', 0, 1)
     pdf.ln(5)
     
-    # Списък с избрани страници
-    pdf.set_font('DejaVu', 'B', 14)
-    pdf.cell(0, 8, 'Включени раздели:', 0, 1)
-    pdf.set_font('DejaVu', '', 12)
-    
     included_sections = []
     if include_main: included_sections.append("Основна страница")
     if include_fig94: included_sections.append("Ꚍμ/p (фиг9.4)")
@@ -777,7 +772,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
     # Основна страница
     if include_main:
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, 'Основна страница - Оразмеряване', 0, 1)
+        pdf.cell(0, 8, 'Оразмеряване на пластове', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         # Общи параметри
@@ -819,7 +814,6 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 8, 'Диаграми и изчисления за пластове', 0, 1)
         pdf.set_font('DejaVu', '', 12)
         
         for i in range(st.session_state.num_layers):
