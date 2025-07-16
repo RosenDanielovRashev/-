@@ -838,8 +838,9 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 # Разделяме съобщението на редове и ги добавяме едно по едно
                 calculation_lines = st.session_state.calculation_messages[i].split('\n')
                 for line in calculation_lines:
-                    if line.strip():  # Пропускаме празните редове
-                        pdf.cell(0, 8, line.strip(), 0, 1)
+                    clean_line = line.strip().replace('\t', '')
+                    if clean_line:
+                        pdf.cell(0, 8, clean_line, 0, 1)
             
             pdf.ln(5)
             
