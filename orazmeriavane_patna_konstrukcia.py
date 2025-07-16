@@ -959,7 +959,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                 else:
                     pdf.cell(0, 8, '❌ Условието НЕ е изпълнено: z ≤ Σh', 0, 1)
                     pdf.cell(0, 8, f'z = {z_value:.2f} cm ≤ Σh = {sum_h:.2f} cm', 0, 1)
-                    pdf.ln(8)
+                    pdf.ln(20)
         
         # Добавяне на изображения от основната страница
         pdf.set_font('DejaVu', 'B', 14)
@@ -976,7 +976,7 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         for img_file in local_images:
             if os.path.exists(img_file):
                 try:
-                    pdf.image(img_file, x=10, w=140)
+                    pdf.image(img_file, x=10, w=160)
                     pdf.ln(5)
                 except:
                     pdf.cell(0, 8, f'Грешка при вмъкване на {img_file}', 0, 1)
