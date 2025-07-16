@@ -823,8 +823,8 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.set_font('DejaVu', '', 12)
         
         for i in range(st.session_state.num_layers):
-            if i > 0:
-                pdf.add_page()
+            pdf.add_page()
+                
             layer = st.session_state.layers_data[i]
             
             # Добавяне на заглавие за пласта
