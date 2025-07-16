@@ -898,8 +898,9 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
                     title=f"Ed / Ei в зависимост от h / D за пласт {i+1}",
                     xaxis_title="h / D",
                     yaxis_title="Ed / Ei",
+                    showlegend=False,
                     legend_title="Изолинии",
-                    width=800,
+                    width=700,
                     height=600,
                     # Цветна палитра
                     template="plotly_white",
