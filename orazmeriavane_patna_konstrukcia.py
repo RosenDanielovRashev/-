@@ -821,7 +821,69 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
         pdf.ln(8)
         
         # В секцията за диаграмите в generate_pdf_report, заменете текущия код със следното:
-      
+        # Визуално представяне на пластовете
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 8, 'Визуално представяне на пластовете', 0, 1)
+        pdf.set_font('DejaVu', '', 10)
+        
+        # Начална позиция по Y
+        y_start = pdf.get_y()
+        
+        # Размери
+        layer_height = 20  # mm
+        layer_width = 180  # mm
+        padding = 2        # mm
+        
+        # Рисуване на пластовете отдолу нагоре
+        for i in range(st.session_state.num_layers-1, -1, -1):
+            layer = st.session_state.layers_data[i]
+            
+            # Координати
+            x = 10
+            y = y_start + (st.session_state.num_layers - i - 1) * (layer_height + padding)
+            
+            # Цвят на пласта
+            pdf.set_fill_color(224, 247, 250)  # светлосиньо
+            pdf.rect(x, y, layer_width, layer_height, style='F')
+            pdf.rect(x, y, layer_width, layer_height)
+            
+            # Текст за пласта
+            pdf.set_xy(x + 5, y + 5)
+            pdf.cell(30, 5, f"Пласт {i+1}")
+            
+            pdf.set_xy(x + 40, y + 5)
+            pdf.cell(50, 5, f"Ei = {int(round(layer.get('Ei', 0)))} MPa")
+            
+            pdf.set_xy(x + 100, y + 5)
+            if 'h' in layer:
+                pdf.cell(40, 5, f"h = {round(layer['h'], 2)} cm")
+            
+            # Ee стойност (от предишния пласт)
+            if i > 0:
+                prev_layer = st.session_state.layers_data[i-1]
+                if 'Ed' in prev_layer:
+                    pdf.set_xy(x + 140, y - 5)
+                    pdf.set_font('DejaVu', 'I', 8)
+                    pdf.cell(40, 5, f"Ee = {int(round(prev_layer['Ed']))} MPa")
+                    pdf.set_font('DejaVu', '', 10)
+        
+        # Последен Ee (за повърхността)
+        if st.session_state.num_layers > 0:
+            first_layer = st.session_state.layers_data[0]
+            pdf.set_xy(150, y_start - 10)
+            pdf.set_font('DejaVu', 'I', 8)
+            pdf.cell(40, 5, f"Ee = {int(round(first_layer['Ee']))} MPa")
+            pdf.set_font('DejaVu', '', 10)
+        
+        # Основа
+        y_base = y_start + st.session_state.num_layers * (layer_height + padding)
+        pdf.rect(10, y_base, layer_width, 10)
+        pdf.set_xy(15, y_base + 3)
+        pdf.cell(30, 5, "Основа")
+        
+        # Преместване курсора след визуализацията
+        pdf.set_y(y_base + 15)
+        pdf.ln(10)      
 
         # Диаграми за всички пластове
         pdf.set_font('DejaVu', 'B', 14)
