@@ -831,15 +831,17 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             
             # Добавяне на изчисленията, ако са налични
             if i in st.session_state.calculation_messages:
+                pdf.set_x(10)  # Позиция за начало на реда, 0 ако искаш да е съвсем вляво
                 pdf.set_font('DejaVu', 'B', 10)
                 pdf.cell(0, 8, 'Изчисления:', 0, 1)
+                
                 pdf.set_font('DejaVu', '', 10)
                 
-                # Разделяме съобщението на редове и ги добавяме едно по едно
                 calculation_lines = st.session_state.calculation_messages[i].split('\n')
                 for line in calculation_lines:
                     clean_line = line.strip().replace('\t', '')
                     if clean_line:
+                        pdf.set_x(10)  # Задължително за всеки ред, за да няма неочакван отстъп
                         pdf.cell(0, 8, clean_line, 0, 1)
             
             pdf.ln(5)
