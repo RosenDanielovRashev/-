@@ -801,13 +801,13 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             lambda_val = st.session_state.lambda_values[i]
             
             Ei_val = round(layer.get('Ei', 0)) if 'Ei' in layer else '-'
-            Ee_val = round(layer.get('Ee', 0)) if 'Ee' in layer else '-'
+            Ee_val = int(round(layer.get('Ee', 0))) if 'Ee' in layer else '-'
             Ed_val = int(round(layer.get('Ed', 0))) if 'Ed' in layer else '-'
             h_val = round(layer['h'], 2) if 'h' in layer else '-'
             
             pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
             pdf.cell(col_widths[1], 10, str(Ei_val), 1, 0, 'C')
-            pdf.cell(col_widths[2], 10, str(Ee_val), 1, 0, 'C')
+            pdf.cell(col_widths[2], 10, str(int(round(Ee_val))) if Ee_val != '-' else '-', 1, 0, 'C')
             pdf.cell(col_widths[3], 10, str(int(round(Ed_val))) if Ed_val != '-' else '-', 1, 0, 'C')
             pdf.cell(col_widths[4], 10, str(round(h_val, 2)), 1, 0, 'C')
             pdf.cell(col_widths[5], 10, str(lambda_val), 1, 0, 'C')
@@ -834,9 +834,9 @@ def generate_pdf_report(include_main, include_fig94, include_fig96, include_fig9
             
             # Добавяне на основните параметри
             pdf.cell(0, 8, f'Ei = {layer.get("Ei", "-")} MPa', 0, 1)
-            pdf.cell(0, 8, f'Ee = {layer.get("Ee", "-")} MPa', 0, 1)
+            pdf.cell(0, 8, f'Ee = {int(round(layer.get("Ee", 0)))} MPa' if 'Ee' in layer else 'Ee = -', 0, 1)
             pdf.cell(0, 8, f'Ed = {int(round(layer.get("Ed", 0)))} MPa' if 'Ed' in layer else 'Ed = -', 0, 1)
-            pdf.cell(0, 8, f'h = {layer.get("h", "-")} cm', 0, 1)
+            pdf.cell(0, 8, f'h = {round(layer.get("h", 0), 2)} cm' if 'h' in layer else 'h = -', 0, 1)
             pdf.cell(0, 8, f'λ = {st.session_state.lambda_values[i]}', 0, 1)
             pdf.ln(5)
             
