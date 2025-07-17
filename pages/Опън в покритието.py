@@ -386,7 +386,7 @@ def generate_pdf_report():
     if 'final_sigma' in st.session_state:
         pdf.add_latex_formula(fr"Esr / Ed = {Esr:.2f} / {Ed:.0f} = {Esr / Ed:.3f}")
         pdf.add_latex_formula(fr"H / D = {H:.2f} / {D:.2f} = {H / D:.3f}")
-        pdf.add_latex_formula(fr"\sigma_R^{\mathrm{номограма}} = {st.session_state.final_sigma:.3f}")
+        pdf.add_latex_formula(fr"\sigma_R^{{\mathrm{{номограма}}}} = {st.session_state.final_sigma:.3f}")
     
     if 'final_sigma_R' in st.session_state:
         p = 0.620 if st.session_state.get("axle_load", 100) == 100 else 0.633
