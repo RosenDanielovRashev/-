@@ -110,7 +110,7 @@ if "final_Ed_list" not in st.session_state:
     st.stop()
 
 # Автоматично определяне на Ed (модул на следващия пласт)
-n airlines = len(Ei_list)
+n_layers = len(Ei_list)
 if len(st.session_state.final_Ed_list) <= n_layers:
     st.error(f"⚠️ Недостатъчно пластове в final_Ed_list (изисква се поне {n_layers+1})!")
     st.stop()
