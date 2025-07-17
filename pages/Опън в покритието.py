@@ -2,7 +2,13 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objs as go
-
+from fpdf import FPDF
+from PIL import Image
+import plotly.io as pio
+import os
+import tempfile
+import base64
+from io import BytesIO
 
 st.title("Опън в покритието")
 
@@ -260,6 +266,112 @@ if sigma_to_compare is not None:
         )
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
+
+# Функция за генериране на PDF отчет
+def generate_pdf_report():
+    class PDF(FPDF):
+        def __init__(self):
+            super().__init__()
+            self.temp_font_files = []
+            
+        def footer(self):
+            self.set_y(-15)
+            self.set_font('DejaVu', 'I', 8)
+            self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+            
+        def add_font_from_bytes(self, family, style, font_bytes):
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+                tmp_file.write(font_bytes)
+                tmp_file_path = tmp_file.name
+                self.temp_font_files.append(tmp_file_path)
+                self.add_font(family, style, tmp_file_path)
+                
+        def cleanup_fonts(self):
+            for file_path in self.temp_font_files:
+                try:
+                    os.unlink(file_path)
+                except Exception as e:
+                    st.error(f"Грешка при изтриване на временен файл: {e}")
+
+    pdf = PDF()
+    
+    try:
+        font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+        if not os.path.exists(font_dir):
+            st.error(f"Директорията за шрифтове не съществува: {font_dir}")
+            return b""
+        
+        sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
+        bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+        italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+        
+        if not all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
+            st.error("Липсващи шрифтове в папка 'fonts'")
+            return b""
+        
+        with open(sans_path, "rb") as f:
+            dejavu_sans = BytesIO(f.read())
+        with open(bold_path, "rb") as f:
+            dejavu_bold = BytesIO(f.read())
+        with open(italic_path, "rb") as f:
+            dejavu_italic = BytesIO(f.read())
+        
+        pdf.add_font_from_bytes('DejaVu', '', dejavu_sans.getvalue())
+        pdf.add_font_from_bytes('DejaVu', 'B', dejavu_bold.getvalue())
+        pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic.getvalue())
+    except Exception as e:
+        st.error(f"Грешка при зареждане на шрифтове: {e}")
+        return b""
+
+    pdf.set_font('DejaVu', '', 12)
+    pdf.add_page()
+    
+    # Заглавие
+    pdf.set_font('DejaVu', 'B', 16)
+    pdf.cell(0, 10, 'Опън в покритието - Отчет', 0, 1, 'C')
+    pdf.ln(10)
+    
+    # Добавяне на данни от изчисленията
+    pdf.set_font('DejaVu', '', 12)
+    pdf.cell(0, 10, f'Диаметър D: {st.session_state.final_D} cm', 0, 1)
+    pdf.cell(0, 10, f'Брой пластове: 2', 0, 1)
+    for i in range(2):
+        pdf.cell(0, 10, f'Пласт {i+1}: E{i+1} = {st.session_state.Ei_list[i]} MPa, h{i+1} = {st.session_state.hi_list[i]} cm', 0, 1)
+    pdf.cell(0, 10, f'Ed: {st.session_state.final_Ed} MPa', 0, 1)
+    pdf.cell(0, 10, f'Esr: {Esr:.2f} MPa', 0, 1)
+    pdf.cell(0, 10, f'H: {H:.2f} cm', 0, 1)
+    if 'final_sigma_R' in st.session_state:
+        pdf.cell(0, 10, f'σR: {st.session_state.final_sigma_R:.3f} MPa', 0, 1)
+    
+    # Добавяне на графиката
+    if 'fig' in locals():
+        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+        img = Image.open(BytesIO(img_bytes))
+        img_path = "plot.png"
+        img.save(img_path)
+        pdf.image(img_path, x=10, w=190)
+        os.remove(img_path)
+    
+    pdf.cleanup_fonts()
+    return pdf.output(dest='S')
+
+# Бутон за генериране на PDF
+st.markdown("---")
+st.subheader("Генериране на PDF отчет")
+if st.button("📄 Генерирай PDF отчет"):
+    with st.spinner('Генериране на PDF отчет...'):
+        pdf_bytes = generate_pdf_report()
+        if pdf_bytes:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                tmpfile.write(pdf_bytes)
+                tmpfile.flush()
+            with open(tmpfile.name, "rb") as f:
+                base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+                download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="open_v_pokritieto_report.pdf">Свали PDF отчет</a>'
+                st.markdown(download_link, unsafe_allow_html=True)
+                st.success("✅ PDF отчетът е успешно генериран!")
+        else:
+            st.error("Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
 
 # Линк към предишната страница
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
