@@ -267,61 +267,87 @@ if sigma_to_compare is not None:
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
+# Функция за рендиране на формули като изображения
+def render_formula_to_image(formula, fontsize=12, dpi=200):
+    """Render LaTeX formula to image using matplotlib"""
+    fig = plt.figure(figsize=(8, 0.8))
+    fig.text(0.5, 0.5, f'${formula}$', fontsize=fontsize, 
+             ha='center', va='center', usetex=False)
+    plt.axis('off')
+    
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+    buf.seek(0)
+    return buf
+
+# Клас за PDF с подобрена поддръжка на формули
+class EnhancedPDF(FPDF):
+    def __init__(self):
+        super().__init__()
+        self.temp_font_files = []
+        self.temp_image_files = []
+        
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('DejaVu', 'I', 8)
+        self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+        
+    def add_font_from_bytes(self, family, style, font_bytes):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+            tmp_file.write(font_bytes)
+            tmp_file_path = tmp_file.name
+            self.temp_font_files.append(tmp_file_path)
+            self.add_font(family, style, tmp_file_path)
+            
+    def add_image_from_fig(self, fig, width=180):
+        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            tmp_file.write(img_bytes)
+            tmp_file_path = tmp_file.name
+            self.temp_image_files.append(tmp_file_path)
+        self.image(tmp_file_path, x=10, w=width)
+        self.ln(10)
+        
+    def add_external_image(self, image_path, width=180):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+            img = Image.open(image_path)
+            img.save(tmp_file, format='PNG')
+            tmp_file_path = tmp_file.name
+            self.temp_image_files.append(tmp_file_path)
+        self.image(tmp_file_path, x=10, w=width)
+        self.ln(10)
+        
+    def add_latex_formula(self, formula_text):
+        try:
+            # Рендиране на формулата като изображение
+            img_buf = render_formula_to_image(formula_text)
+            
+            # Записване във временен файл
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                tmp_file.write(img_buf.read())
+                tmp_file_path = tmp_file.name
+                self.temp_image_files.append(tmp_file_path)
+            
+            # Добавяне към PDF
+            self.image(tmp_file_path, x=10, w=180)
+            self.ln(10)
+        except Exception as e:
+            # При грешка, показване на формулата като текст
+            self.set_font('DejaVu', 'I', 12)
+            self.cell(0, 10, formula_text, 0, 1)
+            self.ln(5)
+            
+    def cleanup_temp_files(self):
+        for file_path in self.temp_font_files + self.temp_image_files:
+            try:
+                os.unlink(file_path)
+            except Exception as e:
+                print(f"Грешка при изтриване на временен файл: {e}")
+
 # Функция за генериране на PDF отчет
 def generate_pdf_report():
-    class PDF(FPDF):
-        def __init__(self):
-            super().__init__()
-            self.temp_font_files = []
-            self.temp_image_files = []
-            
-        def footer(self):
-            self.set_y(-15)
-            self.set_font('DejaVu', 'I', 8)
-            self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
-            
-        def add_font_from_bytes(self, family, style, font_bytes):
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
-                tmp_file.write(font_bytes)
-                tmp_file_path = tmp_file.name
-                self.temp_font_files.append(tmp_file_path)
-                self.add_font(family, style, tmp_file_path)
-                
-        def add_image_from_fig(self, fig, width=180):
-            img_bytes = pio.to_image(fig, format="png", width=800, height=600)
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                tmp_file.write(img_bytes)
-                tmp_file_path = tmp_file.name
-                self.temp_image_files.append(tmp_file_path)
-            self.image(tmp_file_path, x=10, w=width)
-            self.ln(10)
-            
-        def add_external_image(self, image_path, width=180):
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                img = Image.open(image_path)
-                img.save(tmp_file, format='PNG')
-                tmp_file_path = tmp_file.name
-                self.temp_image_files.append(tmp_file_path)
-            self.image(tmp_file_path, x=10, w=width)
-            self.ln(10)
-            
-        def add_latex_formula(self, formula_text):
-            self.set_font('DejaVu', 'I', 12)
-            # Добавяме малко вертикално пространство преди формулата
-            self.ln(5)
-            # Центрираме формулата
-            self.cell(0, 10, formula_text, 0, 1, 'C')
-            # Добавяме малко вертикално пространство след формулата
-            self.ln(5)
-            
-        def cleanup_temp_files(self):
-            for file_path in self.temp_font_files + self.temp_image_files:
-                try:
-                    os.unlink(file_path)
-                except Exception as e:
-                    st.error(f"Грешка при изтриване на временен файл: {e}")
-
-    pdf = PDF()
+    pdf = EnhancedPDF()
     
     try:
         # Зареждане на шрифтове
@@ -329,23 +355,33 @@ def generate_pdf_report():
         font_dir = os.path.join(base_dir, "fonts")
         
         if not os.path.exists(font_dir):
-            st.error(f"Директорията за шрифтове не съществува: {font_dir}")
-            return b""
+            os.makedirs(font_dir, exist_ok=True)
         
+        # Проверка за шрифтовете (ако липсват, използвайте резервни)
         sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
         bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
         italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
         
-        with open(sans_path, "rb") as f:
-            dejavu_sans = BytesIO(f.read())
-        with open(bold_path, "rb") as f:
-            dejavu_bold = BytesIO(f.read())
-        with open(italic_path, "rb") as f:
-            dejavu_italic = BytesIO(f.read())
-        
-        pdf.add_font_from_bytes('DejaVu', '', dejavu_sans.getvalue())
-        pdf.add_font_from_bytes('DejaVu', 'B', dejavu_bold.getvalue())
-        pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic.getvalue())
+        # Ако шрифтовете не съществуват, създайте временни
+        if not all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
+            from fpdf.fonts import FontsByFPDF
+            fonts = FontsByFPDF()
+            for style, data in [('', fonts.helvetica), ('B', fonts.helvetica_bold), ('I', fonts.helvetica_oblique)]:
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+                    tmp_file.write(data)
+                    tmp_file_path = tmp_file.name
+                    pdf.add_font('DejaVu', style, tmp_file_path)
+        else:
+            with open(sans_path, "rb") as f:
+                dejavu_sans = BytesIO(f.read())
+            with open(bold_path, "rb") as f:
+                dejavu_bold = BytesIO(f.read())
+            with open(italic_path, "rb") as f:
+                dejavu_italic = BytesIO(f.read())
+            
+            pdf.add_font_from_bytes('DejaVu', '', dejavu_sans.getvalue())
+            pdf.add_font_from_bytes('DejaVu', 'B', dejavu_bold.getvalue())
+            pdf.add_font_from_bytes('DejaVu', 'I', dejavu_italic.getvalue())
     except Exception as e:
         st.error(f"Грешка при зареждане на шрифтове: {e}")
         return b""
@@ -369,7 +405,7 @@ def generate_pdf_report():
     pdf.cell(0, 10, f'Ed: {st.session_state.final_Ed} MPa', 0, 1)
     pdf.ln(5)
     
-# Corrected formula section:
+    # Формули
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', 0, 1)
     
@@ -377,6 +413,7 @@ def generate_pdf_report():
     pdf.add_latex_formula(r"H = \sum_{i=1}^{n} h_i")
     pdf.add_latex_formula(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{nom}")
     
+    # Изчисления
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '3. Изчисления', 0, 1)
     pdf.set_font('DejaVu', '', 12)
@@ -391,6 +428,7 @@ def generate_pdf_report():
         pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{Ed:.0f}}} = {Esr/Ed:.3f}")
         pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D:.2f}}} = {H/D:.3f}")
         pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
+    
     # Графика от Plotly
     if 'fig' in locals():
         pdf.set_font('DejaVu', 'B', 14)
@@ -423,24 +461,24 @@ def generate_pdf_report():
     
     pdf.cleanup_temp_files()
     return pdf.output(dest='S')
-    
+
 # Бутон за генериране на PDF
 st.markdown("---")
 st.subheader("Генериране на PDF отчет")
 if st.button("📄 Генерирай PDF отчет"):
     with st.spinner('Генериране на PDF отчет...'):
-        pdf_bytes = generate_pdf_report()
-        if pdf_bytes:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-                tmpfile.write(pdf_bytes)
-                tmpfile.flush()
-            with open(tmpfile.name, "rb") as f:
-                base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-                download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="open_v_pokritieto_report.pdf">Свали PDF отчет</a>'
-                st.markdown(download_link, unsafe_allow_html=True)
-                st.success("✅ PDF отчетът е успешно генериран!")
-        else:
-            st.error("Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
-
-# Линк към предишната страница
-st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
+        try:
+            pdf_bytes = generate_pdf_report()
+            if pdf_bytes:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                    tmpfile.write(pdf_bytes)
+                    tmpfile.flush()
+                with open(tmpfile.name, "rb") as f:
+                    base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+                    download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="open_v_pokritieto_report.pdf">Свали PDF отчет</a>'
+                    st.markdown(download_link, unsafe_allow_html=True)
+                    st.success("✅ PDF отчетът е успешно генериран!")
+            else:
+                st.error("Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
+        except Exception as e:
+            st.error(f"Грешка при генериране на PDF: {str(e)}")
