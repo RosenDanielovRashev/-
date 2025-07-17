@@ -319,6 +319,7 @@ def split_formula(formula_str, max_len=40):  # Намалена максимал
 
 def generate_tension_report():
     pdf = PDF()
+    pdf.set_margins(10, 10, 10)
     
     # Зареждане на шрифтове
     font_dir = os.path.abspath("fonts")  # Абсолютен път
@@ -334,7 +335,7 @@ def generate_tension_report():
         st.error(f"Грешка при зареждане на шрифтове: {str(e)}")
         return None
 
-    pdf.set_font('DejaVu', '', 12)
+    pdf.set_font('DejaVu', '', 9)
     pdf.add_page()
     
     # Заглавие
@@ -361,21 +362,23 @@ def generate_tension_report():
     
     # Таблица с параметрите
     available_width = pdf.w - pdf.l_margin - pdf.r_margin
-    col_width = available_width / 4
-    col_widths = [col_width] * 4  # Ще бъде [47.5, 47.5, 47.5, 47.5] за A4 с маргини 10 мм
+    col_widths = [20, 40, 30, 40]  # Широчини в mm
     headers = ["Пласт", "Ei (MPa)", "hi (cm)", "Ed (MPa)"]
     
-    pdf.set_font('DejaVu', '', 10)
+    pdf.set_font('DejaVu', '', 9)
     for i, header in enumerate(headers):
         pdf.cell(col_widths[i], 10, header, 1, 0, align='C')
     pdf.ln()
     
+    # Данни за пластовете
     for i in range(len(Ei_list)):
         pdf.cell(col_widths[0], 10, str(i+1), 1, 0, align='C')
         pdf.cell(col_widths[1], 10, f"{Ei_list[i]:.1f}", 1, 0, align='C')
         pdf.cell(col_widths[2], 10, f"{hi_list[i]:.1f}", 1, 0, align='C')
+        
         if i == len(Ei_list) - 1:
-            pdf.cell(col_widths[3], 10, f"{round(Ed):.1f}", 1, 0, align='C')
+            # Форматиране на Ed с по-малко десетични знаци
+            pdf.cell(col_widths[3], 10, f"{Ed:.0f}", 1, 0, align='C')
         else:
             pdf.cell(col_widths[3], 10, "-", 1, 0, align='C')
         pdf.ln()
