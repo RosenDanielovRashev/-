@@ -185,7 +185,9 @@ if denominator != 0:
             title="Номограма: σR срещу H/D",
             xaxis_title="H / D",
             yaxis_title="σR",
-            height=700
+            height=700,
+            plot_bgcolor='white',  # Бял фон за по-добър контраст
+            paper_bgcolor='white'   # Бял фон за по-добър контраст
         )
         st.plotly_chart(fig, use_container_width=True)
         
@@ -336,9 +338,9 @@ class EnhancedPDF(FPDF):
             self.ln(5)
             
     def add_plotly_figure(self, fig, width=180):
-        """Добавя Plotly фигура към PDF"""
+        """Добавя Plotly фигура към PDF с цветове"""
         try:
-            # Конвертиране на фигурата в изображение
+            # Задаване на висока резолюция и цветова схема
             img_bytes = pio.to_image(
                 fig, 
                 format="png", 
@@ -346,7 +348,8 @@ class EnhancedPDF(FPDF):
                 height=900, 
                 scale=3,  # Увеличаване на резолюцията
                 engine="kaleido"  # Подобрен engine за визуализация
-            )            
+            )
+            
             # Запис във временен файл
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
                 tmp_file.write(img_bytes)
