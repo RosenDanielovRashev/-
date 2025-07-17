@@ -110,7 +110,7 @@ if "final_Ed_list" not in st.session_state:
     st.stop()
 
 # Автоматично определяне на Ed (модул на следващия пласт)
-n_layers = len(Ei_list)
+n airlines = len(Ei_list)
 if len(st.session_state.final_Ed_list) <= n_layers:
     st.error(f"⚠️ Недостатъчно пластове в final_Ed_list (изисква се поне {n_layers+1})!")
     st.stop()
@@ -257,6 +257,7 @@ if sigma_to_compare is not None:
     if check_passed:
         st.success(
             f"✅ Проверката е удовлетворена: "
+            f"изчисленото σR = {sigma_toпроверката е удовлетворена: "
             f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
         )
     else:
@@ -296,7 +297,7 @@ def generate_pdf_report():
     pdf = PDF()
     
     try:
-        font_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts")
+        font_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "main", "fonts")
         if not os.path.exists(font_dir):
             st.error(f"Директорията за шрифтове не съществува: {font_dir}")
             return b""
