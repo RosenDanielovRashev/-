@@ -273,6 +273,7 @@ def generate_pdf_report():
         def __init__(self):
             super().__init__()
             self.temp_font_files = []
+            self.temp_image_files = []
             
         def footer(self):
             self.set_y(-15)
@@ -286,8 +287,31 @@ def generate_pdf_report():
                 self.temp_font_files.append(tmp_file_path)
                 self.add_font(family, style, tmp_file_path)
                 
-        def cleanup_fonts(self):
-            for file_path in self.temp_font_files:
+        def add_image_from_fig(self, fig, width=180):
+            img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                tmp_file.write(img_bytes)
+                tmp_file_path = tmp_file.name
+                self.temp_image_files.append(tmp_file_path)
+            self.image(tmp_file_path, x=10, w=width)
+            self.ln(10)
+            
+        def add_external_image(self, image_path, width=180):
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                img = Image.open(image_path)
+                img.save(tmp_file, format='PNG')
+                tmp_file_path = tmp_file.name
+                self.temp_image_files.append(tmp_file_path)
+            self.image(tmp_file_path, x=10, w=width)
+            self.ln(10)
+            
+        def add_latex_formula(self, formula_text):
+            self.set_font('DejaVu', 'I', 12)
+            self.multi_cell(0, 10, formula_text)
+            self.ln(5)
+            
+        def cleanup_temp_files(self):
+            for file_path in self.temp_font_files + self.temp_image_files:
                 try:
                     os.unlink(file_path)
                 except Exception as e:
@@ -296,11 +320,10 @@ def generate_pdf_report():
     pdf = PDF()
     
     try:
-        # Коригиран път: премахваме "main" от пътя
+        # Зареждане на шрифтове
         base_dir = os.path.dirname(os.path.abspath(__file__))
         font_dir = os.path.join(base_dir, "fonts")
         
-        # Проверка дали директорията съществува
         if not os.path.exists(font_dir):
             st.error(f"Директорията за шрифтове не съществува: {font_dir}")
             return b""
@@ -309,17 +332,6 @@ def generate_pdf_report():
         bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
         italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
         
-        # Проверка за съществуване на файловете
-        missing_fonts = []
-        if not os.path.exists(sans_path): missing_fonts.append("DejaVuSans.ttf")
-        if not os.path.exists(bold_path): missing_fonts.append("DejaVuSans-Bold.ttf")
-        if not os.path.exists(italic_path): missing_fonts.append("DejaVuSans-Oblique.ttf")
-        
-        if missing_fonts:
-            st.error(f"Липсващи шрифтове: {', '.join(missing_fonts)}")
-            return b""
-        
-        # Зареждане на шрифтове
         with open(sans_path, "rb") as f:
             dejavu_sans = BytesIO(f.read())
         with open(bold_path, "rb") as f:
@@ -342,29 +354,77 @@ def generate_pdf_report():
     pdf.cell(0, 10, 'Опън в покритието - Отчет', 0, 1, 'C')
     pdf.ln(10)
     
-    # Добавяне на данни от изчисленията
+    # Основна информация
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '1. Входни параметри', 0, 1)
     pdf.set_font('DejaVu', '', 12)
     pdf.cell(0, 10, f'Диаметър D: {st.session_state.final_D} cm', 0, 1)
     pdf.cell(0, 10, f'Брой пластове: 2', 0, 1)
     for i in range(2):
         pdf.cell(0, 10, f'Пласт {i+1}: E{i+1} = {st.session_state.Ei_list[i]} MPa, h{i+1} = {st.session_state.hi_list[i]} cm', 0, 1)
     pdf.cell(0, 10, f'Ed: {st.session_state.final_Ed} MPa', 0, 1)
-    pdf.cell(0, 10, f'Esr: {Esr:.2f} MPa', 0, 1)
-    pdf.cell(0, 10, f'H: {H:.2f} cm', 0, 1)
+    pdf.ln(5)
+    
+    # Формули
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '2. Формули за изчисление', 0, 1)
+    
+    pdf.add_latex_formula(r"Esr = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}")
+    pdf.add_latex_formula(r"H = \sum_{i=1}^{n} h_i")
+    
+    # Изчисления
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '3. Изчисления', 0, 1)
+    pdf.set_font('DejaVu', '', 12)
+    
+    numerator_str = " + ".join([f"{Ei}×{hi}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
+    denominator_str = " + ".join([f"{hi}" for hi in st.session_state.hi_list])
+    
+    pdf.add_latex_formula(fr"Esr = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \text{{ MPa}}")
+    pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \text{{ см}}")
+    
+    if 'final_sigma' in st.session_state:
+        pdf.add_latex_formula(fr"Esr / Ed = {Esr:.2f} / {Ed:.0f} = {Esr / Ed:.3f}")
+        pdf.add_latex_formula(fr"H / D = {H:.2f} / {D:.2f} = {H / D:.3f}")
+        pdf.add_latex_formula(fr"\sigma_R^{\mathrm{номограма}} = {st.session_state.final_sigma:.3f}")
+    
     if 'final_sigma_R' in st.session_state:
-        pdf.cell(0, 10, f'σR: {st.session_state.final_sigma_R:.3f} MPa', 0, 1)
+        p = 0.620 if st.session_state.get("axle_load", 100) == 100 else 0.633
+        pdf.add_latex_formula(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
+        pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {st.session_state.final_sigma_R:.3f} \text{{ MPa}}")
     
-    # Добавяне на графиката
+    # Графика от Plotly
     if 'fig' in locals():
-        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
-        img = Image.open(BytesIO(img_bytes))
-        img_path = "plot.png"
-        img.save(img_path)
-        pdf.image(img_path, x=10, w=190)
-        os.remove(img_path)
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, '4. Графика на номограмата', 0, 1)
+        pdf.add_image_from_fig(fig)
     
-    pdf.cleanup_fonts()
-    return pdf.output(dest='S')
+    # Снимка с допустими напрежения
+    try:
+        image_path = "Допустими опънни напрежения.png"
+        if os.path.exists(image_path):
+            pdf.set_font('DejaVu', 'B', 14)
+            pdf.cell(0, 10, '5. Допустими опънни напрежения', 0, 1)
+            pdf.add_external_image(image_path)
+    except Exception as e:
+        st.error(f"Грешка при добавяне на изображение: {e}")
+    
+    # Резултати и проверка
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '6. Резултати и проверка', 0, 1)
+    pdf.set_font('DejaVu', '', 12)
+    
+    if 'final_sigma_R' in st.session_state and 'manual_sigma_value' in st.session_state:
+        check_passed = st.session_state.final_sigma_R <= st.session_state.manual_sigma_value
+        result_text = (
+            f"Изчислено σR: {st.session_state.final_sigma_R:.3f} MPa\n"
+            f"Допустимо σR: {st.session_state.manual_sigma_value:.3f} MPa\n"
+            f"Проверка: {'✅ Удовлетворена' if check_passed else '❌ Неудовлетворена'}"
+        )
+        pdf.multi_cell(0, 10, result_text)
+    
+    pdf.cleanup_temp_files()
+    return pdf.output(dest='S').encode('latin1')
 
 # Бутон за генериране на PDF
 st.markdown("---")
