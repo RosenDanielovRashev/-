@@ -257,7 +257,6 @@ if sigma_to_compare is not None:
     if check_passed:
         st.success(
             f"✅ Проверката е удовлетворена: "
-            f"изчисленото σR = {sigma_toпроверката е удовлетворена: "
             f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
         )
     else:
