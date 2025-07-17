@@ -360,17 +360,19 @@ def generate_tension_report():
     axle_load = st.session_state.get("axle_load", 100)
     
     # Таблица с параметрите
-    col_widths = [50, 50, 50, 50]  # Увеличена ширина
+    available_width = pdf.w - pdf.l_margin - pdf.r_margin
+    col_width = available_width / 4
+    col_widths = [col_width] * 4  # Ще бъде [47.5, 47.5, 47.5, 47.5] за A4 с маргини 10 мм
     headers = ["Пласт", "Ei (MPa)", "hi (cm)", "Ed (MPa)"]
     
-    pdf.set_font('DejaVu', '', 10)  # Намален шрифт за таблицата
+    pdf.set_font('DejaVu', '', 10)
     for i, header in enumerate(headers):
         pdf.cell(col_widths[i], 10, header, 1, 0, align='C')
     pdf.ln()
     
     for i in range(len(Ei_list)):
         pdf.cell(col_widths[0], 10, str(i+1), 1, 0, align='C')
-        pdf.cell(col_widths[1], 10, f"{Ei_list[i]:.1f}", 1, 0, align='C')  # Ограничени десетични знаци
+        pdf.cell(col_widths[1], 10, f"{Ei_list[i]:.1f}", 1, 0, align='C')
         pdf.cell(col_widths[2], 10, f"{hi_list[i]:.1f}", 1, 0, align='C')
         if i == len(Ei_list) - 1:
             pdf.cell(col_widths[3], 10, f"{round(Ed):.1f}", 1, 0, align='C')
