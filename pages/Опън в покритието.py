@@ -424,7 +424,7 @@ def generate_pdf_report():
         pdf.multi_cell(0, 10, result_text)
     
     pdf.cleanup_temp_files()
-    return pdf.output(dest='S').encode('latin1')
+    return pdf.output(dest='S')
 
 # Бутон за генериране на PDF
 st.markdown("---")
