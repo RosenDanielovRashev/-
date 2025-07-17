@@ -307,7 +307,11 @@ def generate_pdf_report():
             
         def add_latex_formula(self, formula_text):
             self.set_font('DejaVu', 'I', 12)
-            self.multi_cell(0, 10, formula_text)
+            # Добавяме малко вертикално пространство преди формулата
+            self.ln(5)
+            # Центрираме формулата
+            self.cell(0, 10, formula_text, 0, 1, 'C')
+            # Добавяме малко вертикално пространство след формулата
             self.ln(5)
             
         def cleanup_temp_files(self):
@@ -369,8 +373,9 @@ def generate_pdf_report():
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', 0, 1)
     
-    pdf.add_latex_formula(r"Esr = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}")
+    pdf.add_latex_formula(r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}")
     pdf.add_latex_formula(r"H = \sum_{i=1}^{n} h_i")
+    pdf.add_latex_formula(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{nom}")
     
     # Изчисления
     pdf.set_font('DejaVu', 'B', 14)
@@ -380,18 +385,17 @@ def generate_pdf_report():
     numerator_str = " + ".join([f"{Ei}×{hi}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
     denominator_str = " + ".join([f"{hi}" for hi in st.session_state.hi_list])
     
-    pdf.add_latex_formula(fr"Esr = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \text{{ MPa}}")
-    pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \text{{ см}}")
+    pdf.add_latex_formula(fr"E_{sr} = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \, \text{{MPa}}")
+    pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \, \text{{cm}}")
     
     if 'final_sigma' in st.session_state:
-        pdf.add_latex_formula(fr"Esr / Ed = {Esr:.2f} / {Ed:.0f} = {Esr / Ed:.3f}")
-        pdf.add_latex_formula(fr"H / D = {H:.2f} / {D:.2f} = {H / D:.3f}")
-        pdf.add_latex_formula(fr"\sigma_R^{{\mathrm{{номограма}}}} = {st.session_state.final_sigma:.3f}")
+        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{Ed:.0f}}} = {Esr / Ed:.3f}")
+        pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D:.2f}}} = {H / D:.3f}")
+        pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
     
     if 'final_sigma_R' in st.session_state:
         p = 0.620 if st.session_state.get("axle_load", 100) == 100 else 0.633
-        pdf.add_latex_formula(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
-        pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {st.session_state.final_sigma_R:.3f} \text{{ MPa}}")
+        pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {st.session_state.final_sigma_R:.3f} \, \text{{MPa}}")
     
     # Графика от Plotly
     if 'fig' in locals():
@@ -425,7 +429,7 @@ def generate_pdf_report():
     
     pdf.cleanup_temp_files()
     return pdf.output(dest='S')
-
+    
 # Бутон за генериране на PDF
 st.markdown("---")
 st.subheader("Генериране на PDF отчет")
