@@ -407,12 +407,12 @@ def generate_tension_report():
     numerator_str = " + ".join([f"{Ei:.1f}×{hi:.1f}" for Ei, hi in zip(Ei_list, hi_list)])
     denominator_str = " + ".join([f"{hi:.1f}" for hi in hi_list])
     
-    pdf.multi_cell(0, 6, 'Esr = (Σ(Ei × hi)) / (Σhi)', border=0, align='L')
+    pdf.multi_cell(0, 10, 'Esr = (Σ(Ei × hi)) / (Σhi)', border=0, align='L')
     
     numerator_lines = split_formula(numerator_str)
     pdf.multi_cell(0, 6, 'Σ(Ei × hi) =', border=0, align='L')
     for line in numerator_lines:
-        pdf.multi_cell(180, 6, line, border=0, align='L')  # Използване на multi_cell
+        pdf.multi_cell(180, 10, line, border=0, align='L')  # Използване на multi_cell
     
     denominator_lines = split_formula(denominator_str)
     pdf.multi_cell(0, 6, 'Σhi =', border=0, align='L')
