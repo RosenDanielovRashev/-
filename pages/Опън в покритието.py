@@ -9,6 +9,8 @@ import os
 import tempfile
 import base64
 from io import BytesIO
+import matplotlib.pyplot as plt
+from matplotlib import mathtext
 
 st.title("Опън в покритието")
 
