@@ -8,3 +8,5 @@ fpdf2
 kaleido==0.2.1
 imgkit==1.2.2
 wkhtmltopdf==0.2
+reportlab==4.2.0
+Pillow==10.3.0
