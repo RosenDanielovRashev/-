@@ -339,8 +339,14 @@ class EnhancedPDF(FPDF):
         """Добавя Plotly фигура към PDF"""
         try:
             # Конвертиране на фигурата в изображение
-            img_bytes = pio.to_image(fig, format="png", width=1000, height=700)
-            
+            img_bytes = pio.to_image(
+                fig, 
+                format="png", 
+                width=1200, 
+                height=900, 
+                scale=3,  # Увеличаване на резолюцията
+                engine="kaleido"  # Подобрен engine за визуализация
+            )            
             # Запис във временен файл
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
                 tmp_file.write(img_bytes)
