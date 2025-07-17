@@ -296,7 +296,11 @@ def generate_pdf_report():
     pdf = PDF()
     
     try:
-        font_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "main", "fonts")
+        # Коригиран път: премахваме "main" от пътя
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        font_dir = os.path.join(base_dir, "fonts")
+        
+        # Проверка дали директорията съществува
         if not os.path.exists(font_dir):
             st.error(f"Директорията за шрифтове не съществува: {font_dir}")
             return b""
@@ -305,10 +309,17 @@ def generate_pdf_report():
         bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
         italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
         
-        if not all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
-            st.error("Липсващи шрифтове в папка 'fonts'")
+        # Проверка за съществуване на файловете
+        missing_fonts = []
+        if not os.path.exists(sans_path): missing_fonts.append("DejaVuSans.ttf")
+        if not os.path.exists(bold_path): missing_fonts.append("DejaVuSans-Bold.ttf")
+        if not os.path.exists(italic_path): missing_fonts.append("DejaVuSans-Oblique.ttf")
+        
+        if missing_fonts:
+            st.error(f"Липсващи шрифтове: {', '.join(missing_fonts)}")
             return b""
         
+        # Зареждане на шрифтове
         with open(sans_path, "rb") as f:
             dejavu_sans = BytesIO(f.read())
         with open(bold_path, "rb") as f:
