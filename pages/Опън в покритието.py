@@ -188,6 +188,10 @@ if denominator != 0:
             height=700
         )
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Запазване на фигурата в session_state
+        st.session_state["fig"] = fig
+        
     else:
         st.warning("❗ Точката е извън диапазона на наличните данни.")
         for key in ["final_sigma", "final_hD", "final_y_low", "final_y_high", "final_low", "final_high"]:
@@ -302,15 +306,6 @@ class EnhancedPDF(FPDF):
             self.temp_font_files.append(tmp_file_path)
             self.add_font(family, style, tmp_file_path)
             
-    def add_image_from_fig(self, fig, width=180):
-        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-            tmp_file.write(img_bytes)
-            tmp_file_path = tmp_file.name
-            self.temp_image_files.append(tmp_file_path)
-        self.image(tmp_file_path, x=10, w=width)
-        self.ln(10)
-        
     def add_external_image(self, image_path, width=180):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
             img = Image.open(image_path)
@@ -339,6 +334,26 @@ class EnhancedPDF(FPDF):
             self.set_font('DejaVu', 'I', 12)
             self.cell(0, 10, formula_text, 0, 1)
             self.ln(5)
+            
+    def add_plotly_figure(self, fig, width=180):
+        """Добавя Plotly фигура към PDF"""
+        try:
+            # Конвертиране на фигурата в изображение
+            img_bytes = pio.to_image(fig, format="png", width=1000, height=700)
+            
+            # Запис във временен файл
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                tmp_file.write(img_bytes)
+                tmp_file_path = tmp_file.name
+                self.temp_image_files.append(tmp_file_path)
+            
+            # Добавяне към PDF
+            self.image(tmp_file_path, x=10, w=width)
+            self.ln(10)
+            return True
+        except Exception as e:
+            print(f"Грешка при добавяне на Plotly фигура: {e}")
+            return False
             
     def cleanup_temp_files(self):
         for file_path in self.temp_font_files + self.temp_image_files:
@@ -431,11 +446,11 @@ def generate_pdf_report():
         pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D:.2f}}} = {H/D:.3f}")
         pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
     
-    # Графика от Plotly
-    if 'fig' in locals():
+    # Добавяне на диаграмата ако е налична
+    if "fig" in st.session_state:
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, '4. Графика на номограмата', 0, 1)
-        pdf.add_image_from_fig(fig)
+        pdf.add_plotly_figure(st.session_state["fig"])
     
     # Снимка с допустими напрежения
     try:
