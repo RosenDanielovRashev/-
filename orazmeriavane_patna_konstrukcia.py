@@ -631,7 +631,7 @@ if all('h' in layer for layer in st.session_state.layers_data):
     with col2:
         st.metric("Изчислена дълбочина на замръзване (z)", f"{z_value:.2f} cm")
     
-    if z_value > sum_h:
+    if z_value < sum_h:
         st.success("✅ Условието е изпълнено: z > Σh")
         st.markdown("""
         <div style="background-color:#e8f5e9; padding:10px; border-radius:5px; border-left:4px solid #2e7d32;">
