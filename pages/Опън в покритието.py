@@ -473,7 +473,7 @@ def generate_pdf_report():
     ]
     
     for formula in formulas:
-        pdf.add_latex_formula(formula)
+        pdf.add_latex_formula(formula)  # премахнат fontsize
     
     # Изчисления
     pdf.set_font('DejaVu', 'B', 14)
@@ -573,7 +573,7 @@ def generate_pdf_report():
     pdf.cell(0, 10, 'Съставено със система за автоматизирано изчисление на пътни конструкции', 0, 1, 'C')
     
     pdf.cleanup_temp_files()
-    return pdf.output(dest='S').encode('latin-1')
+    return pdf.output(dest='S')
 
 # Бутон за генериране на PDF
 st.markdown("---")
