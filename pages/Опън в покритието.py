@@ -7,12 +7,10 @@ from PIL import Image
 import plotly.io as pio
 import os
 import tempfile
-import base64
 from io import BytesIO
 import matplotlib.pyplot as plt
-from matplotlib import mathtext
-from datetime import datetime
 import matplotlib as mpl
+from datetime import datetime
 
 # Настройки за висококачествени формули
 mpl.rcParams['mathtext.fontset'] = 'stix'
@@ -103,7 +101,7 @@ st.session_state["final_D"] = D
 st.session_state["Ei_list"] = Ei_list
 st.session_state["hi_list"] = hi_list
 
-# Изчисления
+# Проверка на final_Ed_list
 if "final_Ed_list" not in st.session_state:
     st.error("⚠️ Липсва final_Ed_list в session_state!")
     st.info("Моля, върнете се на първата страница и изчислете всички пластове")
@@ -189,82 +187,37 @@ if denominator != 0:
 else:
     st.error("Сумата на hᵢ не може да бъде 0.")
 
-st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
+st.image("Допустими опънни напрежения.png", caption="Таблица 9.2", use_column_width=True)
 
-axle_load = st.session_state.get("axle_load", 100)
-p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else None
+# ----- PDF част с поправени шрифтове -----
 
-if p is not None:
-    st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
-    st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
-    
-    sigma = st.session_state.get("final_sigma", None)
-    
-    if sigma is not None:
-        sigma_final = 1.15 * p * sigma
-        st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
-        st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
-        st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
-        st.session_state["final_sigma_R"] = sigma_final
-
-# Ръчно въвеждане
-if 'manual_sigma_value' not in st.session_state:
-    st.session_state.manual_sigma_value = 1.20
-
-manual_value = st.number_input(
-    label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
-    min_value=0.0,
-    max_value=20.0,
-    value=st.session_state.manual_sigma_value,
-    step=0.01,
-    key="manual_sigma_input",
-    format="%.2f"
-)
-
-st.session_state.manual_sigma_value = manual_value
-
-# PDF генериране
-def render_formula_to_image(formula, fontsize=14, dpi=300):
-    """Render LaTeX formula to high-quality image"""
-    fig = plt.figure(figsize=(8, 0.5))
-    fig.text(0.02, 0.5, f'${formula}$', 
-             fontsize=fontsize, 
-             ha='left', 
-             va='center',
-             color='black')
-    plt.axis('off')
-    buf = BytesIO()
-    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', transparent=True)
-    plt.close()
-    buf.seek(0)
-    return buf
+# Трябва да имате локални файлове с DejaVu шрифтове или изтеглете:
+DEJAVU_REGULAR = "DejaVuSans.ttf"
+DEJAVU_BOLD = "DejaVuSans-Bold.ttf"
+DEJAVU_ITALIC = "DejaVuSans-Oblique.ttf"
 
 class EnhancedPDF(FPDF):
     def __init__(self):
         super().__init__()
         self.temp_files = []
-        
+        # Добавяне на шрифтовете
+        self.add_font('DejaVu', '', DEJAVU_REGULAR, uni=True)
+        self.add_font('DejaVu', 'B', DEJAVU_BOLD, uni=True)
+        self.add_font('DejaVu', 'I', DEJAVU_ITALIC, uni=True)
+
     def footer(self):
         self.set_y(-15)
         self.set_font('DejaVu', 'I', 8)
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
-        
-    def add_font_from_bytes(self, family, style, font_bytes):
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
-            tmp_file.write(font_bytes)
-            self.temp_files.append(tmp_file.name)
-            self.add_font(family, style, tmp_file.name)
-    
+
     def add_highres_image(self, image_data, width=180):
-        """Add high resolution image"""
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
             tmp_file.write(image_data)
             self.temp_files.append(tmp_file.name)
-        self.image(tmp_file.name, x=10, w=width)
-        self.ln(10)
-        
+            self.image(tmp_file.name, x=10, w=width)
+            self.ln(10)
+
     def add_latex_formula(self, formula_text):
-        """Add LaTeX formula as image"""
         try:
             img_buf = render_formula_to_image(formula_text)
             self.add_highres_image(img_buf.getvalue(), width=160)
@@ -277,16 +230,23 @@ class EnhancedPDF(FPDF):
         for file_path in self.temp_files:
             try:
                 os.unlink(file_path)
-            except:
+            except Exception:
                 pass
+
+def render_formula_to_image(formula, fontsize=14, dpi=300):
+    fig = plt.figure(figsize=(8, 0.5))
+    fig.text(0.02, 0.5, f'${formula}$', fontsize=fontsize, ha='left', va='center', color='black')
+    plt.axis('off')
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', transparent=True)
+    plt.close(fig)
+    buf.seek(0)
+    return buf
 
 def generate_pdf_report():
     pdf = EnhancedPDF()
     pdf.set_auto_page_break(auto=True, margin=20)
-    
-    # Зареждане на шрифтове
     try:
-        # Добавяне на шрифтове
         pdf.add_page()
         pdf.set_font('DejaVu', 'B', 18)
         pdf.cell(0, 15, 'ОПЪН В ПОКРИТИЕТО - ОТЧЕТ', ln=True, align='C')
@@ -294,166 +254,55 @@ def generate_pdf_report():
         pdf.cell(0, 10, f"Дата на генериране: {datetime.today().strftime('%d.%m.%Y')}", ln=True, align='C')
         pdf.ln(15)
 
-        # 1. Входни параметри
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, '1. Входни параметри', ln=True)
-        
-        # Таблица с параметри
-        pdf.set_font('DejaVu', 'B', 10)
-        pdf.set_fill_color(200, 220, 255)
-        pdf.cell(60, 8, 'Параметър', 1, 0, 'C', True)
-        pdf.cell(60, 8, 'Стойност', 1, 0, 'C', True)
-        pdf.cell(60, 8, 'Мерна единица', 1, 1, 'C', True)
-        
-        pdf.set_font('DejaVu', '', 10)
-        params = [
-            ("Диаметър D", f"{st.session_state.final_D:.2f}", "cm"),
-            ("Брой пластове", "2", ""),
-            ("Пласт 1 - Ei", f"{st.session_state.Ei_list[0]:.2f}", "MPa"),
-            ("Пласт 1 - hi", f"{st.session_state.hi_list[0]:.2f}", "cm"),
-            ("Пласт 2 - Ei", f"{st.session_state.Ei_list[1]:.2f}", "MPa"),
-            ("Пласт 2 - hi", f"{st.session_state.hi_list[1]:.2f}", "cm"),
-            ("Ed", f"{st.session_state.final_Ed:.2f}", "MPa"),
-            ("Осова тежест", f"{st.session_state.get('axle_load', 100)}", "kN")
-        ]
-        
-        fill = False
-        for p_name, p_val, p_unit in params:
-            pdf.set_fill_color(240, 240, 240) if fill else pdf.set_fill_color(255, 255, 255)
-            pdf.cell(60, 8, p_name, 1, 0, 'L', fill)
-            pdf.cell(60, 8, p_val, 1, 0, 'C', fill)
-            pdf.cell(60, 8, p_unit, 1, 1, 'C', fill)
-            fill = not fill
-        
-        pdf.ln(10)
-
-        # 2. Формули
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
-        
-        formulas = [
-            r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}",
-            r"H = \sum_{i=1}^{n} h_i",
-            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
-        ]
-        
-        for formula in formulas:
-            pdf.add_latex_formula(formula)
-        
+        pdf.cell(0, 10, 'Входни данни:', ln=True)
+        pdf.set_font('DejaVu', '', 12)
+        pdf.cell(0, 10, f'Диаметър на отпечатъка D: {st.session_state["final_D"]:.2f} см', ln=True)
         pdf.ln(5)
 
-        # 3. Изчисления
+        pdf.cell(0, 10, 'Модул на деформация и дебелина на пластовете:', ln=True)
+        for i, (Ei, hi) in enumerate(zip(st.session_state["Ei_list"], st.session_state["hi_list"]), start=1):
+            pdf.cell(0, 10, f'Пласт {i}: E{i} = {Ei:.2f} MPa, h{i} = {hi:.2f} см', ln=True)
+        pdf.ln(5)
+
+        pdf.cell(0, 10, f'Ed (модул на деформация на основата): {st.session_state["final_Ed"]:.2f} MPa', ln=True)
+        pdf.ln(10)
+
+        pdf.cell(0, 10, 'Изчисления:', ln=True)
         pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, '3. Изчисления', ln=True)
-        
-        # Изчислителни формули
-        numerator = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
-        denominator = sum(st.session_state.hi_list)
-        Esr = numerator / denominator if denominator else 0
-        H = denominator
-        
-        num_str = " + ".join([f"{Ei:.2f} \\times {hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
-        den_str = " + ".join([f"{hi:.2f}" for hi in st.session_state.hi_list])
-        
-        pdf.add_latex_formula(fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr:.2f} \, \text{{MPa}}")
-        pdf.add_latex_formula(fr"H = {den_str} = {H:.2f} \, \text{{cm}}")
-        
-        if 'final_sigma' in st.session_state:
-            pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr/st.session_state.final_Ed:.3f}")
-            pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{st.session_state.final_D:.2f}}} = {H/st.session_state.final_D:.3f}")
-            pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
-            
-            axle_load = st.session_state.get("axle_load", 100)
-            p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
-            if p:
-                sigma_final = 1.15 * p * st.session_state.final_sigma
-                pdf.add_latex_formula(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
-                pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final:.3f} \, \text{{MPa}}")
-        
+        pdf.cell(0, 10, 'Esr:', ln=True)
+        pdf.set_font('DejaVu', '', 12)
+
+        numerator_str = " + ".join([f"{Ei:.2f}×{hi:.2f}" for Ei, hi in zip(st.session_state["Ei_list"], st.session_state["hi_list"])])
+        denominator_str = " + ".join([f"{hi:.2f}" for hi in st.session_state["hi_list"]])
+        formula1 = fr"Esr = \frac{{{numerator_str}}}{{{denominator_str}}} = {numerator:.2f} / {denominator:.2f} = {numerator/denominator:.2f} \text{{ MPa}}"
+        pdf.add_latex_formula(formula1)
+        pdf.ln(5)
+        pdf.cell(0, 10, f'H = {denominator_str} = {denominator:.2f} см', ln=True)
+        pdf.ln(5)
+
+        pdf.cell(0, 10, 'Резултат:', ln=True)
+        pdf.set_font('DejaVu', 'B', 16)
+        pdf.cell(0, 15, f'σR = {st.session_state["final_sigma"]:.3f}', ln=True)
         pdf.ln(10)
 
-        # 4. Графика
+        # Вмъкваме графиката
         if "fig" in st.session_state:
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, '4. Графика на номограмата', ln=True)
-            
-            img_bytes = pio.to_image(
-                st.session_state["fig"], 
-                format="png", 
-                width=1600,
-                height=1200,
-                scale=3,
-                engine="kaleido"
-            )
-            pdf.add_highres_image(img_bytes, width=160)
-
-        # 5. Допустими напрежения
-        img_path = "Допустими опънни напрежения.png"
-        if os.path.exists(img_path):
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, '5. Допустими опънни напрежения', ln=True)
-            
-            with open(img_path, "rb") as f:
-                pdf.add_highres_image(f.read(), width=160)
-
-        # 6. Резултати
-        if 'final_sigma_R' in st.session_state and 'manual_sigma_value' in st.session_state:
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, '6. Резултати и проверка', ln=True)
-            
-            check_passed = st.session_state.final_sigma_R <= st.session_state.manual_sigma_value
-            
-            pdf.set_font('DejaVu', 'B', 10)
-            pdf.set_fill_color(200, 220, 255)
-            pdf.cell(90, 8, 'Параметър', 1, 0, 'C', True)
-            pdf.cell(90, 8, 'Стойност', 1, 1, 'C', True)
-            
-            pdf.set_font('DejaVu', '', 10)
-            pdf.cell(90, 8, 'Изчислено σR', 1, 0, 'L')
-            pdf.cell(90, 8, f"{st.session_state.final_sigma_R:.3f} MPa", 1, 1, 'C')
-            
-            pdf.cell(90, 8, 'Допустимо σR', 1, 0, 'L')
-            pdf.cell(90, 8, f"{st.session_state.manual_sigma_value:.2f} MPa", 1, 1, 'C')
-            
-            pdf.ln(5)
-            pdf.set_font('DejaVu', 'B', 12)
-            if check_passed:
-                pdf.set_text_color(0, 100, 0)
-                pdf.cell(0, 10, "✅ Проверка: УДОВЛЕТВОРЕНА", ln=True)
-            else:
-                pdf.set_text_color(150, 0, 0)
-                pdf.cell(0, 10, "❌ Проверка: НЕУДОВЛЕТВОРЕНА", ln=True)
-            
-            pdf.set_text_color(0, 0, 0)
-
-        pdf.ln(10)
-        pdf.set_font('DejaVu', 'I', 8)
-        pdf.cell(0, 10, 'Съставено със система за автоматизирано изчисление', align='C')
+            img_bytes = pio.to_image(st.session_state["fig"], format='png', width=600, height=400, scale=2)
+            pdf.add_highres_image(img_bytes, width=180)
 
         pdf.cleanup_temp_files()
         return pdf.output(dest='S').encode('latin-1')
-    
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {str(e)}")
         return b""
 
-# Бутон за генериране на PDF
-st.markdown("---")
-st.subheader("Генериране на PDF отчет")
-if st.button("📄 Генерирай PDF отчет"):
-    with st.spinner('Генериране на PDF отчет...'):
-        try:
-            pdf_bytes = generate_pdf_report()
-            if pdf_bytes:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-                    tmpfile.write(pdf_bytes)
-                
-                with open(tmpfile.name, "rb") as f:
-                    base64_pdf = base64.b64encode(f.read()).decode('utf-8')
-                    download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="open_v_pokritieto_report.pdf">Свали PDF отчет</a>'
-                    st.markdown(download_link, unsafe_allow_html=True)
-                    st.success("✅ PDF отчетът е успешно генериран!")
-            else:
-                st.error("Неуспешно генериране на PDF.")
-        except Exception as e:
-            st.error(f"Грешка: {str(e)}")
+if st.button("Генерирай PDF отчет"):
+    pdf_data = generate_pdf_report()
+    if pdf_data:
+        st.download_button(
+            label="Свали PDF",
+            data=pdf_data,
+            file_name="Otchet_Opan_v_Pokritieto.pdf",
+            mime="application/pdf"
+        )
