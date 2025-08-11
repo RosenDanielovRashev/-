@@ -366,6 +366,46 @@ class EnhancedPDF(FPDF):
                 os.unlink(file_path)
             except Exception as e:
                 print(f"Грешка при изтриване на временен файл: {e}")
+                
+    def add_formula_section(self, title, formulas):
+        """Добавя секция с формули подредени в три колони със заглавие"""
+        self.set_font('DejaVu', 'B', 12)
+        self.cell(0, 8, title, ln=True)
+        self.ln(2)
+        
+        # Разделяне на формулите на групи от по три
+        groups = [formulas[i:i+3] for i in range(0, len(formulas), 3)]
+        
+        for group in groups:
+            col_width = 60  # Ширина на колона
+            self.set_x(10)  # Начална позиция
+            
+            for i, formula in enumerate(group):
+                try:
+                    img_buf = render_formula_to_image(formula)
+                    
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                        tmp_file.write(img_buf.read())
+                        tmp_file_path = tmp_file.name
+                        self.temp_image_files.append(tmp_file_path)
+                    
+                    # Добавяне на сив фон за формулата
+                    self.set_fill_color(240, 240, 240)
+                    self.rect(self.get_x(), self.get_y(), col_width-2, 18, 'F')
+                    
+                    # Поставяне на изображението с формулата
+                    self.image(tmp_file_path, x=self.get_x()+2, y=self.get_y()+1, w=col_width-6)
+                    
+                    # Преместване към следващата колона
+                    self.set_x(self.get_x() + col_width)
+                    
+                except Exception as e:
+                    print(f"Грешка при визуализиране на формула: {formula}, {e}")
+            
+            self.ln(20)  # Интервал след ред
+        
+        self.ln(5)  # Допълнителен интервал след секцията
+
 def generate_pdf_report():
     pdf = EnhancedPDF()
     pdf.set_auto_page_break(auto=True, margin=20)
@@ -451,19 +491,28 @@ def generate_pdf_report():
     # --- 2. Формули ---
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
-    formulas = [
+    
+    # Дефиниране на формулите в списък
+    formulas_section2 = [
         r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}",
         r"H = \sum_{i=1}^{n} h_i",
-        r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
+        r"\frac{E_{sr}}{E_d} = \frac{E_{sr}}{E_d}",
+        r"\frac{H}{D} = \frac{H}{D}",
+        r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}",
+        r"p = f(\text{осов товар})"
     ]
-    for f in formulas:
-        pdf.add_latex_formula(f)
-        pdf.ln(3)
+    
+    # Добавяне на формулите в три колони със заглавие
+    pdf.add_formula_section("Основни формули за изчисление:", formulas_section2)
 
     # --- 3. Изчисления ---
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '3. Изчисления', ln=True)
-
+    
+    # Подготвяне на формулите за изчисленията
+    formulas_section3 = []
+    
+    # Формули за Esr и H
     numerator = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
     denominator = sum(st.session_state.hi_list)
     Esr = numerator / denominator if denominator else 0
@@ -471,21 +520,25 @@ def generate_pdf_report():
 
     num_str = " + ".join([f"{Ei:.2f} \\times {hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
     den_str = " + ".join([f"{hi:.2f}" for hi in st.session_state.hi_list])
-
-    pdf.add_latex_formula(fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr:.2f} \, \text{{MPa}}")
-    pdf.add_latex_formula(fr"H = {den_str} = {H:.2f} \, \text{{cm}}")
-
+    
+    formulas_section3.append(fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr:.2f} \, \text{{MPa}}")
+    formulas_section3.append(fr"H = {den_str} = {H:.2f} \, \text{{cm}}")
+    
+    # Допълнителни формули ако има данни
     if 'final_sigma' in st.session_state:
-        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr/st.session_state.final_Ed:.3f}")
-        pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{st.session_state.final_D:.2f}}} = {H/st.session_state.final_D:.3f}")
-        pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
+        formulas_section3.append(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr/st.session_state.final_Ed:.3f}")
+        formulas_section3.append(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{st.session_state.final_D:.2f}}} = {H/st.session_state.final_D:.3f}")
+        formulas_section3.append(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
 
     axle_load = st.session_state.get("axle_load", 100)
     p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
     if p and 'final_sigma' in st.session_state:
         sigma_final = 1.15 * p * st.session_state.final_sigma
-        pdf.add_latex_formula(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
-        pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final:.3f} \, \text{{MPa}}")
+        formulas_section3.append(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
+        formulas_section3.append(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final:.3f} \, \text{{MPa}}")
+    
+    # Добавяне на изчислителните формули
+    pdf.add_formula_section("Изчислителни формули:", formulas_section3)
 
     pdf.ln(5)
 
