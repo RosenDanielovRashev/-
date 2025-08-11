@@ -11,6 +11,7 @@ import base64
 from io import BytesIO
 import matplotlib.pyplot as plt
 from matplotlib import mathtext
+from datetime import datetime
 
 st.title("Опън в покритието")
 
@@ -408,35 +409,83 @@ def generate_pdf_report():
     
     # Заглавие
     pdf.set_font('DejaVu', 'B', 16)
-    pdf.cell(0, 10, 'Опън в покритието - Отчет', 0, 1, 'C')
+    pdf.cell(0, 10, 'ОПЪН В ПОКРИТИЕТО - ОТЧЕТ', 0, 1, 'C')
+    
+    # Дата
+    today = datetime.today().strftime("%d.%m.%Y")
+    pdf.set_font('DejaVu', 'I', 10)
+    pdf.cell(0, 10, f'Дата: {today}', 0, 1, 'R')
     pdf.ln(10)
     
     # Основна информация
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '1. Входни параметри', 0, 1)
-    pdf.set_font('DejaVu', '', 12)
-    pdf.cell(0, 10, f'Диаметър D: {st.session_state.final_D:.2f} cm', 0, 1)
-    pdf.cell(0, 10, f'Брой пластове: 2', 0, 1)
+    pdf.set_font('DejaVu', '', 10)
+    
+    # Таблица за входни параметри
+    col_width = 45
+    row_height = 8
+    
+    # Заглавен ред
+    pdf.set_fill_color(200, 220, 255)
+    pdf.set_font('DejaVu', 'B', 10)
+    pdf.cell(col_width, row_height, 'Параметър', 1, 0, 'C', 1)
+    pdf.cell(col_width, row_height, 'Стойност', 1, 0, 'C', 1)
+    pdf.cell(col_width, row_height, 'Мерна единица', 1, 1, 'C', 1)
+    
+    # Данни
+    pdf.set_font('DejaVu', '', 10)
+    pdf.cell(col_width, row_height, 'Диаметър D', 1)
+    pdf.cell(col_width, row_height, f"{st.session_state.final_D:.2f}", 1)
+    pdf.cell(col_width, row_height, 'cm', 1, 1)
+    
+    pdf.cell(col_width, row_height, 'Брой пластове', 1)
+    pdf.cell(col_width, row_height, '2', 1)
+    pdf.cell(col_width, row_height, '', 1, 1)
+    
     for i in range(2):
-        pdf.cell(0, 10, 
-                 f'Пласт {i+1}: E{i+1} = {st.session_state.Ei_list[i]:.2f} MPa, '
-                 f'h{i+1} = {st.session_state.hi_list[i]:.2f} cm', 
-                 0, 1)
-    pdf.cell(0, 10, f'Ed: {st.session_state.final_Ed:.2f} MPa', 0, 1)
-    pdf.ln(5)
+        pdf.cell(col_width, row_height, f'Пласт {i+1} - Ei', 1)
+        pdf.cell(col_width, row_height, f"{st.session_state.Ei_list[i]:.2f}", 1)
+        pdf.cell(col_width, row_height, 'MPa', 1, 1)
+        
+        pdf.cell(col_width, row_height, f'Пласт {i+1} - hi', 1)
+        pdf.cell(col_width, row_height, f"{st.session_state.hi_list[i]:.2f}", 1)
+        pdf.cell(col_width, row_height, 'cm', 1, 1)
+    
+    pdf.cell(col_width, row_height, 'Ed', 1)
+    pdf.cell(col_width, row_height, f"{st.session_state.final_Ed:.2f}", 1)
+    pdf.cell(col_width, row_height, 'MPa', 1, 1)
+    
+    axle_load = st.session_state.get("axle_load", 100)
+    pdf.cell(col_width, row_height, 'Осова тежест', 1)
+    pdf.cell(col_width, row_height, f"{axle_load}", 1)
+    pdf.cell(col_width, row_height, 'kN', 1, 1)
+    
+    pdf.ln(10)
     
     # Формули
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', 0, 1)
     
-    pdf.add_latex_formula(r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}")
-    pdf.add_latex_formula(r"H = \sum_{i=1}^{n} h_i")
-    pdf.add_latex_formula(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{nom}")
+    formulas = [
+        r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}",
+        r"H = \sum_{i=1}^{n} h_i",
+        r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
+    ]
+    
+    for formula in formulas:
+        pdf.add_latex_formula(formula, fontsize=14)
     
     # Изчисления
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '3. Изчисления', 0, 1)
-    pdf.set_font('DejaVu', '', 12)
+    pdf.set_font('DejaVu', '', 10)
+    
+    # Изчисление на Esr и H
+    numerator = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
+    denominator = sum(st.session_state.hi_list)
+    Esr = numerator / denominator if denominator != 0 else 0
+    H = denominator
     
     numerator_str = " + ".join(
         [f"{Ei:.2f} \\times {hi:.2f}" 
@@ -446,43 +495,83 @@ def generate_pdf_report():
         [f"{hi:.2f}" for hi in st.session_state.hi_list]
     )
     
-    pdf.add_latex_formula(fr"E_{{sr}} = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \, \text{{MPa}}")
-    pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \, \text{{cm}}")
+    pdf.add_latex_formula(fr"E_{{sr}} = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \, \text{{MPa}}", fontsize=12)
+    pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \, \text{{cm}}", fontsize=12)
     
     if 'final_sigma' in st.session_state:
-        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{Ed:.2f}}} = {Esr/Ed:.3f}")
-        pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D:.2f}}} = {H/D:.3f}")
-        pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
+        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr/st.session_state.final_Ed:.3f}", fontsize=12)
+        pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{st.session_state.final_D:.2f}}} = {H/st.session_state.final_D:.3f}", fontsize=12)
+        pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}", fontsize=12)
     
-    # Добавяне на диаграмата ако е налична
+    # Изчисление на крайното σR
+    p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
+    if p and 'final_sigma' in st.session_state:
+        sigma_final = 1.15 * p * st.session_state.final_sigma
+        pdf.add_latex_formula(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}", fontsize=12)
+        pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final:.3f} \, \text{{MPa}}", fontsize=12)
+    
+    # Графика
     if "fig" in st.session_state:
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, '4. Графика на номограмата', 0, 1)
-        pdf.add_plotly_figure(st.session_state["fig"])
+        pdf.add_plotly_figure(st.session_state["fig"], width=160)
     
-    # Снимка с допустими напрежения
+    # Допустими напрежения
     try:
         image_path = "Допустими опънни напрежения.png"
         if os.path.exists(image_path):
             pdf.set_font('DejaVu', 'B', 14)
             pdf.cell(0, 10, '5. Допустими опънни напрежения', 0, 1)
-            pdf.add_external_image(image_path)
+            pdf.add_external_image(image_path, width=160)
     except Exception as e:
         st.error(f"Грешка при добавяне на изображение: {e}")
     
     # Резултати и проверка
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '6. Резултати и проверка', 0, 1)
-    pdf.set_font('DejaVu', '', 12)
+    pdf.set_font('DejaVu', '', 10)
     
     if 'final_sigma_R' in st.session_state and 'manual_sigma_value' in st.session_state:
         check_passed = st.session_state.final_sigma_R <= st.session_state.manual_sigma_value
-        result_text = (
-            f"Изчислено σR: {st.session_state.final_sigma_R:.3f} MPa\n"
-            f"Допустимо σR: {st.session_state.manual_sigma_value:.2f} MPa\n"
-            f"Проверка: {'✅ Удовлетворена' if check_passed else '❌ Неудовлетворена'}"
-        )
-        pdf.multi_cell(0, 10, result_text)
+        
+        # Резултати в таблица
+        pdf.set_fill_color(230, 240, 255)
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.cell(90, 8, 'Параметър', 1, 0, 'C', 1)
+        pdf.cell(90, 8, 'Стойност', 1, 1, 'C', 1)
+        
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(90, 8, 'Изчислено σR', 1)
+        pdf.cell(90, 8, f"{st.session_state.final_sigma_R:.3f} MPa", 1, 1)
+        
+        pdf.cell(90, 8, 'Допустимо σR (ръчно)', 1)
+        pdf.cell(90, 8, f"{st.session_state.manual_sigma_value:.2f} MPa", 1, 1)
+        
+        pdf.ln(5)
+        
+        # Проверка
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.set_text_color(0, 100, 0 if check_passed else 150, 0)
+        result = "УДОВЛЕТВОРЕНА ✅" if check_passed else "НЕУДОВЛЕТВОРЕНА ❌"
+        pdf.cell(0, 10, f"Проверка: {result}", 0, 1)
+        
+        if check_passed:
+            pdf.set_text_color(0, 100, 0)
+            pdf.multi_cell(0, 8, 
+                f"Изчисленото напрежение σR = {st.session_state.final_sigma_R:.3f} MPa "
+                f"е по-малко или равно на допустимото напрежение {st.session_state.manual_sigma_value:.2f} MPa. "
+                "Конструкцията отговаря на изискванията.")
+        else:
+            pdf.set_text_color(150, 0, 0)
+            pdf.multi_cell(0, 8, 
+                f"Изчисленото напрежение σR = {st.session_state.final_sigma_R:.3f} MPa "
+                f"надвишава допустимото напрежение {st.session_state.manual_sigma_value:.2f} MPa. "
+                "Конструкцията НЕ отговаря на изискванията.")
+    
+    pdf.ln(5)
+    pdf.set_text_color(0, 0, 0)
+    pdf.set_font('DejaVu', 'I', 8)
+    pdf.cell(0, 10, 'Съставено със система за автоматизирано изчисление на пътни конструкции', 0, 1, 'C')
     
     pdf.cleanup_temp_files()
     return pdf.output(dest='S')
