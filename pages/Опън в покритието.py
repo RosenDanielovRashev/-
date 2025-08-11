@@ -550,7 +550,11 @@ def generate_pdf_report():
         
         # Проверка
         pdf.set_font('DejaVu', 'B', 12)
-        pdf.set_text_color(0, 100, 0 if check_passed else 150, 0)
+        if check_passed:
+            pdf.set_text_color(0, 100, 0)  # зелен
+        else:
+            pdf.set_text_color(150, 0, 0)  # червен
+        
         result = "УДОВЛЕТВОРЕНА ✅" if check_passed else "НЕУДОВЛЕТВОРЕНА ❌"
         pdf.cell(0, 10, f"Проверка: {result}", 0, 1)
         
@@ -566,7 +570,7 @@ def generate_pdf_report():
                 f"Изчисленото напрежение σR = {st.session_state.final_sigma_R:.3f} MPa "
                 f"надвишава допустимото напрежение {st.session_state.manual_sigma_value:.2f} MPa. "
                 "Конструкцията НЕ отговаря на изискванията.")
-    
+
     pdf.ln(5)
     pdf.set_text_color(0, 0, 0)
     pdf.set_font('DejaVu', 'I', 8)
