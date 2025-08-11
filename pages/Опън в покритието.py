@@ -123,7 +123,7 @@ st.session_state["final_Ed"] = Ed
 st.markdown(f"""
 #### 🟢 Стойност за Ed (модул на деформация на земното основание)
 - Взета от пласт {n_layers} 
-- Ed = {Ed:.0f} MPa
+- Ed = {Ed:.2f} MPa
 """)
 
 # Изчисляване на Esr и H
@@ -138,8 +138,8 @@ st.latex(r"Esr = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}")
 st.latex(r"H = \sum_{i=1}^{n} h_i")
 
 # Показване на заместени стойности
-numerator_str = " + ".join([f"{Ei}×{hi}" for Ei, hi in zip(Ei_list, hi_list)])
-denominator_str = " + ".join([f"{hi}" for hi in hi_list])
+numerator_str = " + ".join([f"{Ei:.2f}×{hi:.2f}" for Ei, hi in zip(Ei_list, hi_list)])
+denominator_str = " + ".join([f"{hi:.2f}" for hi in hi_list])
 st.latex(fr"Esr = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \text{{ MPa}}")
 st.latex(fr"H = {denominator_str} = {H:.2f} \text{{ см}}")
 
@@ -160,7 +160,7 @@ if denominator != 0:
         st.markdown("## 📋 Резултати от изчисленията")
         st.markdown(f"""
         **Изчислено:**
-        - $Esr / Ed = {Esr:.2f} / {Ed:.0f} = {Esr / Ed:.3f}$
+        - $Esr / Ed = {Esr:.2f} / {Ed:.2f} = {Esr / Ed:.3f}$
         - $H / D = {H:.2f} / {D:.2f} = {H / D:.3f}$
         """)
         st.success(f"✅ σR = {sigma:.3f}")
@@ -186,8 +186,8 @@ if denominator != 0:
             xaxis_title="H / D",
             yaxis_title="σR",
             height=700,
-            plot_bgcolor='white',  # Бял фон за по-добър контраст
-            paper_bgcolor='white'   # Бял фон за по-добър контраст
+            plot_bgcolor='white',
+            paper_bgcolor='white'
         )
         st.plotly_chart(fig, use_container_width=True)
         
@@ -241,7 +241,7 @@ st.markdown(
 
 # Инициализиране на ръчната стойност
 if 'manual_sigma_value' not in st.session_state:
-    st.session_state.manual_sigma_value = 1.2
+    st.session_state.manual_sigma_value = 1.20
 
 # Поле за ръчно въвеждане
 manual_value = st.number_input(
@@ -249,8 +249,9 @@ manual_value = st.number_input(
     min_value=0.0,
     max_value=20.0,
     value=st.session_state.manual_sigma_value,
-    step=0.1,
+    step=0.01,
     key="manual_sigma_input",
+    format="%.2f",
     label_visibility="visible"
 )
 
@@ -265,22 +266,25 @@ if sigma_to_compare is not None:
     if check_passed:
         st.success(
             f"✅ Проверката е удовлетворена: "
-            f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
+            f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.2f} MPa (допустимото σR)"
         )
     else:
         st.error(
             f"❌ Проверката НЕ е удовлетворена: "
-            f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
+            f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.2f} MPa (допустимото σR)"
         )
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
-# Функция за рендиране на формули като изображения
 def render_formula_to_image(formula, fontsize=12, dpi=200):
-    """Render LaTeX formula to image using matplotlib"""
-    fig = plt.figure(figsize=(8, 0.8))
-    fig.text(0.5, 0.5, f'${formula}$', fontsize=fontsize, 
-             ha='center', va='center', usetex=False)
+    """Render LaTeX formula to image with left alignment"""
+    # Изчисляване на ширината въз основа на дължината на формулата
+    width = max(8, min(12, len(formula) * 0.15))  # Динамична ширина
+    
+    fig = plt.figure(figsize=(width, 0.8))
+    # Промяна: подравняване в ляво
+    fig.text(0.02, 0.5, f'${formula}$', fontsize=fontsize, 
+             ha='left', va='center', usetex=False)
     plt.axis('off')
     
     buf = BytesIO()
@@ -289,7 +293,6 @@ def render_formula_to_image(formula, fontsize=12, dpi=200):
     buf.seek(0)
     return buf
 
-# Клас за PDF с подобрена поддръжка на формули
 class EnhancedPDF(FPDF):
     def __init__(self):
         super().__init__()
@@ -319,44 +322,36 @@ class EnhancedPDF(FPDF):
         
     def add_latex_formula(self, formula_text):
         try:
-            # Рендиране на формулата като изображение
             img_buf = render_formula_to_image(formula_text)
             
-            # Записване във временен файл
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
                 tmp_file.write(img_buf.read())
                 tmp_file_path = tmp_file.name
                 self.temp_image_files.append(tmp_file_path)
             
-            # Добавяне към PDF
             self.image(tmp_file_path, x=10, w=180)
             self.ln(10)
         except Exception as e:
-            # При грешка, показване на формулата като текст
             self.set_font('DejaVu', 'I', 12)
             self.cell(0, 10, formula_text, 0, 1)
             self.ln(5)
             
     def add_plotly_figure(self, fig, width=180):
-        """Добавя Plotly фигура към PDF с цветове"""
         try:
-            # Задаване на висока резолюция и цветова схема
             img_bytes = pio.to_image(
                 fig, 
                 format="png", 
                 width=1200, 
                 height=900, 
-                scale=3,  # Увеличаване на резолюцията
-                engine="kaleido"  # Подобрен engine за визуализация
+                scale=3,
+                engine="kaleido"
             )
             
-            # Запис във временен файл
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
                 tmp_file.write(img_bytes)
                 tmp_file_path = tmp_file.name
                 self.temp_image_files.append(tmp_file_path)
             
-            # Добавяне към PDF
             self.image(tmp_file_path, x=10, w=width)
             self.ln(10)
             return True
@@ -371,24 +366,20 @@ class EnhancedPDF(FPDF):
             except Exception as e:
                 print(f"Грешка при изтриване на временен файл: {e}")
 
-# Функция за генериране на PDF отчет
 def generate_pdf_report():
     pdf = EnhancedPDF()
     
     try:
-        # Зареждане на шрифтове
         base_dir = os.path.dirname(os.path.abspath(__file__))
         font_dir = os.path.join(base_dir, "fonts")
         
         if not os.path.exists(font_dir):
             os.makedirs(font_dir, exist_ok=True)
         
-        # Проверка за шрифтовете (ако липсват, използвайте резервни)
         sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
         bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
         italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
         
-        # Ако шрифтовете не съществуват, създайте временни
         if not all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
             from fpdf.fonts import FontsByFPDF
             fonts = FontsByFPDF()
@@ -424,11 +415,14 @@ def generate_pdf_report():
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '1. Входни параметри', 0, 1)
     pdf.set_font('DejaVu', '', 12)
-    pdf.cell(0, 10, f'Диаметър D: {st.session_state.final_D} cm', 0, 1)
+    pdf.cell(0, 10, f'Диаметър D: {st.session_state.final_D:.2f} cm', 0, 1)
     pdf.cell(0, 10, f'Брой пластове: 2', 0, 1)
     for i in range(2):
-        pdf.cell(0, 10, f'Пласт {i+1}: E{i+1} = {st.session_state.Ei_list[i]} MPa, h{i+1} = {st.session_state.hi_list[i]} cm', 0, 1)
-    pdf.cell(0, 10, f'Ed: {st.session_state.final_Ed} MPa', 0, 1)
+        pdf.cell(0, 10, 
+                 f'Пласт {i+1}: E{i+1} = {st.session_state.Ei_list[i]:.2f} MPa, '
+                 f'h{i+1} = {st.session_state.hi_list[i]:.2f} cm', 
+                 0, 1)
+    pdf.cell(0, 10, f'Ed: {st.session_state.final_Ed:.2f} MPa', 0, 1)
     pdf.ln(5)
     
     # Формули
@@ -444,14 +438,19 @@ def generate_pdf_report():
     pdf.cell(0, 10, '3. Изчисления', 0, 1)
     pdf.set_font('DejaVu', '', 12)
     
-    numerator_str = " + ".join([f"{Ei}×{hi}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
-    denominator_str = " + ".join([f"{hi}" for hi in st.session_state.hi_list])
+    numerator_str = " + ".join(
+        [f"{Ei:.2f} \\times {hi:.2f}" 
+         for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)]
+    )
+    denominator_str = " + ".join(
+        [f"{hi:.2f}" for hi in st.session_state.hi_list]
+    )
     
     pdf.add_latex_formula(fr"E_{{sr}} = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \, \text{{MPa}}")
     pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \, \text{{cm}}")
     
     if 'final_sigma' in st.session_state:
-        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{Ed:.0f}}} = {Esr/Ed:.3f}")
+        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{Ed:.2f}}} = {Esr/Ed:.3f}")
         pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D:.2f}}} = {H/D:.3f}")
         pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
     
@@ -480,7 +479,7 @@ def generate_pdf_report():
         check_passed = st.session_state.final_sigma_R <= st.session_state.manual_sigma_value
         result_text = (
             f"Изчислено σR: {st.session_state.final_sigma_R:.3f} MPa\n"
-            f"Допустимо σR: {st.session_state.manual_sigma_value:.3f} MPa\n"
+            f"Допустимо σR: {st.session_state.manual_sigma_value:.2f} MPa\n"
             f"Проверка: {'✅ Удовлетворена' if check_passed else '❌ Неудовлетворена'}"
         )
         pdf.multi_cell(0, 10, result_text)
