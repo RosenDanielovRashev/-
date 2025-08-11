@@ -366,7 +366,6 @@ class EnhancedPDF(FPDF):
                 os.unlink(file_path)
             except Exception as e:
                 print(f"Грешка при изтриване на временен файл: {e}")
-
 def generate_pdf_report():
     pdf = EnhancedPDF()
     
@@ -474,7 +473,7 @@ def generate_pdf_report():
     ]
     
     for formula in formulas:
-        pdf.add_latex_formula(formula, fontsize=14)
+        pdf.add_latex_formula(formula)
     
     # Изчисления
     pdf.set_font('DejaVu', 'B', 14)
@@ -495,20 +494,20 @@ def generate_pdf_report():
         [f"{hi:.2f}" for hi in st.session_state.hi_list]
     )
     
-    pdf.add_latex_formula(fr"E_{{sr}} = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \, \text{{MPa}}", fontsize=12)
-    pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \, \text{{cm}}", fontsize=12)
+    pdf.add_latex_formula(fr"E_{{sr}} = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \, \text{{MPa}}")
+    pdf.add_latex_formula(fr"H = {denominator_str} = {H:.2f} \, \text{{cm}}")
     
     if 'final_sigma' in st.session_state:
-        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr/st.session_state.final_Ed:.3f}", fontsize=12)
-        pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{st.session_state.final_D:.2f}}} = {H/st.session_state.final_D:.3f}", fontsize=12)
-        pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}", fontsize=12)
+        pdf.add_latex_formula(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr/st.session_state.final_Ed:.3f}")
+        pdf.add_latex_formula(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{st.session_state.final_D:.2f}}} = {H/st.session_state.final_D:.3f}")
+        pdf.add_latex_formula(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
     
     # Изчисление на крайното σR
     p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
     if p and 'final_sigma' in st.session_state:
         sigma_final = 1.15 * p * st.session_state.final_sigma
-        pdf.add_latex_formula(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}", fontsize=12)
-        pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final:.3f} \, \text{{MPa}}", fontsize=12)
+        pdf.add_latex_formula(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
+        pdf.add_latex_formula(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final:.3f} \, \text{{MPa}}")
     
     # Графика
     if "fig" in st.session_state:
@@ -574,7 +573,7 @@ def generate_pdf_report():
     pdf.cell(0, 10, 'Съставено със система за автоматизирано изчисление на пътни конструкции', 0, 1, 'C')
     
     pdf.cleanup_temp_files()
-    return pdf.output(dest='S')
+    return pdf.output(dest='S').encode('latin-1')
 
 # Бутон за генериране на PDF
 st.markdown("---")
