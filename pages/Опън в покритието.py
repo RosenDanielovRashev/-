@@ -13,19 +13,30 @@ import matplotlib.pyplot as plt
 from matplotlib import mathtext
 from datetime import datetime
 
+# Опит за импорт на cairosvg (за векторни формули)
+try:
+    import cairosvg  # pip install cairosvg
+    _HAS_CAIROSVG = True
+except Exception:
+    _HAS_CAIROSVG = False
+
 st.title("Опън в покритието")
 
+# -----------------------------
 # Зареждане на данните
+# -----------------------------
 @st.cache_data
 def load_data():
     return pd.read_csv("sigma_data.csv")
 
 data = load_data()
 
+# -----------------------------
 # Функция за изчисляване на σR
+# -----------------------------
 def compute_sigma_R(H, D, Esr, Ed):
-    hD = H / D
-    Esr_Ed = Esr / Ed
+    hD = H / D if D else 0
+    Esr_Ed = Esr / Ed if Ed else 0
     tol = 1e-3
     iso_levels = sorted(data['Esr_over_Ed'].unique())
 
@@ -51,13 +62,13 @@ def compute_sigma_R(H, D, Esr, Ed):
 
     return None, None, None, None, None, None
 
-# Заглавна част
+# -----------------------------
+# UI: Заглавие и входове
+# -----------------------------
 st.title("Определяне опънното напрежение в долния пласт на покритието фиг.9.2")
-
-# Въвеждане на параметри
 st.markdown("### Въвеждане на параметри на пластове")
 
-# Зареждане на стойности от session_state или задаване на дефолтни
+# Вземаме дефолтни стойности от session_state (ако има)
 D_default = st.session_state.get("final_D", 34.0)
 Ei_list_full = st.session_state.get("Ei_list", [])
 hi_list_full = st.session_state.get("hi_list", [])
@@ -74,14 +85,12 @@ D = st.selectbox(
     index=[34.0, 32.04, 33.0].index(D_default) if D_default in [34.0, 32.04, 33.0] else 0
 )
 
-# Брой пластове (фиксиран на 2)
+# Фиксиран брой пластове (2)
 st.markdown(f"**Брой пластове:** 2 (фиксиран за това изчисление)")
 n = 2
 
-# Въвеждане на параметри за двата пласта
-Ei_list = []
-hi_list = []
-
+# Въвеждане на Ei и hi
+Ei_list, hi_list = [], []
 st.markdown("#### Въвеждане на Eᵢ и hᵢ за всеки пласт:")
 for i in range(1, n + 1):
     col1, col2 = st.columns(2)
@@ -100,24 +109,23 @@ for i in range(1, n + 1):
     Ei_list.append(Ei)
     hi_list.append(hi)
 
-# Запазване на параметрите
+# Запазване в session_state
 st.session_state["final_D"] = D
 st.session_state["Ei_list"] = Ei_list
 st.session_state["hi_list"] = hi_list
 
-# Вземане на Ed от първата страница
+# Проверка за Ed
 st.markdown("---")
 if "final_Ed_list" not in st.session_state:
     st.error("⚠️ Липсва final_Ed_list в session_state!")
     st.info("Моля, върнете се на първата страница и изчислете всички пластове")
     st.stop()
 
-# Автоматично определяне на Ed (модул на следващия пласт)
 n_layers = len(Ei_list)
 if len(st.session_state.final_Ed_list) <= n_layers:
     st.error(f"⚠️ Недостатъчно пластове в final_Ed_list (изисква се поне {n_layers+1})!")
     st.stop()
-    
+
 Ed = st.session_state.final_Ed_list[n_layers-1]
 st.session_state["final_Ed"] = Ed
 
@@ -127,18 +135,17 @@ st.markdown(f"""
 - Ed = {Ed:.2f} MPa
 """)
 
-# Изчисляване на Esr и H
+# Esr и H
 numerator = sum(Ei * hi for Ei, hi in zip(Ei_list, hi_list))
 denominator = sum(hi_list)
 Esr = numerator / denominator if denominator != 0 else 0
 H = denominator
 
-# Показване на формулите
+# Показване на формули (Streamlit)
 st.markdown("### ℹ️ Формули за изчисление")
 st.latex(r"Esr = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}")
 st.latex(r"H = \sum_{i=1}^{n} h_i")
 
-# Показване на заместени стойности
 numerator_str = " + ".join([f"{Ei:.2f}×{hi:.2f}" for Ei, hi in zip(Ei_list, hi_list)])
 denominator_str = " + ".join([f"{hi:.2f}" for hi in hi_list])
 st.latex(fr"Esr = \frac{{{numerator_str}}}{{{denominator_str}}} = {Esr:.2f} \text{{ MPa}}")
@@ -147,17 +154,14 @@ st.latex(fr"H = {denominator_str} = {H:.2f} \text{{ см}}")
 # Автоматично изчисляване на σR
 if denominator != 0:
     sigma, hD, y_low, y_high, low, high = compute_sigma_R(H, D, Esr, Ed)
-    
     if sigma is not None:
-        # Запазване на резултатите
         st.session_state["final_sigma"] = sigma
         st.session_state["final_hD"] = hD
         st.session_state["final_y_low"] = y_low
         st.session_state["final_y_high"] = y_high
         st.session_state["final_low"] = low
         st.session_state["final_high"] = high
-        
-        # Показване на резултатите
+
         st.markdown("## 📋 Резултати от изчисленията")
         st.markdown(f"""
         **Изчислено:**
@@ -191,10 +195,7 @@ if denominator != 0:
             paper_bgcolor='white'
         )
         st.plotly_chart(fig, use_container_width=True)
-        
-        # Запазване на фигурата в session_state
         st.session_state["fig"] = fig
-        
     else:
         st.warning("❗ Точката е извън диапазона на наличните данни.")
         for key in ["final_sigma", "final_hD", "final_y_low", "final_y_high", "final_low", "final_high"]:
@@ -206,31 +207,28 @@ else:
 # Изображение на допустимите напрежения
 st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=800)
 
-# Автоматично изчисляване на крайното σR
+# Крайно σR (спрямо осов товар)
 axle_load = st.session_state.get("axle_load", 100)
 p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else None
 
 if p is not None:
     st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
     st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
-    
-    sigma = st.session_state.get("final_sigma", None)
-    
-    if sigma is not None:
-        sigma_final = 1.15 * p * sigma
+
+    sigma_nom = st.session_state.get("final_sigma", None)
+    if sigma_nom is not None:
+        sigma_final = 1.15 * p * sigma_nom
         st.markdown("### Формула за изчисление на крайното напрежение σR:")
         st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
-        st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
+        st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma_nom:.3f} = {sigma_final:.3f} \text{{ MPa}}")
         st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
-        
-        # Запазване на крайната стойност
         st.session_state["final_sigma_R"] = sigma_final
     else:
         st.warning("❗ Липсва σR от номограмата за изчисление.")
 else:
     st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
 
-# Секция за ръчно въвеждане
+# Ръчно въвеждане
 st.markdown(
     """
     <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
@@ -239,12 +237,9 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-# Инициализиране на ръчната стойност
 if 'manual_sigma_value' not in st.session_state:
     st.session_state.manual_sigma_value = 1.20
 
-# Поле за ръчно въвеждане
 manual_value = st.number_input(
     label="Въведете допустимо опънно напрежение σR [MPa] (от таблица 9.7)",
     min_value=0.0,
@@ -255,13 +250,9 @@ manual_value = st.number_input(
     format="%.2f",
     label_visibility="visible"
 )
-
-# Запазване на въведената стойност
 st.session_state.manual_sigma_value = manual_value
 
-# Автоматична проверка на условието
 sigma_to_compare = st.session_state.get("final_sigma_R", None)
-
 if sigma_to_compare is not None:
     check_passed = sigma_to_compare <= manual_value
     if check_passed:
@@ -277,37 +268,63 @@ if sigma_to_compare is not None:
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
-def render_formula_to_image(formula, fontsize=22, dpi=300):
-    """Рендва формула с достатъчно място, за да не се реже"""
-    fig = plt.figure(figsize=(8, 2.5))  # по-широко и по-високо платно
-    fig.text(0.05, 0.5, f'${formula}$', fontsize=fontsize,
-             ha='left', va='center', usetex=False)
-    plt.axis('off')
+# -------------------------------------------------
+# Векторен рендер на формули: SVG -> PNG (или fallback)
+# -------------------------------------------------
+def render_formula_to_svg(formula, output_path):
+    """
+    Рендва формула като SVG чрез matplotlib.mathtext.
+    """
+    parser = mathtext.MathTextParser("path")
+    parser.to_svg(f"${formula}$", output_path)
+    return output_path
 
+def svg_to_png(svg_path, png_path=None, dpi=300):
+    """
+    Конвертира SVG към PNG с висока резолюция. Изисква cairosvg.
+    """
+    if not _HAS_CAIROSVG:
+        raise RuntimeError("cairosvg не е наличен")
+    if png_path is None:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_png:
+            png_path = tmp_png.name
+    cairosvg.svg2png(url=svg_path, write_to=png_path, dpi=dpi)
+    return png_path
+
+def render_formula_to_image_fallback(formula, fontsize=22, dpi=450):
+    """
+    Fallback: рендва формула директно в PNG чрез matplotlib (растерно, но висок DPI).
+    """
+    fig = plt.figure(figsize=(8, 2.5))
+    fig.text(0.05, 0.5, f'${formula}$', fontsize=fontsize, ha='left', va='center', usetex=False)
+    plt.axis('off')
     buf = BytesIO()
     plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.3)
     plt.close()
     buf.seek(0)
     return buf
 
+# -------------------------------------------------
+# PDF клас с подобрено управление на формули (без сив фон)
+# -------------------------------------------------
 class EnhancedPDF(FPDF):
     def __init__(self):
         super().__init__()
         self.temp_font_files = []
         self.temp_image_files = []
-        
+
     def footer(self):
         self.set_y(-15)
         self.set_font('DejaVu', 'I', 8)
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
-        
+
     def add_font_from_bytes(self, family, style, font_bytes):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
             tmp_file.write(font_bytes)
             tmp_file_path = tmp_file.name
             self.temp_font_files.append(tmp_file_path)
             self.add_font(family, style, tmp_file_path)
-            
+
     def add_external_image(self, image_path, width=180):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
             img = Image.open(image_path)
@@ -316,102 +333,130 @@ class EnhancedPDF(FPDF):
             self.temp_image_files.append(tmp_file_path)
         self.image(tmp_file_path, x=10, w=width)
         self.ln(10)
-        
-    def add_latex_formula(self, formula_text):
+
+    def _formula_png_from_svg_or_fallback(self, formula_text, dpi=300):
+        """
+        Прави PNG път от формула чрез SVG→PNG, а ако няма cairosvg → fallback PNG буфер.
+        Връща път към PNG файл, добавен към temp списъка.
+        """
         try:
-            img_buf = render_formula_to_image(formula_text)
-            
+            # SVG временен файл
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".svg") as tmp_svg:
+                render_formula_to_svg(formula_text, tmp_svg.name)
+                # PNG от SVG
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_png:
+                    svg_to_png(tmp_svg.name, tmp_png.name, dpi=dpi)
+                    png_path = tmp_png.name
+            self.temp_image_files.append(png_path)
+            return png_path
+        except Exception:
+            # Fallback: директно PNG от matplotlib
+            buf = render_formula_to_image_fallback(formula_text, fontsize=22, dpi=450)
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                tmp_file.write(img_buf.read())
-                tmp_file_path = tmp_file.name
-                self.temp_image_files.append(tmp_file_path)
-            
-            self.image(tmp_file_path, x=10, w=180)
-            self.ln(10)
-        except Exception as e:
+                tmp_file.write(buf.read())
+                png_path = tmp_file.name
+            self.temp_image_files.append(png_path)
+            return png_path
+
+    def add_latex_formula(self, formula_text, width=100, line_gap=12):
+        """
+        Добавя ЕДНА формула като изображение (векторен рендер до PNG), без фонови плочи.
+        """
+        try:
+            png_path = self._formula_png_from_svg_or_fallback(formula_text)
+            # Вмъкване с фиксирана ширина → еднакъв визуален размер
+            self.image(png_path, x=self.get_x(), y=self.get_y(), w=width)
+            # Приблизителен вертикален интервал
+            self.ln(line_gap + width * 0.22)
+        except Exception:
             self.set_font('DejaVu', 'I', 12)
-            self.cell(0, 10, formula_text, 0, 1)
+            self.multi_cell(0, 8, formula_text)
             self.ln(5)
-            
+
     def add_plotly_figure(self, fig, width=180):
         try:
             img_bytes = pio.to_image(
-                fig, 
-                format="png", 
-                width=1200, 
-                height=900, 
+                fig,
+                format="png",
+                width=1200,
+                height=900,
                 scale=3,
                 engine="kaleido"
             )
-            
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
                 tmp_file.write(img_bytes)
                 tmp_file_path = tmp_file.name
                 self.temp_image_files.append(tmp_file_path)
-            
             self.image(tmp_file_path, x=10, w=width)
             self.ln(10)
             return True
         except Exception as e:
             print(f"Грешка при добавяне на Plotly фигура: {e}")
             return False
-            
+
     def cleanup_temp_files(self):
         for file_path in self.temp_font_files + self.temp_image_files:
             try:
                 os.unlink(file_path)
             except Exception as e:
                 print(f"Грешка при изтриване на временен файл: {e}")
-                
-    def add_formula_section(self, title, formulas):
-        """Добавя секция с формули подредени в две колони със заглавие"""
+
+    def add_formula_section(self, title, formulas, columns=2, col_width=95, img_width=85, row_gap=8):
+        """
+        Секция с формули, подредени по колони, без фон и с еднакво мащабиране.
+        - img_width контролира реалната ширина на всяка формула.
+        """
         self.set_font('DejaVu', 'B', 12)
         self.cell(0, 8, title, ln=True)
         self.ln(2)
-        
-        # Разделяне на формулите на групи от по две
-        groups = [formulas[i:i+2] for i in range(0, len(formulas), 2)]
-        
-        for group in groups:
-            col_width = 90  # По-широки колони (вместо 60)
-            self.set_x(10)  # Начална позиция
-            
-            for i, formula in enumerate(group):
-                try:
-                    img_buf = render_formula_to_image(formula)
-                    
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                        tmp_file.write(img_buf.read())
-                        tmp_file_path = tmp_file.name
-                        self.temp_image_files.append(tmp_file_path)
-                    
-                    # Поставяне на изображението с формулата
-                    self.image(tmp_file_path, x=self.get_x()+2, y=self.get_y()+3, w=col_width-12)
-                    
-                    # Преместване към следващата колона
-                    self.set_x(self.get_x() + col_width)
-                    
-                except Exception as e:
-                    print(f"Грешка при визуализиране на формула: {formula}, {e}")
-            
-            self.ln(10)  # По-голям интервал след ред
-        
-        self.ln(5)  # Допълнителен интервал след секцията
 
+        # Групираме по броя колони
+        rows = [formulas[i:i+columns] for i in range(0, len(formulas), columns)]
+
+        for row in rows:
+            # Начална X позиция
+            start_x = 10
+            self.set_x(start_x)
+            max_row_height = 0  # при нужда може да се развие за още по-точен вертикален интервал
+
+            for idx, formula in enumerate(row):
+                try:
+                    png_path = self._formula_png_from_svg_or_fallback(formula)
+                    # Картинка с фиксиран img_width за еднакъв размер
+                    self.image(png_path, x=self.get_x(), y=self.get_y(), w=img_width)
+                except Exception:
+                    # Текстов fallback
+                    self.set_font('DejaVu', '', 11)
+                    self.multi_cell(col_width, 6, formula)
+                # Преместваме в следващата колона
+                self.set_x(start_x + col_width * (idx + 1))
+                max_row_height = max(max_row_height, img_width * 0.28)
+
+            # Нов ред с малък промеждутък
+            self.ln(max(18, int(max_row_height)) + row_gap)
+
+        self.ln(4)
+
+# -------------------------------------------------
+# Генерация на PDF
+# -------------------------------------------------
 def generate_pdf_report():
     pdf = EnhancedPDF()
     pdf.set_auto_page_break(auto=True, margin=20)
 
-    # Зареждане на шрифтове
+    # Шрифтове
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        font_dir = os.path.join(base_dir, "fonts")
-        os.makedirs(font_dir, exist_ok=True)
+    except NameError:
+        base_dir = os.getcwd()
+    font_dir = os.path.join(base_dir, "fonts")
+    os.makedirs(font_dir, exist_ok=True)
 
-        sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
-        bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
-        italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+    sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
+    bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+    italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
 
+    try:
         if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
             with open(sans_path, "rb") as f:
                 pdf.add_font_from_bytes('DejaVu', '', f.read())
@@ -440,15 +485,13 @@ def generate_pdf_report():
     pdf.cell(0, 10, f"Дата на генериране: {datetime.today().strftime('%d.%m.%Y')}", ln=True, align='C')
     pdf.ln(10)
 
-    # --- 1. Входни параметри ---
+    # 1. Входни параметри
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '1. Входни параметри', ln=True)
-    pdf.set_fill_color(240, 240, 240)
 
     col_width = 60
     row_height = 8
 
-    # Таблица с "зебра" стил
     pdf.set_font('DejaVu', 'B', 11)
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(col_width, row_height, 'Параметър', border=1, align='C', fill=True)
@@ -480,81 +523,71 @@ def generate_pdf_report():
 
     pdf.ln(5)
 
-    # --- 2. Формули ---
+    # 2. Формули за изчисление (векторен рендер)
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
-    
-    # Дефиниране на формулите в списък
+
     formulas_section2 = [
         r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}",
         r"H = \sum_{i=1}^{n} h_i",
-        r"\frac{E_{sr}}{E_d} = \frac{E_{sr}}{E_d}",
-        r"\frac{H}{D} = \frac{H}{D}",
+        r"\frac{E_{sr}}{E_d}",
+        r"\frac{H}{D}",
         r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}",
         r"p = f(\text{осов товар})"
     ]
-    
-    # Добавяне на формулите в три колони със заглавие
-    pdf.add_formula_section("Основни формули за изчисление:", formulas_section2)
+    pdf.add_formula_section("Основни формули за изчисление:", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=8)
 
-    # --- 3. Изчисления ---
+    # 3. Изчисления (с числени замествания)
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '3. Изчисления', ln=True)
-    
-    # Подготвяне на формулите за изчисленията
-    formulas_section3 = []
-    
-    # Формули за Esr и H
-    numerator = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
-    denominator = sum(st.session_state.hi_list)
-    Esr = numerator / denominator if denominator else 0
-    H = denominator
 
+    num = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
+    den = sum(st.session_state.hi_list)
+    Esr_val = num / den if den else 0
+    H_val = den
     num_str = " + ".join([f"{Ei:.2f} \\times {hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
     den_str = " + ".join([f"{hi:.2f}" for hi in st.session_state.hi_list])
-    
-    formulas_section3.append(fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr:.2f} \, \text{{MPa}}")
-    formulas_section3.append(fr"H = {den_str} = {H:.2f} \, \text{{cm}}")
-    
-    # Допълнителни формули ако има данни
+
+    formulas_section3 = [
+        fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr_val:.2f} \, \text{{MPa}}",
+        fr"H = {den_str} = {H_val:.2f} \, \text{{cm}}"
+    ]
     if 'final_sigma' in st.session_state:
-        formulas_section3.append(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr/st.session_state.final_Ed:.3f}")
-        formulas_section3.append(fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{st.session_state.final_D:.2f}}} = {H/st.session_state.final_D:.3f}")
+        formulas_section3.append(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr_val/st.session_state.final_Ed:.3f}")
+        formulas_section3.append(fr"\frac{{H}}{{D}} = \frac{{{H_val:.2f}}}{{{st.session_state.final_D:.2f}}} = {H_val/st.session_state.final_D:.3f}")
         formulas_section3.append(fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
 
     axle_load = st.session_state.get("axle_load", 100)
-    p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
-    if p and 'final_sigma' in st.session_state:
-        sigma_final = 1.15 * p * st.session_state.final_sigma
-        formulas_section3.append(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
-        formulas_section3.append(fr"\sigma_R = 1.15 \times {p:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final:.3f} \, \text{{MPa}}")
-    
-    # Добавяне на изчислителните формули
-    pdf.add_formula_section("Изчислителни формули:", formulas_section3)
+    p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
+    if p_loc and 'final_sigma' in st.session_state:
+        sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
+        formulas_section3.append(fr"p = {p_loc:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
+        formulas_section3.append(fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \, \text{{MPa}}")
+
+    pdf.add_formula_section("Изчислителни формули:", formulas_section3, columns=2, col_width=95, img_width=85, row_gap=8)
 
     pdf.ln(5)
 
-    # --- 4. Графика ---
+    # 4. Графика
     if "fig" in st.session_state:
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, '4. Графика на номограмата', ln=True)
         pdf.add_plotly_figure(st.session_state["fig"], width=160)
 
-    # --- 5. Допустими напрежения ---
+    # 5. Допустими напрежения
     img_path = "Допустими опънни напрежения.png"
     if os.path.exists(img_path):
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, '5. Допустими опънни напрежения', ln=True)
         pdf.add_external_image(img_path, width=160)
 
-    # --- 6. Резултати и проверка ---
+    # 6. Резултати и проверка
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '6. Резултати и проверка', ln=True)
 
     if 'final_sigma_R' in st.session_state and 'manual_sigma_value' in st.session_state:
         check_passed = st.session_state.final_sigma_R <= st.session_state.manual_sigma_value
 
-        # Таблица с резултати
         pdf.set_font('DejaVu', 'B', 10)
         pdf.set_fill_color(200, 220, 255)
         pdf.cell(90, 8, 'Параметър', border=1, align='C', fill=True)
@@ -571,7 +604,6 @@ def generate_pdf_report():
             pdf.cell(90, 8, val, border=1, align='C', fill=True)
             pdf.ln(8)
 
-        # Крайна оценка
         pdf.ln(5)
         if check_passed:
             pdf.set_text_color(0, 100, 0)
@@ -593,8 +625,9 @@ def generate_pdf_report():
     pdf.cleanup_temp_files()
     return pdf.output(dest='S')
 
-
-# --- Бутон за генериране ---
+# -----------------------------
+# Бутон за генериране на PDF
+# -----------------------------
 st.markdown("---")
 st.subheader("Генериране на PDF отчет")
 if st.button("📄 Генерирай PDF отчет"):
