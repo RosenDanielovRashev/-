@@ -10,3 +10,4 @@ imgkit==1.2.2
 wkhtmltopdf==0.2
 reportlab==3.6.12
 Pillow==10.3.0
+cairosvg
