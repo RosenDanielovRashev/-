@@ -411,7 +411,7 @@ if layer_idx in st.session_state.layer_results:
     st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
 
 # -------------------------------------------------
-# PDF клас с Unicode шрифтове за кирилица
+# PDF клас с абсолютно същия начин на зареждане на шрифтове
 # -------------------------------------------------
 class EnhancedPDF(FPDF):
     def __init__(self):
@@ -419,10 +419,45 @@ class EnhancedPDF(FPDF):
         self.temp_font_files = []
         self.temp_image_files = []
         
-        # Добавяне на Unicode шрифтове
-        self.add_font('DejaVuSans', '', 'DejaVuSans.ttf', uni=True)
-        self.add_font('DejaVuSans', 'B', 'DejaVuSans-Bold.ttf', uni=True)
-        self.add_font('DejaVuSans', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
+        # АБСОЛЮТНО СЪЩИЯТ НАЧИН КАТО В ПЪРВИЯ ФАЙЛ
+        try:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+        except NameError:
+            base_dir = os.getcwd()
+        font_dir = os.path.join(base_dir, "fonts")
+        os.makedirs(font_dir, exist_ok=True)
+
+        sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
+        bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+        italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+
+        try:
+            if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
+                with open(sans_path, "rb") as f:
+                    self.add_font_from_bytes('DejaVuSans', '', f.read())
+                with open(bold_path, "rb") as f:
+                    self.add_font_from_bytes('DejaVuSans', 'B', f.read())
+                with open(italic_path, "rb") as f:
+                    self.add_font_from_bytes('DejaVuSans', 'I', f.read())
+            else:
+                # Fallback към вградените шрифтове
+                from fpdf.fonts import FontsByFPDF
+                fonts = FontsByFPDF()
+                for style, data in [('', fonts.helvetica),
+                                    ('B', fonts.helvetica_bold),
+                                    ('I', fonts.helvetica_oblique)]:
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+                        tmp_file.write(data)
+                        self.add_font('DejaVuSans', style, tmp_file.name)
+        except Exception as e:
+            print(f"Грешка при зареждане на шрифтове: {e}")
+
+    def add_font_from_bytes(self, family, style, font_bytes):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+            tmp_file.write(font_bytes)
+            tmp_file_path = tmp_file.name
+            self.temp_font_files.append(tmp_file_path)
+            self.add_font(family, style, tmp_file_path)
 
     def footer(self):
         self.set_y(-15)
