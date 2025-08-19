@@ -277,20 +277,18 @@ if sigma_to_compare is not None:
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
-def render_formula_to_image(formula, fontsize=30, dpi=300):
-    """Render LaTeX formula to image with left alignment"""
-    # Динамична ширина въз основа на дължината на формулата
-    width = max(10, min(16, len(formula) * 0.25))  # По-широки изображения
-    
-    fig = plt.figure(figsize=(width, 1.2))  # Увеличена височина
-    fig.text(0.02, 0.5, f'${formula}$', fontsize=fontsize, 
+def render_formula_to_image(formula, fontsize=22, dpi=300):
+    """Рендва формула с еднакъв мащаб за всички"""
+    fig = plt.figure(figsize=(6, 1.6))  # фиксиран размер за всички формули
+    fig.text(0.02, 0.5, f'${formula}$', fontsize=fontsize,
              ha='left', va='center', usetex=False)
     plt.axis('off')
-    
+
     buf = BytesIO()
-    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.1)
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.2)
     plt.close()
     buf.seek(0)
+    return buf
     return buf
 
 class EnhancedPDF(FPDF):
@@ -389,7 +387,7 @@ class EnhancedPDF(FPDF):
                         self.temp_image_files.append(tmp_file_path)
                     
                     # Поставяне на изображението с формулата
-                    self.image(tmp_file_path, x=self.get_x()+2, y=self.get_y()+3, w=col_width-6)
+                    self.image(tmp_file_path, x=self.get_x()+2, y=self.get_y()+3, w=80)
                     
                     # Преместване към следващата колона
                     self.set_x(self.get_x() + col_width)
