@@ -535,7 +535,7 @@ def generate_pdf_report():
         r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}",
         r"p = f(\text{осов товар})"
     ]
-    pdf.add_formula_section("Основни формули за изчисление:", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=-2)
+    pdf.add_formula_section("Основни формули за изчисление:", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=-5)
 
     # 3. Изчисления (с числени замествания)
     pdf.set_font('DejaVu', 'B', 14)
@@ -564,7 +564,7 @@ def generate_pdf_report():
         formulas_section3.append(fr"p = {p_loc:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
         formulas_section3.append(fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \, \text{{MPa}}")
 
-    pdf.add_formula_section("Изчислителни формули:", formulas_section3, columns=2, col_width=95, img_width=85, row_gap=-2)
+    pdf.add_formula_section("Изчислителни формули:", formulas_section3, columns=2, col_width=95, img_width=85, row_gap=-5)
 
     pdf.ln(5)
 
