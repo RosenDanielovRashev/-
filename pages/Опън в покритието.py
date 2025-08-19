@@ -277,13 +277,12 @@ if sigma_to_compare is not None:
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
-def render_formula_to_image(formula, fontsize=12, dpi=200):
+def render_formula_to_image(formula, fontsize=16, dpi=300):
     """Render LaTeX formula to image with left alignment"""
-    # Изчисляване на ширината въз основа на дължината на формулата
-    width = max(8, min(12, len(formula) * 0.15))  # Динамична ширина
+    # Динамична ширина въз основа на дължината на формулата
+    width = max(10, min(16, len(formula) * 0.25))  # По-широки изображения
     
-    fig = plt.figure(figsize=(width, 0.8))
-    # Промяна: подравняване в ляво
+    fig = plt.figure(figsize=(width, 1.2))  # Увеличена височина
     fig.text(0.02, 0.5, f'${formula}$', fontsize=fontsize, 
              ha='left', va='center', usetex=False)
     plt.axis('off')
@@ -368,16 +367,16 @@ class EnhancedPDF(FPDF):
                 print(f"Грешка при изтриване на временен файл: {e}")
                 
     def add_formula_section(self, title, formulas):
-        """Добавя секция с формули подредени в три колони със заглавие"""
+        """Добавя секция с формули подредени в две колони със заглавие"""
         self.set_font('DejaVu', 'B', 12)
         self.cell(0, 8, title, ln=True)
         self.ln(2)
         
-        # Разделяне на формулите на групи от по три
-        groups = [formulas[i:i+3] for i in range(0, len(formulas), 3)]
+        # Разделяне на формулите на групи от по две
+        groups = [formulas[i:i+2] for i in range(0, len(formulas), 2)]
         
         for group in groups:
-            col_width = 60  # Ширина на колона
+            col_width = 90  # По-широки колони (вместо 60)
             self.set_x(10)  # Начална позиция
             
             for i, formula in enumerate(group):
@@ -391,10 +390,10 @@ class EnhancedPDF(FPDF):
                     
                     # Добавяне на сив фон за формулата
                     self.set_fill_color(240, 240, 240)
-                    self.rect(self.get_x(), self.get_y(), col_width-2, 18, 'F')
+                    self.rect(self.get_x(), self.get_y(), col_width-2, 25, 'F')  # Увеличена височина
                     
                     # Поставяне на изображението с формулата
-                    self.image(tmp_file_path, x=self.get_x()+2, y=self.get_y()+1, w=col_width-6)
+                    self.image(tmp_file_path, x=self.get_x()+2, y=self.get_y()+3, w=col_width-6)
                     
                     # Преместване към следващата колона
                     self.set_x(self.get_x() + col_width)
@@ -402,7 +401,7 @@ class EnhancedPDF(FPDF):
                 except Exception as e:
                     print(f"Грешка при визуализиране на формула: {formula}, {e}")
             
-            self.ln(20)  # Интервал след ред
+            self.ln(25)  # По-голям интервал след ред
         
         self.ln(5)  # Допълнителен интервал след секцията
 
