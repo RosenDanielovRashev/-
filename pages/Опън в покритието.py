@@ -616,7 +616,6 @@ def generate_pdf_report():
     pdf.ln(10)
     pdf.set_font('DejaVu', 'I', 8)
     pdf.set_text_color(100, 100, 100)
-    pdf.cell(0, 10, 'Съставено със система за автоматизирано изчисление на пътни конструкции', align='C')
 
     pdf.cleanup_temp_files()
     return pdf.output(dest='S')
