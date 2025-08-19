@@ -480,10 +480,10 @@ def generate_pdf_report():
     # Заглавна страница
     pdf.add_page()
     pdf.set_font('DejaVu', 'B', 18)
-    pdf.cell(0, 15, 'ОПЪН В ПОКРИТИЕТО - ОТЧЕТ', ln=True, align='C')
+    pdf.cell(0, 15, 'ОПЪН В ПОКРИТИЕТО', ln=True, align='C')
     pdf.set_font('DejaVu', 'I', 12)
     pdf.cell(0, 10, f"Дата на генериране: {datetime.today().strftime('%d.%m.%Y')}", ln=True, align='C')
-    pdf.ln(10)
+    pdf.ln(6)
 
     # 1. Входни параметри
     pdf.set_font('DejaVu', 'B', 14)
