@@ -411,23 +411,25 @@ if layer_idx in st.session_state.layer_results:
     st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
 
 # -------------------------------------------------
-# PDF клас с Unicode шрифтове за кирилица
+# PDF клас с Unicode шрифтове за кирилица (както във файл 1)
 # -------------------------------------------------
 class EnhancedPDF(FPDF):
     def __init__(self):
         super().__init__()
         self.temp_font_files = []
         self.temp_image_files = []
-        
-        # Добавяне на Unicode шрифтове
-        self.add_font('DejaVuSans', '', 'DejaVuSans.ttf', uni=True)
-        self.add_font('DejaVuSans', 'B', 'DejaVuSans-Bold.ttf', uni=True)
-        self.add_font('DejaVuSans', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font('DejaVuSans', 'I', 8)
+        self.set_font('DejaVu', 'I', 8)
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+
+    def add_font_from_bytes(self, family, style, font_bytes):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+            tmp_file.write(font_bytes)
+            tmp_file_path = tmp_file.name
+            self.temp_font_files.append(tmp_file_path)
+            self.add_font(family, style, tmp_file_path)
 
     def add_external_image(self, image_path, width=180):
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
@@ -472,30 +474,46 @@ class EnhancedPDF(FPDF):
 def generate_pdf_report_2():
     pdf = EnhancedPDF()
     pdf.set_auto_page_break(auto=True, margin=20)
-    pdf.add_page()
+
+    # Шрифтове (както във файл 1)
+    try:
+        from fpdf.fonts import FontsByFPDF
+        fonts = FontsByFPDF()
+        
+        # Добавяне на шрифтове от bytes (както във файл 1)
+        for style, data in [('', fonts.helvetica),
+                            ('B', fonts.helvetica_bold),
+                            ('I', fonts.helvetica_oblique)]:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+                tmp_file.write(data)
+                pdf.add_font('DejaVu', style, tmp_file.name)
+    except Exception as e:
+        st.error(f"Грешка при зареждане на шрифтове: {e}")
+        return b""
 
     # Заглавна страница
-    pdf.set_font('DejaVuSans', 'B', 18)
+    pdf.add_page()
+    pdf.set_font('DejaVu', 'B', 18)
     pdf.cell(0, 15, 'ОПЪН В МЕЖДИНЕН ПЛАСТ', ln=True, align='C')
-    pdf.set_font('DejaVuSans', 'I', 12)
+    pdf.set_font('DejaVu', 'I', 12)
     pdf.cell(0, 10, 'Фигура 9.3 - Определяне опънното напрежение в междиен пласт', ln=True, align='C')
     pdf.ln(10)
 
     # 1. Входни параметри
-    pdf.set_font('DejaVuSans', 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '1. Входни параметри', ln=True)
 
     col_width = 60
     row_height = 8
 
-    pdf.set_font('DejaVuSans', 'B', 11)
+    pdf.set_font('DejaVu', 'B', 11)
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(col_width, row_height, 'Параметър', border=1, align='C', fill=True)
     pdf.cell(col_width, row_height, 'Стойност', border=1, align='C', fill=True)
     pdf.cell(col_width, row_height, 'Мерна единица', border=1, align='C', fill=True)
     pdf.ln(row_height)
 
-    pdf.set_font('DejaVuSans', '', 10)
+    pdf.set_font('DejaVu', '', 10)
     params = [
         ("Диаметър D", f"{D:.2f}", "cm"),
         ("Брой пластове", f"{n}", ""),
@@ -518,9 +536,9 @@ def generate_pdf_report_2():
     pdf.ln(10)
 
     # 2. Формули за изчисление
-    pdf.set_font('DejaVuSans', 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
-    pdf.set_font('DejaVuSans', '', 11)
+    pdf.set_font('DejaVu', '', 11)
     
     formulas = [
         r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
@@ -539,13 +557,13 @@ def generate_pdf_report_2():
     pdf.ln(5)
 
     # 3. Резултати от изчисленията
-    pdf.set_font('DejaVuSans', 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '3. Резултати от изчисленията', ln=True)
     
     if layer_idx in st.session_state.layer_results:
         results = st.session_state.layer_results[layer_idx]
         
-        pdf.set_font('DejaVuSans', '', 11)
+        pdf.set_font('DejaVu', '', 11)
         result_data = [
             (f"H{layer_idx}", f"{results['H_n_1_r']} cm"),
             (f"H{results['n_for_calc']}", f"{results['H_n_r']} cm"),
@@ -574,14 +592,14 @@ def generate_pdf_report_2():
     pdf.ln(10)
 
     # 4. Проверка
-    pdf.set_font('DejaVuSans', 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '4. Проверка на резултатите', ln=True)
     
     if 'final_sigma_R' in st.session_state and f'manual_sigma_{layer_idx}' in st.session_state.manual_sigma_values:
         manual_value = st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}']
         check_passed = st.session_state.final_sigma_R <= manual_value
         
-        pdf.set_font('DejaVuSans', '', 11)
+        pdf.set_font('DejaVu', '', 11)
         pdf.cell(80, 8, "Изчислено σR:", border=0)
         pdf.cell(40, 8, f"{st.session_state.final_sigma_R:.3f} MPa", border=0)
         pdf.ln(6)
@@ -590,7 +608,7 @@ def generate_pdf_report_2():
         pdf.cell(40, 8, f"{manual_value:.2f} MPa", border=0)
         pdf.ln(8)
         
-        pdf.set_font('DejaVuSans', 'B', 12)
+        pdf.set_font('DejaVu', 'B', 12)
         if check_passed:
             pdf.set_text_color(0, 100, 0)
             pdf.cell(0, 10, "Проверка: УДОВЛЕТВОРЕНА", ln=True)
@@ -602,7 +620,7 @@ def generate_pdf_report_2():
 
     # Дата на генериране
     pdf.ln(10)
-    pdf.set_font('DejaVuSans', 'I', 8)
+    pdf.set_font('DejaVu', 'I', 8)
     pdf.cell(0, 8, f"Генерирано на: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
 
     pdf.cleanup_temp_files()
