@@ -277,7 +277,7 @@ if sigma_to_compare is not None:
 else:
     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
-def render_formula_to_image(formula, fontsize=25, dpi=300):
+def render_formula_to_image(formula, fontsize=30, dpi=300):
     """Render LaTeX formula to image with left alignment"""
     # Динамична ширина въз основа на дължината на формулата
     width = max(10, min(16, len(formula) * 0.25))  # По-широки изображения
