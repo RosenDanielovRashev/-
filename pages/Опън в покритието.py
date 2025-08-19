@@ -551,7 +551,7 @@ def generate_pdf_report():
     if 'final_sigma' in st.session_state:
         formulas_section3.append(fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr_val/st.session_state.final_Ed:.3f}")
         formulas_section3.append(fr"\frac{{H}}{{D}} = \frac{{{H_val:.2f}}}{{{st.session_state.final_D:.2f}}} = {H_val/st.session_state.final_D:.3f}")
-        formulas_section3.append(fr"\sigma_R^{\mathrm{номограма}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
+        formulas_section3.append(fr"\sigma_R^{{Hom}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
 
     axle_load = st.session_state.get("axle_load", 100)
     p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
