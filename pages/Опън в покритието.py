@@ -388,10 +388,6 @@ class EnhancedPDF(FPDF):
                         tmp_file_path = tmp_file.name
                         self.temp_image_files.append(tmp_file_path)
                     
-                    # Добавяне на сив фон за формулата
-                    self.set_fill_color(240, 240, 240)
-                    self.rect(self.get_x(), self.get_y(), col_width-2, 25, 'F')  # Увеличена височина
-                    
                     # Поставяне на изображението с формулата
                     self.image(tmp_file_path, x=self.get_x()+2, y=self.get_y()+3, w=col_width-6)
                     
@@ -401,7 +397,7 @@ class EnhancedPDF(FPDF):
                 except Exception as e:
                     print(f"Грешка при визуализиране на формула: {formula}, {e}")
             
-            self.ln(25)  # По-голям интервал след ред
+            self.ln(10)  # По-голям интервал след ред
         
         self.ln(5)  # Допълнителен интервал след секцията
 
