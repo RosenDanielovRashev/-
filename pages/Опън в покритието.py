@@ -530,10 +530,7 @@ def generate_pdf_report():
     formulas_section2 = [
         r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}",
         r"H = \sum_{i=1}^{n} h_i",
-        r"\frac{E_{sr}}{E_d}",
-        r"\frac{H}{D}",
         r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}",
-        r"p = f(\text{осов товар})"
     ]
     pdf.add_formula_section("Основни формули за изчисление:", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=-3)
 
