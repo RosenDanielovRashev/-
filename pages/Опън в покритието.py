@@ -618,7 +618,7 @@ def generate_pdf_report():
     pdf.set_text_color(100, 100, 100)
 
     pdf.cleanup_temp_files()
-    return pdf.output(dest='S')
+    return pdf.output(dest='S').encode('latin-1')
 
 # -----------------------------
 # Бутон за генериране на PDF
