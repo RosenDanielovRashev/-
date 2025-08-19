@@ -411,17 +411,22 @@ if layer_idx in st.session_state.layer_results:
     st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
 
 # -------------------------------------------------
-# PDF клас с подобрено управление на формули (без сив фон)
+# PDF клас с Unicode шрифтове за кирилица
 # -------------------------------------------------
 class EnhancedPDF(FPDF):
     def __init__(self):
         super().__init__()
         self.temp_font_files = []
         self.temp_image_files = []
+        
+        # Добавяне на Unicode шрифтове
+        self.add_font('DejaVuSans', '', 'DejaVuSans.ttf', uni=True)
+        self.add_font('DejaVuSans', 'B', 'DejaVuSans-Bold.ttf', uni=True)
+        self.add_font('DejaVuSans', 'I', 'DejaVuSans-Oblique.ttf', uni=True)
 
     def footer(self):
         self.set_y(-15)
-        self.set_font('Helvetica', 'I', 8)
+        self.set_font('DejaVuSans', 'I', 8)
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
 
     def add_external_image(self, image_path, width=180):
@@ -470,27 +475,27 @@ def generate_pdf_report_2():
     pdf.add_page()
 
     # Заглавна страница
-    pdf.set_font('Helvetica', 'B', 18)
+    pdf.set_font('DejaVuSans', 'B', 18)
     pdf.cell(0, 15, 'ОПЪН В МЕЖДИНЕН ПЛАСТ', ln=True, align='C')
-    pdf.set_font('Helvetica', 'I', 12)
+    pdf.set_font('DejaVuSans', 'I', 12)
     pdf.cell(0, 10, 'Фигура 9.3 - Определяне опънното напрежение в междиен пласт', ln=True, align='C')
     pdf.ln(10)
 
     # 1. Входни параметри
-    pdf.set_font('Helvetica', 'B', 14)
+    pdf.set_font('DejaVuSans', 'B', 14)
     pdf.cell(0, 10, '1. Входни параметри', ln=True)
 
     col_width = 60
     row_height = 8
 
-    pdf.set_font('Helvetica', 'B', 11)
+    pdf.set_font('DejaVuSans', 'B', 11)
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(col_width, row_height, 'Параметър', border=1, align='C', fill=True)
     pdf.cell(col_width, row_height, 'Стойност', border=1, align='C', fill=True)
     pdf.cell(col_width, row_height, 'Мерна единица', border=1, align='C', fill=True)
     pdf.ln(row_height)
 
-    pdf.set_font('Helvetica', '', 10)
+    pdf.set_font('DejaVuSans', '', 10)
     params = [
         ("Диаметър D", f"{D:.2f}", "cm"),
         ("Брой пластове", f"{n}", ""),
@@ -513,9 +518,9 @@ def generate_pdf_report_2():
     pdf.ln(10)
 
     # 2. Формули за изчисление
-    pdf.set_font('Helvetica', 'B', 14)
+    pdf.set_font('DejaVuSans', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
-    pdf.set_font('Helvetica', '', 11)
+    pdf.set_font('DejaVuSans', '', 11)
     
     formulas = [
         r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
@@ -534,13 +539,13 @@ def generate_pdf_report_2():
     pdf.ln(5)
 
     # 3. Резултати от изчисленията
-    pdf.set_font('Helvetica', 'B', 14)
+    pdf.set_font('DejaVuSans', 'B', 14)
     pdf.cell(0, 10, '3. Резултати от изчисленията', ln=True)
     
     if layer_idx in st.session_state.layer_results:
         results = st.session_state.layer_results[layer_idx]
         
-        pdf.set_font('Helvetica', '', 11)
+        pdf.set_font('DejaVuSans', '', 11)
         result_data = [
             (f"H{layer_idx}", f"{results['H_n_1_r']} cm"),
             (f"H{results['n_for_calc']}", f"{results['H_n_r']} cm"),
@@ -569,14 +574,14 @@ def generate_pdf_report_2():
     pdf.ln(10)
 
     # 4. Проверка
-    pdf.set_font('Helvetica', 'B', 14)
+    pdf.set_font('DejaVuSans', 'B', 14)
     pdf.cell(0, 10, '4. Проверка на резултатите', ln=True)
     
     if 'final_sigma_R' in st.session_state and f'manual_sigma_{layer_idx}' in st.session_state.manual_sigma_values:
         manual_value = st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}']
         check_passed = st.session_state.final_sigma_R <= manual_value
         
-        pdf.set_font('Helvetica', '', 11)
+        pdf.set_font('DejaVuSans', '', 11)
         pdf.cell(80, 8, "Изчислено σR:", border=0)
         pdf.cell(40, 8, f"{st.session_state.final_sigma_R:.3f} MPa", border=0)
         pdf.ln(6)
@@ -585,19 +590,19 @@ def generate_pdf_report_2():
         pdf.cell(40, 8, f"{manual_value:.2f} MPa", border=0)
         pdf.ln(8)
         
-        pdf.set_font('Helvetica', 'B', 12)
+        pdf.set_font('DejaVuSans', 'B', 12)
         if check_passed:
             pdf.set_text_color(0, 100, 0)
-            pdf.cell(0, 10, "✅ Проверка: УДОВЛЕТВОРЕНА", ln=True)
+            pdf.cell(0, 10, "Проверка: УДОВЛЕТВОРЕНА", ln=True)
         else:
             pdf.set_text_color(150, 0, 0)
-            pdf.cell(0, 10, "❌ Проверка: НЕУДОВЛЕТВОРЕНА", ln=True)
+            pdf.cell(0, 10, "Проверка: НЕУДОВЛЕТВОРЕНА", ln=True)
         
         pdf.set_text_color(0, 0, 0)
 
     # Дата на генериране
     pdf.ln(10)
-    pdf.set_font('Helvetica', 'I', 8)
+    pdf.set_font('DejaVuSans', 'I', 8)
     pdf.cell(0, 8, f"Генерирано на: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
 
     pdf.cleanup_temp_files()
