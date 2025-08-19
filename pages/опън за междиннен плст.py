@@ -28,7 +28,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Определяне опънното напрежение в междиен пласт от пътната конструкция фиг.9.3")
+st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
 def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
@@ -42,7 +42,7 @@ if 'manual_sigma_values' not in st.session_state:
 if 'check_results' not in st.session_state:
     st.session_state.check_results = {}
 
-# Проверка за данни от главния файл
+# Проверка за данни от główny файл
 use_auto_data = False
 if 'layers_data_all' in st.session_state and 'final_D_all' in st.session_state:
     layers_data = st.session_state.layers_data_all
@@ -347,6 +347,7 @@ if layer_idx in st.session_state.layer_results:
                 st.warning("❗ Липсва p или σR от номограмата за изчисление.")
 
 
+    
             # Секция за ръчно въвеждане
             st.markdown(
                 """
@@ -663,4 +664,3 @@ if st.button("📄 Генерирай PDF отчет за междинен пл�
                 st.error("Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
         except Exception as e:
             st.error(f"Грешка при генериране на PDF: {str(e)}")
-
