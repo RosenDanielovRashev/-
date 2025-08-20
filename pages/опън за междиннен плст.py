@@ -227,14 +227,15 @@ if layer_idx in st.session_state.layer_results:
                             x_intercept = np.interp(y_at_ratio, df_level['y'], df_level['H/D'])
                         else:
                             for i in range(len(Ei_Ed_values)-1):
-                                if Ei_Ed_values[i] < Ei_Ed_target < Ei_Ed_values[i+1]:
-                                    df_lower = df_original[df_original['Ei/Ed'] == Ei_Ed_values[i]].sort_values(by='H/D')
-                                    df_upper = df_original[df_original['Ei/Ed'] == Ei_Ed_values[i+1]].sort_values(by='H/D')
-                                    
-                                    x_lower = np.interp(y_at_ratio, df_lower['y'], df_lower['H/D'])
-                                    x_upper = np.interp(y_at_ratio, df_upper['y'], df_upper['H/D'])
-                                                                    x_intercept = x_lower + (x_upper - x_lower) * (Ei_Ed_target - Ei_Ed_values[i]) / (Ei_Ed_values[i+1] - Ei_Ed_values[i])
-                                    break
+                            if Ei_Ed_values[i] < Ei_Ed_target < Ei_Ed_values[i+1]:
+                                df_lower = df_original[df_original['Ei/Ed'] == Ei_Ed_values[i]].sort_values(by='H/D')
+                                df_upper = df_original[df_original['Ei/Ed'] == Ei_Ed_values[i+1]].sort_values(by='H/D')
+                                
+                                y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
+                                y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
+                                
+                                x_intercept = x_lower + (x_upper - x_lower) * (Ei_Ed_target - Ei_Ed_values[i]) / (Ei_Ed_values[i+1] - Ei_Ed_values[i])
+                                break  # Този ред беше неправилно подравнен
 
                         if x_intercept is not None:
                             fig.add_trace(go.Scatter(
