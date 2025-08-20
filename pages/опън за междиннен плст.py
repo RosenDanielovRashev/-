@@ -795,11 +795,11 @@ if layer_idx in st.session_state.layer_results:
         
         pdf.ln(5)
         
-        # 4. Графика
-        if "fig" in globals():
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, '4. Графика на номограмата', ln=True)
-            pdf.add_plotly_figure(fig, width=160)
+        # 4. Графика на номограмата
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, "4. ГРАФИКА НА НОМОГРАМАТА", 0, 1)
+        
+        # Запазване на графиката като временно изображение с по-висока резолюция
         
         # 5. Допустими напрежения
         img_path = "Допустими опънни напрежения.png"
