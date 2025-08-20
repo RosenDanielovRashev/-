@@ -11,7 +11,6 @@ from matplotlib import font_manager as fm
 import io
 from PIL import Image, ImageDraw, ImageFont
 import xml.etree.ElementTree as ET
-import cairosvg
 import requests
 
 
