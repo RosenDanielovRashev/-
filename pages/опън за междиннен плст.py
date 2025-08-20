@@ -307,7 +307,7 @@ class EnhancedPDF(FPDF):
 
         self.ln(4)
 
-# Функция за създаване на графиката
+# Коригиран код за функцията create_nomogram_plot
 def create_nomogram_plot(results, layer_idx):
     try:
         df_original = pd.read_csv("danni_1.csv")
@@ -442,11 +442,12 @@ def create_nomogram_plot(results, layer_idx):
                 title='H/D',
                 showgrid=True,
                 zeroline=False,
+                range=[0, 1]  # Явно задаване на диапазон
             ),
             xaxis2=dict(
                 overlaying='x',
                 side='top',
-                range=[fig.layout.xaxis.range[0] if fig.layout.xaxis.range else 0, 1],
+                range=[0, 1],  # Явно задаване на диапазон
                 showgrid=False,
                 zeroline=False,
                 tickvals=[0, 0.25, 0.5, 0.75, 1],
@@ -455,9 +456,11 @@ def create_nomogram_plot(results, layer_idx):
             ),
             yaxis=dict(
                 title='y',
-                range=[0, 3]
+                range=[0, 3]  # Явно задаване на диапазон
             ),
-            showlegend=False
+            showlegend=False,
+            width=800,  # Добавяне на фиксирана ширина
+            height=600   # Добавяне на фиксирана височина
         )
 
         return fig
