@@ -677,7 +677,7 @@ if layer_idx in st.session_state.layer_results:
         
         # Добавяне на дата и час на генериране
         pdf.ln(10)
-        pdf.set_font("DejaVu", "I", 8)
+        pdf.set_font("DejaVu", "", 8)
         from datetime import datetime
         generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         pdf.cell(0, 5, f"Генерирано на: {generated_at}", 0, 0, 'R')
