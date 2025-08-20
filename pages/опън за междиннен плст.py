@@ -816,7 +816,7 @@ if layer_idx in st.session_state.layer_results:
             st.download_button(
                 label="Свали PDF отчета",
                 data=pdf_bytes,
-                file_name="opyn_v_pokritieto_report.pdf",
+                file_name="opyn_v_mejdinen_report.pdf",
                 mime="application/pdf"
             )
             
