@@ -6,7 +6,6 @@ from fpdf import FPDF
 import base64
 import tempfile
 import os
-from datetime import datetime
 
 st.markdown("""
     <style>
@@ -20,54 +19,6 @@ st.markdown("""
         .css-1lcbmi9 {
             max-width: 800px !important;
             margin: 0 auto !important;
-        }
-        .export-section {
-            background-color: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
-            margin-top: 20px;
-            border-left: 5px solid #4e73df;
-        }
-        .export-button {
-            background-color: #4e73df;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 10px 2px;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: background-color 0.3s;
-        }
-        .export-button:hover {
-            background-color: #2e59d9;
-        }
-        .result-card {
-            background-color: #f0f9ff;
-            border-radius: 10px;
-            padding: 15px;
-            margin: 10px 0;
-            border-left: 4px solid #36b9cc;
-        }
-        .parameter-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 15px 0;
-        }
-        .parameter-table th, .parameter-table td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        .parameter-table th {
-            background-color: #4e73df;
-            color: white;
-        }
-        .parameter-table tr:nth-child(even) {
-            background-color: #f2f2f2;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -502,7 +453,7 @@ if layer_idx in st.session_state.layer_results:
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
 
-    # Функция за генериране на PDF отчет с подобрен дизайн
+    # Функция за генериране на PDF отчет
     def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, manual_value=None, check_passed=None):
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
@@ -519,28 +470,20 @@ if layer_idx in st.session_state.layer_results:
         
         pdf.add_page()
         
-        # Хедър с лого и заглавие
-        pdf.set_fill_color(78, 115, 223)  # Синьо
-        pdf.rect(0, 0, 210, 30, 'F')
-        pdf.set_text_color(255, 255, 255)
-        pdf.set_font("DejaVu", "B", 18)
-        pdf.cell(0, 10, "АНАЛИЗ НА ОПЪННО НАПРЕЖЕНИЕ В МЕЖДИНЕН ПЛАСТ", 0, 1, 'C')
-        pdf.set_font("DejaVu", "", 12)
-        pdf.cell(0, 10, f"Дата на генериране: {datetime.now().strftime('%d.%m.%Y %H:%M')}", 0, 1, 'C')
-        pdf.ln(15)
+        # Заглавие
+        pdf.set_font("DejaVu", "B", 16)
+        pdf.cell(0, 10, "ОПЪННО НАПРЕЖЕНИЕ В МЕЖДИНЕН ПЛАСТ ОТ ПЪТНАТА КОНСТРУКЦИЯ", 0, 1, 'C')
+        pdf.ln(5)
         
         # 1. Входни параметри
-        pdf.set_text_color(0, 0, 0)
-        pdf.set_font("DejaVu", "B", 16)
+        pdf.set_font("DejaVu", "B", 14)
         pdf.cell(0, 10, "1. Входни параметри", 0, 1)
         pdf.set_font("DejaVu", "", 12)
         
         pdf.cell(0, 10, f"Брой пластове (n): {len(h_values)}", 0, 1)
-        pdf.cell(0, 10, f"D: {D} cm", 0, 1)
-        pdf.cell(0, 10, f"Анализиран пласт: {layer_idx+1}", 0, 1)
+        pdf.cell(0, 10, f"D: {D}", 0, 1)
         
         # Създаване на таблица за входните параметри
-        pdf.set_font("DejaVu", "B", 14)
         pdf.cell(0, 10, "Таблица 1: Входни параметри на пластовете", 0, 1)
         
         # Колони на таблицата
@@ -548,27 +491,23 @@ if layer_idx in st.session_state.layer_results:
         
         # Заглавия на колоните
         pdf.set_font("DejaVu", "B", 12)
-        pdf.set_fill_color(200, 200, 200)
-        pdf.cell(col_widths[0], 10, "Пласт", 1, 0, 'C', 1)
-        pdf.cell(col_widths[1], 10, "h [cm]", 1, 0, 'C', 1)
-        pdf.cell(col_widths[2], 10, "E [MPa]", 1, 0, 'C', 1)
-        pdf.cell(col_widths[3], 10, "Ed [MPa]", 1, 1, 'C', 1)
+        pdf.cell(col_widths[0], 10, "Пласт", 1, 0, 'C')
+        pdf.cell(col_widths[1], 10, "h [cm]", 1, 0, 'C')
+        pdf.cell(col_widths[2], 10, "E [MPa]", 1, 0, 'C')
+        pdf.cell(col_widths[3], 10, "Ed [MPa]", 1, 1, 'C')
         
         # Данни в таблицата
         pdf.set_font("DejaVu", "", 12)
-        fill = False
         for i in range(len(h_values)):
-            pdf.set_fill_color(240, 240, 240) if fill else pdf.set_fill_color(255, 255, 255)
-            pdf.cell(col_widths[0], 10, f"Пласт {i+1}", 1, 0, 'C', fill)
-            pdf.cell(col_widths[1], 10, f"{h_values[i]}", 1, 0, 'C', fill)
-            pdf.cell(col_widths[2], 10, f"{E_values[i]}", 1, 0, 'C', fill)
-            pdf.cell(col_widths[3], 10, f"{Ed_values[i]}", 1, 1, 'C', fill)
-            fill = not fill
+            pdf.cell(col_widths[0], 10, f"Пласт {i+1}", 1, 0, 'C')
+            pdf.cell(col_widths[1], 10, f"{h_values[i]}", 1, 0, 'C')
+            pdf.cell(col_widths[2], 10, f"{E_values[i]}", 1, 0, 'C')
+            pdf.cell(col_widths[3], 10, f"{Ed_values[i]}", 1, 1, 'C')
         
-        pdf.ln(10)
+        pdf.ln(5)
         
         # 2. Формули за изчисление
-        pdf.set_font("DejaVu", "B", 16)
+        pdf.set_font("DejaVu", "B", 14)
         pdf.cell(0, 10, "2. Формули за изчисление", 0, 1)
         pdf.set_font("DejaVu", "", 12)
         
@@ -584,71 +523,53 @@ if layer_idx in st.session_state.layer_results:
         
         for formula in formulas:
             pdf.cell(0, 10, f"${formula}$", 0, 1)
-            pdf.ln(5)
         
         pdf.ln(5)
         
         # 3. Изчисления
-        pdf.set_font("DejaVu", "B", 16)
+        pdf.set_font("DejaVu", "B", 14)
         pdf.cell(0, 10, "3. Изчисления", 0, 1)
         pdf.set_font("DejaVu", "", 12)
         
         pdf.cell(0, 10, f"За пласт {layer_idx+1}:", 0, 1)
-        pdf.ln(2)
+        pdf.cell(0, 10, f"H{to_subscript(layer_idx)} = {results['H_n_1_r']} cm", 0, 1)
+        pdf.cell(0, 10, f"H{to_subscript(results['n_for_calc'])} = {results['H_n_r']} cm", 0, 1)
         
-        # Таблица с резултати от изчисленията
-        pdf.set_font("DejaVu", "B", 12)
-        pdf.cell(90, 10, "Параметър", 1, 0, 'C', 1)
-        pdf.cell(90, 10, "Стойност", 1, 1, 'C', 1)
+        if layer_idx > 0:
+            pdf.cell(0, 10, f"Esr = {results['Esr_r']} MPa", 0, 1)
+        else:
+            pdf.cell(0, 10, "Esr = 0 (няма предишни пластове)", 0, 1)
         
-        pdf.set_font("DejaVu", "", 12)
-        calc_data = [
-            (f"H{to_subscript(layer_idx)}", f"{results['H_n_1_r']} cm"),
-            (f"H{to_subscript(results['n_for_calc'])}", f"{results['H_n_r']} cm"),
-            ("Esr", f"{results['Esr_r']} MPa" if layer_idx > 0 else "0 (няма предишни пластове)"),
-            (f"H{to_subscript(results['n_for_calc'])}/D", f"{results['ratio_r']}"),
-            (f"E{to_subscript(layer_idx+1)}", f"{results['En_r']} MPa"),
-            (f"Esr/E{to_subscript(layer_idx+1)}", f"{results['Esr_over_En_r']}"),
-            (f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)}", f"{results['En_over_Ed_r']}")
-        ]
-        
-        fill = False
-        for param, value in calc_data:
-            pdf.set_fill_color(240, 240, 240) if fill else pdf.set_fill_color(255, 255, 255)
-            pdf.cell(90, 10, param, 1, 0, 'L', fill)
-            pdf.cell(90, 10, value, 1, 1, 'C', fill)
-            fill = not fill
+        pdf.cell(0, 10, f"H{to_subscript(results['n_for_calc'])}/D = {results['ratio_r']}", 0, 1)
+        pdf.cell(0, 10, f"E{to_subscript(layer_idx+1)} = {results['En_r']} MPa", 0, 1)
+        pdf.cell(0, 10, f"Esr/E{to_subscript(layer_idx+1)} = {results['Esr_over_En_r']}", 0, 1)
+        pdf.cell(0, 10, f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)} = {results['En_over_Ed_r']}", 0, 1)
         
         if sigma_r is not None:
-            pdf.set_fill_color(240, 240, 240) if fill else pdf.set_fill_color(255, 255, 255)
-            pdf.cell(90, 10, "σr (от номограмата)", 1, 0, 'L', fill)
-            pdf.cell(90, 10, f"{sigma_r} MPa", 1, 1, 'C', fill)
-            fill = not fill
+            pdf.cell(0, 10, f"σr = {sigma_r} MPa", 0, 1)
         
         if sigma_final is not None:
-            pdf.set_fill_color(230, 240, 255)  # Светло синьо за важни резултати
-            pdf.cell(90, 10, "Крайно σR", 1, 0, 'L', 1)
-            pdf.cell(90, 10, f"{sigma_final:.3f} MPa", 1, 1, 'C', 1)
+            pdf.cell(0, 10, f"Крайно σR = {sigma_final:.3f} MPa", 0, 1)
         
-        pdf.ln(10)
+        pdf.ln(5)
         
         # 4. Графика на номограмата
-        pdf.set_font("DejaVu", "B", 16)
+        pdf.set_font("DejaVu", "B", 14)
         pdf.cell(0, 10, "4. Графика на номограмата", 0, 1)
         
         # Запазване на графиката като временно изображение
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-                fig.write_image(tmpfile.name, width=800, height=600)
-                pdf.image(tmpfile.name, x=10, y=None, w=190)
+                fig.write_image(tmpfile.name)
+                pdf.image(tmpfile.name, x=10, y=None, w=180)
                 os.unlink(tmpfile.name)
         except Exception as e:
             pdf.cell(0, 10, f"Грешка при добавяне на графиката: {e}", 0, 1)
         
-        pdf.ln(10)
+        pdf.ln(5)
         
         # 5. Допустими опънни напрежения
-        pdf.set_font("DejaVu", "B", 16)
+        pdf.set_font("DejaVu", "B", 14)
         pdf.cell(0, 10, "5. Допустими опънни напрежения", 0, 1)
         
         try:
@@ -663,7 +584,7 @@ if layer_idx in st.session_state.layer_results:
             img_found = False
             for path in image_paths:
                 try:
-                    pdf.image(path, x=10, y=None, w=190)
+                    pdf.image(path, x=10, y=None, w=180)
                     img_found = True
                     break
                 except:
@@ -674,10 +595,10 @@ if layer_idx in st.session_state.layer_results:
         except Exception as e:
             pdf.cell(0, 10, f"Грешка при добавяне на изображението: {e}", 0, 1)
         
-        pdf.ln(10)
+        pdf.ln(5)
         
         # 6. Резултати и проверка
-        pdf.set_font("DejaVu", "B", 16)
+        pdf.set_font("DejaVu", "B", 14)
         pdf.cell(0, 10, "6. Резултати и проверка", 0, 1)
         pdf.set_font("DejaVu", "", 12)
         
@@ -685,21 +606,10 @@ if layer_idx in st.session_state.layer_results:
             pdf.cell(0, 10, f"Ръчно отчетена стойност σR: {manual_value} MPa", 0, 1)
         
         if check_passed is not None:
-            pdf.ln(5)
             if check_passed:
-                pdf.set_text_color(0, 128, 0)  # Зелено
                 pdf.cell(0, 10, "✅ Проверката е удовлетворена", 0, 1)
-                pdf.cell(0, 10, f"Изчисленото σR = {sigma_final:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)", 0, 1)
             else:
-                pdf.set_text_color(255, 0, 0)  # Червено
                 pdf.cell(0, 10, "❌ Проверката НЕ е удовлетворена", 0, 1)
-                pdf.cell(0, 10, f"Изчисленото σR = {sigma_final:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)", 0, 1)
-        
-        # Футър
-        pdf.set_text_color(100, 100, 100)
-        pdf.set_y(-30)
-        pdf.set_font("DejaVu", "I", 10)
-        pdf.cell(0, 10, "Генерирано от системата за анализ на пътни конструкции", 0, 0, 'C')
         
         # Запазване на PDF във временен файл
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
@@ -711,45 +621,25 @@ if layer_idx in st.session_state.layer_results:
             
             os.unlink(tmpfile.name)
             return pdf_bytes
-    
-    # Секция за експорт с подобрен дизайн
-    if layer_idx in st.session_state.layer_results:
-        st.markdown("---")
-        st.markdown('<div class="export-section">', unsafe_allow_html=True)
-        st.markdown("### 📊 Експорт на резултати")
-        
-        col1, col2 = st.columns([2, 1])
-        
-        with col1:
-            st.markdown("Генерирайте подробен отчет във PDF формат, включващ всички изчисления, графики и резултати.")
+
+    # Добавяне на бутон за генериране на PDF отчет
+    if st.button("Генерирай PDF отчет"):
+        with st.spinner("Генериране на PDF..."):
+            # Вземете необходимите данни за отчета
+            sigma_r = st.session_state.get("final_sigma", None)
+            sigma_final = st.session_state.get("final_sigma_R", None)
+            manual_value = st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', None)
+            check_passed = st.session_state.check_results.get(f'check_result_{layer_idx}', None)
             
-            # Допълнителни опции за експорт
-            include_calculations = st.checkbox("Включи детайлни изчисления", value=True)
-            include_charts = st.checkbox("Включи графики", value=True)
-            include_tables = st.checkbox("Включи таблици", value=True)
-        
-        with col2:
-            st.markdown("&nbsp;")
-            if st.button("📄 Генерирай PDF отчет", type="primary", use_container_width=True):
-                with st.spinner("Генериране на PDF отчет..."):
-                    # Вземете необходимите данни за отчета
-                    sigma_r = st.session_state.get("final_sigma", None)
-                    sigma_final = st.session_state.get("final_sigma_R", None)
-                    manual_value = st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', None)
-                    check_passed = st.session_state.check_results.get(f'check_result_{layer_idx}', None)
-                    
-                    # Генериране на PDF
-                    pdf_bytes = generate_pdf_report(
-                        layer_idx, results, D, sigma_r, sigma_final, manual_value, check_passed
-                    )
-                    
-                    # Показване на линк за изтегляне
-                    b64 = base64.b64encode(pdf_bytes).decode()
-                    href = f'<a href="data:application/octet-stream;base64,{b64}" download="анализ_опън_пласт_{layer_idx+1}_{datetime.now().strftime("%Y%m%d_%H%M")}.pdf" style="display: inline-block; padding: 12px 20px; background-color: #4e73df; color: white; text-decoration: none; border-radius: 6px; font-weight: bold;">⬇️ Изтегли PDF отчет</a>'
-                    st.markdown(href, unsafe_allow_html=True)
-                    st.success("Отчетът е генериран успешно!")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+            # Генериране на PDF
+            pdf_bytes = generate_pdf_report(
+                layer_idx, results, D, sigma_r, sigma_final, manual_value, check_passed
+            )
+            
+            # Показване на линк за изтегляне
+            b64 = base64.b64encode(pdf_bytes).decode()
+            href = f'<a href="data:application/octet-stream;base64,{b64}" download="опън_за_междинен_пласт_отчет.pdf">Изтегли PDF отчет</a>'
+            st.markdown(href, unsafe_allow_html=True)
 
 # Линк към предишната страница
 st.markdown('[Към Оразмеряване на пътна конструкция](orazmeriavane_patna_konstrukcia.py)')
