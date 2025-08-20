@@ -1,3 +1,4 @@
+[file content begin]
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -233,8 +234,7 @@ if layer_idx in st.session_state.layer_results:
                                     
                                     x_lower = np.interp(y_at_ratio, df_lower['y'], df_lower['H/D'])
                                     x_upper = np.interp(y_at_ratio, df_upper['y'], df_upper['H/D'])
-                                    
-                                    x_intercept = x_lower + (x_upper - x_lower) * (Ei_Ed_target - Ei_Ed_values[i]) / (Ei_Ed_values[i+1] - Ei_Ed_values[i])
+                                                                    x_intercept = x_lower + (x_upper - x_lower) * (Ei_Ed_target - Ei_Ed_values[i]) / (Ei_Ed_values[i+1] - Ei_Ed_values[i])
                                     break
 
                         if x_intercept is not None:
@@ -433,17 +433,26 @@ if layer_idx in st.session_state.layer_results:
         pdf.cell(0, 10, f"Брой пластове (n): {len(h_values)}", 0, 1)
         pdf.cell(0, 10, f"D: {D}", 0, 1)
         
-        pdf.cell(0, 10, "Дебелини на пластовете (h):", 0, 1)
-        for i, h in enumerate(h_values):
-            pdf.cell(0, 10, f"  h{to_subscript(i+1)} = {h} cm", 0, 1)
+        # Създаване на таблица за входните параметри
+        pdf.cell(0, 10, "Таблица 1: Входни параметри на пластовете", 0, 1)
         
-        pdf.cell(0, 10, "Модули на еластичност (E):", 0, 1)
-        for i, E in enumerate(E_values):
-            pdf.cell(0, 10, f"  E{to_subscript(i+1)} = {E} MPa", 0, 1)
+        # Колони на таблицата
+        col_widths = [30, 40, 40, 40]
         
-        pdf.cell(0, 10, "Модули на деформация (Ed):", 0, 1)
-        for i, Ed in enumerate(Ed_values):
-            pdf.cell(0, 10, f"  Ed{to_subscript(i+1)} = {Ed} MPa", 0, 1)
+        # Заглавия на колоните
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(col_widths[0], 10, "Пласт", 1, 0, 'C')
+        pdf.cell(col_widths[1], 10, "h [cm]", 1, 0, 'C')
+        pdf.cell(col_widths[2], 10, "E [MPa]", 1, 0, 'C')
+        pdf.cell(col_widths[3], 10, "Ed [MPa]", 1, 1, 'C')
+        
+        # Данни в таблицата
+        pdf.set_font("DejaVu", "", 12)
+        for i in range(len(h_values)):
+            pdf.cell(col_widths[0], 10, f"Пласт {i+1}", 1, 0, 'C')
+            pdf.cell(col_widths[1], 10, f"{h_values[i]}", 1, 0, 'C')
+            pdf.cell(col_widths[2], 10, f"{E_values[i]}", 1, 0, 'C')
+            pdf.cell(col_widths[3], 10, f"{Ed_values[i]}", 1, 1, 'C')
         
         pdf.ln(5)
         
@@ -566,3 +575,4 @@ if layer_idx in st.session_state.layer_results:
 
     # Линк към предишната страница
     st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
+[file content end]
