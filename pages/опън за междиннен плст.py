@@ -463,10 +463,10 @@ if layer_idx in st.session_state.layer_results:
             font_path = os.path.join("pages", "fonts", "DejaVuSans.ttf")
             pdf.add_font("DejaVu", "", font_path, uni=True)
             pdf.add_font("DejaVu", "B", font_path.replace("DejaVuSans.ttf", "DejaVuSans-Bold.ttf"), uni=True)
-            pdf.set_font("DejaVu", "", 10)
+            pdf.set_font("DejaVu", "", 12)
         except:
             # Fallback към стандартни шрифтове ако DejaVu не е наличен
-            pdf.set_font("Arial", "", 10)
+            pdf.set_font("Arial", "", 12)
         
         pdf.add_page()
         
