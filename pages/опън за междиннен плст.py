@@ -118,27 +118,62 @@ def calculate_layer(layer_index):
     return results
 
 # PDF Generation function
+# PDF Generation function
 def generate_pdf_report():
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
+    # Create EnhancedPDF class if not exists
+    class EnhancedPDF(FPDF):
+        def header(self):
+            pass
+        
+        def footer(self):
+            pass
+    
+    pdf = EnhancedPDF()
+    pdf.set_auto_page_break(auto=True, margin=20)
+
+    # Шрифтове
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        base_dir = os.getcwd()
+    font_dir = os.path.join(base_dir, "fonts")
+    os.makedirs(font_dir, exist_ok=True)
+
+    sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
+    bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+    italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+
+    try:
+        if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
+            with open(sans_path, "rb") as f:
+                pdf.add_font('DejaVu', '', f.read())
+            with open(bold_path, "rb") as f:
+                pdf.add_font('DejaVu', 'B', f.read())
+            with open(italic_path, "rb") as f:
+                pdf.add_font('DejaVu', 'I', f.read())
+            pdf.set_font('DejaVu', '', 12)
+        else:
+            # Fallback to built-in font if custom fonts not available
+            st.error("DejaVu шрифтовете не са намерени. Моля, уверете се, че са в папка 'fonts'")
+            return None
+    except Exception as e:
+        st.error(f"Грешка при зареждане на шрифтове: {e}")
+        return None
     
     # Add a page
     pdf.add_page()
     
-    # Set font
-    pdf.set_font("Arial", size=12)
-    
     # Add title
-    pdf.set_font("Arial", 'B', 16)
+    pdf.set_font('DejaVu', 'B', 16)
     pdf.cell(200, 10, txt="ОПЪН В ПОКРИТИЕТО", ln=True, align='C')
     pdf.ln(10)
     
     # Section 1: Input parameters
-    pdf.set_font("Arial", 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(200, 10, txt="1. Входни параметри", ln=True)
     pdf.ln(5)
     
-    pdf.set_font("Arial", size=10)
+    pdf.set_font('DejaVu', '', 10)
     # Create table header
     pdf.cell(60, 10, "Параметър", 1, 0, 'C')
     pdf.cell(60, 10, "Стойност", 1, 0, 'C')
@@ -173,11 +208,11 @@ def generate_pdf_report():
     pdf.ln(10)
     
     # Section 2: Formulas
-    pdf.set_font("Arial", 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(200, 10, txt="2. Формули за изчисление", ln=True)
     pdf.ln(5)
     
-    pdf.set_font("Arial", size=10)
+    pdf.set_font('DejaVu', '', 10)
     pdf.multi_cell(0, 10, "Основни формули за изчисление:")
     pdf.multi_cell(0, 10, "Esf = ∑ hi")
     pdf.multi_cell(0, 10, "Изчислителни формули:")
@@ -190,11 +225,11 @@ def generate_pdf_report():
     pdf.ln(10)
     
     # Section 3: Calculations
-    pdf.set_font("Arial", 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(200, 10, txt="3. Изчисления", ln=True)
     pdf.ln(5)
     
-    pdf.set_font("Arial", size=10)
+    pdf.set_font('DejaVu', '', 10)
     
     if layer_idx > 0:
         # Esr calculation
@@ -224,12 +259,12 @@ def generate_pdf_report():
     pdf.add_page()
     
     # Section 6: Results and check
-    pdf.set_font("Arial", 'B', 14)
+    pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(200, 10, txt="6. Результати и проверка", ln=True)
     pdf.ln(10)
     
     # Results table
-    pdf.set_font("Arial", size=10)
+    pdf.set_font('DejaVu', '', 10)
     pdf.cell(100, 10, "Параметър", 1, 0, 'C')
     pdf.cell(100, 10, "Стойност", 1, 1, 'C')
     
@@ -244,7 +279,7 @@ def generate_pdf_report():
     pdf.ln(10)
     
     # Check result
-    pdf.set_font("Arial", 'B', 12)
+    pdf.set_font('DejaVu', 'B', 12)
     if f'check_result_{layer_idx}' in st.session_state.check_results:
         if st.session_state.check_results[f'check_result_{layer_idx}']:
             pdf.cell(200, 10, txt="Проверка: УДОВЛЕТВОРЕНА", ln=True)
@@ -258,7 +293,6 @@ def generate_pdf_report():
     pdf.output(temp_file.name)
     
     return temp_file.name
-
 # Calculate button
 if st.button(f"Изчисли за пласт {layer_idx+1}"):
     results = calculate_layer(layer_idx)
