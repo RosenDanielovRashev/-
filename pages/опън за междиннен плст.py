@@ -2,7 +2,11 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-
+from fpdf import FPDF
+import base64
+from io import BytesIO
+import tempfile
+import os
 
 st.markdown("""
     <style>
@@ -33,6 +37,8 @@ if 'manual_sigma_values' not in st.session_state:
     st.session_state.manual_sigma_values = {}
 if 'check_results' not in st.session_state:
     st.session_state.check_results = {}
+if 'pdf_exported' not in st.session_state:
+    st.session_state.pdf_exported = False
 
 # Проверка за данни от główny файл
 use_auto_data = False
@@ -110,6 +116,148 @@ def calculate_layer(layer_index):
     
     st.session_state.layer_results[layer_index] = results
     return results
+
+# PDF Generation function
+def generate_pdf_report():
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Add a page
+    pdf.add_page()
+    
+    # Set font
+    pdf.set_font("Arial", size=12)
+    
+    # Add title
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="ОПЪН В ПОКРИТИЕТО", ln=True, align='C')
+    pdf.ln(10)
+    
+    # Section 1: Input parameters
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(200, 10, txt="1. Входни параметри", ln=True)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", size=10)
+    # Create table header
+    pdf.cell(60, 10, "Параметър", 1, 0, 'C')
+    pdf.cell(60, 10, "Стойност", 1, 0, 'C')
+    pdf.cell(60, 10, "Мерна единица", 1, 1, 'C')
+    
+    # Add input parameters
+    pdf.cell(60, 10, "Диаметър D", 1, 0)
+    pdf.cell(60, 10, f"{D}", 1, 0)
+    pdf.cell(60, 10, "cm", 1, 1)
+    
+    pdf.cell(60, 10, "Брой пластове", 1, 0)
+    pdf.cell(60, 10, f"{n}", 1, 0)
+    pdf.cell(60, 10, "", 1, 1)
+    
+    for i in range(n):
+        pdf.cell(60, 10, f"Пласт {i+1} - Ei", 1, 0)
+        pdf.cell(60, 10, f"{E_values[i]}", 1, 0)
+        pdf.cell(60, 10, "MPa", 1, 1)
+        
+        pdf.cell(60, 10, f"Пласт {i+1} - hi", 1, 0)
+        pdf.cell(60, 10, f"{h_values[i]}", 1, 0)
+        pdf.cell(60, 10, "cm", 1, 1)
+    
+    pdf.cell(60, 10, "Ed", 1, 0)
+    pdf.cell(60, 10, f"{Ed_values[layer_idx]}", 1, 0)
+    pdf.cell(60, 10, "MPa", 1, 1)
+    
+    pdf.cell(60, 10, "Осова тежест", 1, 0)
+    pdf.cell(60, 10, "100", 1, 0)
+    pdf.cell(60, 10, "kN", 1, 1)
+    
+    pdf.ln(10)
+    
+    # Section 2: Formulas
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(200, 10, txt="2. Формули за изчисление", ln=True)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", size=10)
+    pdf.multi_cell(0, 10, "Основни формули за изчисление:")
+    pdf.multi_cell(0, 10, "Esf = ∑ hi")
+    pdf.multi_cell(0, 10, "Изчислителни формули:")
+    
+    H = sum(h_values[:layer_idx+1])
+    pdf.multi_cell(0, 10, f"H = {' + '.join([str(h) for h in h_values[:layer_idx+1]])} = {H} cm")
+    pdf.multi_cell(0, 10, f"H = {H}")
+    pdf.multi_cell(0, 10, f"D = {D}")
+    
+    pdf.ln(10)
+    
+    # Section 3: Calculations
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(200, 10, txt="3. Изчисления", ln=True)
+    pdf.ln(5)
+    
+    pdf.set_font("Arial", size=10)
+    
+    if layer_idx > 0:
+        # Esr calculation
+        numerator = " + ".join([f"{E_values[i]} × {h_values[i]}" for i in range(layer_idx)])
+        denominator = " + ".join([f"{h_values[i]}" for i in range(layer_idx)])
+        pdf.multi_cell(0, 10, f"Esr = ({numerator}) / ({denominator})")
+        pdf.multi_cell(0, 10, f"Esr = {st.session_state.layer_results[layer_idx]['Esr_r']}")
+        
+        # Esr/En
+        pdf.multi_cell(0, 10, f"Esr/En = {st.session_state.layer_results[layer_idx]['Esr_r']} / {E_values[layer_idx]} = {st.session_state.layer_results[layer_idx]['Esr_over_En_r']}")
+    
+    # H/D
+    pdf.multi_cell(0, 10, f"H/D = {H} / {D} = {st.session_state.layer_results[layer_idx]['ratio_r']}")
+    
+    # En/Ed
+    pdf.multi_cell(0, 10, f"En/Ed = {E_values[layer_idx]} / {Ed_values[layer_idx]} = {st.session_state.layer_results[layer_idx]['En_over_Ed_r']}")
+    
+    # Final calculation
+    if 'final_sigma_R' in st.session_state:
+        sigma_r = st.session_state.final_sigma_R
+        p = 0.620  # Default value for 100 kN
+        sigma_nomogram = sigma_r / (1.15 * p)
+        pdf.multi_cell(0, 10, f"σR[номограма] = {sigma_nomogram:.3f} MPa")
+        pdf.multi_cell(0, 10, f"σR = 1.15 × {p} × {sigma_nomogram:.3f} = {sigma_r:.3f} MPa")
+    
+    # Add new page for results
+    pdf.add_page()
+    
+    # Section 6: Results and check
+    pdf.set_font("Arial", 'B', 14)
+    pdf.cell(200, 10, txt="6. Результати и проверка", ln=True)
+    pdf.ln(10)
+    
+    # Results table
+    pdf.set_font("Arial", size=10)
+    pdf.cell(100, 10, "Параметър", 1, 0, 'C')
+    pdf.cell(100, 10, "Стойност", 1, 1, 'C')
+    
+    if 'final_sigma_R' in st.session_state:
+        pdf.cell(100, 10, "Изчислено σR", 1, 0)
+        pdf.cell(100, 10, f"{st.session_state.final_sigma_R:.3f} MPa", 1, 1)
+    
+    manual_sigma = st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', 1.20)
+    pdf.cell(100, 10, "Допустимо σR (ръчно)", 1, 0)
+    pdf.cell(100, 10, f"{manual_sigma:.2f} MPa", 1, 1)
+    
+    pdf.ln(10)
+    
+    # Check result
+    pdf.set_font("Arial", 'B', 12)
+    if f'check_result_{layer_idx}' in st.session_state.check_results:
+        if st.session_state.check_results[f'check_result_{layer_idx}']:
+            pdf.cell(200, 10, txt="Проверка: УДОВЛЕТВОРЕНА", ln=True)
+        else:
+            pdf.cell(200, 10, txt="Проверка: НЕУДОВЛЕТВОРЕНА", ln=True)
+    else:
+        pdf.cell(200, 10, txt="Проверка: НЕИЗВЪРШЕНА", ln=True)
+    
+    # Save the PDF to a temporary file
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
+    pdf.output(temp_file.name)
+    
+    return temp_file.name
 
 # Calculate button
 if st.button(f"Изчисли за пласт {layer_idx+1}"):
@@ -399,6 +547,30 @@ if layer_idx in st.session_state.layer_results:
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
 
+    # PDF Export Button
+    st.markdown("---")
+    st.markdown("### Експорт на отчет")
+    
+    if st.button("Генерирай PDF отчет"):
+        with st.spinner("Генериране на PDF..."):
+            pdf_path = generate_pdf_report()
+            
+            # Read the PDF file
+            with open(pdf_path, "rb") as f:
+                pdf_bytes = f.read()
+            
+            # Create download button
+            st.download_button(
+                label="Свали PDF отчета",
+                data=pdf_bytes,
+                file_name="opyn_v_pokritieto_report.pdf",
+                mime="application/pdf"
+            )
+            
+            # Clean up temporary file
+            os.unlink(pdf_path)
+            
+            st.session_state.pdf_exported = True
+
     # Линк към предишната страница
     st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
-        
