@@ -646,7 +646,7 @@ if layer_idx in st.session_state.layer_results:
         pdf = EnhancedPDF()
         pdf.set_auto_page_break(auto=True, margin=20)
         
-        # Шрифтове
+        # Зареждане на шрифтове
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
         except NameError:
