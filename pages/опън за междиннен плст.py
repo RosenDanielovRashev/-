@@ -123,17 +123,15 @@ def calculate_layer(layer_index):
     st.session_state.layer_results[layer_index] = results
     return results
 
-    # Функция за създаване на PDF
-    def create_pdf():
-        try:
-            # Създаване на PDF документ
-            pdf = FPDF()
-            pdf.set_auto_page_break(auto=True, margin=15)
-            pdf.add_page()
-            
-    # Нов блок с новата стратегия за шрифтовете без изтегляне от интернет
+# Функция за създаване на PDF
+def create_pdf():
     try:
-        # Път за шрифтовете
+        # Създаване на PDF документ
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        
+        # Шрифтове
         try:
             base_dir = os.path.dirname(os.path.abspath(__file__))
         except NameError:
@@ -142,27 +140,42 @@ def calculate_layer(layer_index):
         font_dir = os.path.join(base_dir, "fonts")
         os.makedirs(font_dir, exist_ok=True)
         
-        # Пътища за шрифтовете
         sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
         bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
         italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
         
-        # Проверяваме дали шрифтовете съществуват локално
-        if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
-            with open(sans_path, "rb") as f:
-                pdf.add_font_from_bytes('DejaVu', '', f.read())
-            with open(bold_path, "rb") as f:
-                pdf.add_font_from_bytes('DejaVu', 'B', f.read())
-            with open(italic_path, "rb") as f:
-                pdf.add_font_from_bytes('DejaVu', 'I', f.read())
-        else:
-            # Ако шрифтовете не съществуват локално, показваме съобщение за грешка
-            st.error("Шрифтовете не са намерени локално. Моля, добавете необходимите шрифтове в директорията 'fonts'.")
+        try:
+            if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
+                with open(sans_path, "rb") as f:
+                    pdf.add_font_from_bytes('DejaVu', '', f.read())
+                with open(bold_path, "rb") as f:
+                    pdf.add_font_from_bytes('DejaVu', 'B', f.read())
+                with open(italic_path, "rb") as f:
+                    pdf.add_font_from_bytes('DejaVu', 'I', f.read())
+            else:
+                # Ако нямаме шрифтовете, изтегляме ги
+                font_urls = {
+                    sans_path: "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf",
+                    bold_path: "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf",
+                    italic_path: "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf"
+                }
+                
+                for path, url in font_urls.items():
+                    response = requests.get(url)
+                    with open(path, "wb") as f:
+                        f.write(response.content)
+                
+                # Сега добавяме шрифтовете
+                with open(sans_path, "rb") as f:
+                    pdf.add_font_from_bytes('DejaVu', '', f.read())
+                with open(bold_path, "rb") as f:
+                    pdf.add_font_from_bytes('DejaVu', 'B', f.read())
+                with open(italic_path, "rb") as f:
+                    pdf.add_font_from_bytes('DejaVu', 'I', f.read())
+        except Exception as e:
+            st.error(f"Грешка при зареждане на шрифтове: {e}")
             return b""
-    except Exception as e:
-        st.error(f"Грешка при зареждане на шрифтове: {e}")
-        return b""
-            
+        
         pdf.set_font('DejaVu', '', 12)
         
         # Заглавие
