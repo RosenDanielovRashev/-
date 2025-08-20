@@ -2,16 +2,6 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
-import os
-import tempfile
-import base64
-from fpdf import FPDF
-import matplotlib.pyplot as plt
-from matplotlib import font_manager as fm
-import io
-from PIL import Image, ImageDraw, ImageFont
-import xml.etree.ElementTree as ET
-import requests
 
 
 st.markdown("""
@@ -43,8 +33,6 @@ if 'manual_sigma_values' not in st.session_state:
     st.session_state.manual_sigma_values = {}
 if 'check_results' not in st.session_state:
     st.session_state.check_results = {}
-if 'pdf_export_data' not in st.session_state:
-    st.session_state.pdf_export_data = {}
 
 # Проверка за данни от główny файл
 use_auto_data = False
@@ -122,168 +110,6 @@ def calculate_layer(layer_index):
     
     st.session_state.layer_results[layer_index] = results
     return results
-
-# Функция за създаване на PDF
-def create_pdf():
-    try:
-        # Създаване на PDF документ
-        pdf = FPDF()
-        pdf.set_auto_page_break(auto=True, margin=15)
-        pdf.add_page()
-        
-        # Шрифтове
-        try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-        except NameError:
-            base_dir = os.getcwd()
-            
-        font_dir = os.path.join(base_dir, "fonts")
-        os.makedirs(font_dir, exist_ok=True)
-        
-        sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
-        bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
-        italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
-        
-        try:
-            if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
-                with open(sans_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', '', f.read())
-                with open(bold_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', 'B', f.read())
-                with open(italic_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', 'I', f.read())
-            else:
-                # Ако нямаме шрифтовете, изтегляме ги
-                font_urls = {
-                    sans_path: "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans.ttf",
-                    bold_path: "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Bold.ttf",
-                    italic_path: "https://github.com/dejavu-fonts/dejavu-fonts/raw/master/ttf/DejaVuSans-Oblique.ttf"
-                }
-                
-                for path, url in font_urls.items():
-                    response = requests.get(url)
-                    with open(path, "wb") as f:
-                        f.write(response.content)
-                
-                # Сега добавяме шрифтовете
-                with open(sans_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', '', f.read())
-                with open(bold_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', 'B', f.read())
-                with open(italic_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', 'I', f.read())
-        except Exception as e:
-            st.error(f"Грешка при зареждане на шрифтове: {e}")
-            return b""
-        
-        pdf.set_font('DejaVu', '', 12)
-        
-        # Заглавие
-        pdf.set_font('DejaVu', 'B', 16)
-        pdf.cell(0, 10, "Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3", 0, 1, 'C')
-        pdf.ln(5)
-        
-        # Входни параметри
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, "Входни параметри", 0, 1)
-        pdf.set_font('DejaVu', '', 12)
-        
-        pdf.cell(0, 10, f"Брой пластове (n): {n}", 0, 1)
-        pdf.cell(0, 10, f"Стойност на D: {D}", 0, 1)
-        
-        # Таблица с входни данни
-        pdf.ln(5)
-        pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 10, "Свойства на пластовете:", 0, 1)
-        
-        col_widths = [30, 30, 30, 30]
-        pdf.set_fill_color(200, 220, 255)
-        pdf.cell(col_widths[0], 10, "Пласт", 1, 0, 'C', True)
-        pdf.cell(col_widths[1], 10, "h [см]", 1, 0, 'C', True)
-        pdf.cell(col_widths[2], 10, "E [МРа]", 1, 0, 'C', True)
-        pdf.cell(col_widths[3], 10, "Ed [МРа]", 1, 1, 'C', True)
-        
-        pdf.set_font('DejaVu', '', 12)
-        for i in range(n):
-            pdf.cell(col_widths[0], 10, str(i+1), 1, 0, 'C')
-            pdf.cell(col_widths[1], 10, str(h_values[i]), 1, 0, 'C')
-            pdf.cell(col_widths[2], 10, str(E_values[i]), 1, 0, 'C')
-            pdf.cell(col_widths[3], 10, str(Ed_values[i]), 1, 1, 'C')
-        
-        # Резултати за избрания пласт
-        if layer_idx in st.session_state.layer_results:
-            results = st.session_state.layer_results[layer_idx]
-            pdf.ln(10)
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, f"Резултати за пласт {layer_idx+1}", 0, 1)
-            pdf.set_font('DejaVu', '', 12)
-            
-            # Формули и резултати
-            formulas = [
-                f"H{to_subscript(layer_idx)} = {results['H_n_1_r']}",
-                f"H{to_subscript(results['n_for_calc'])} = {results['H_n_r']}",
-                f"Esr = {results['Esr_r']}",
-                f"H{to_subscript(results['n_for_calc'])}/D = {results['ratio_r']}",
-                f"E{to_subscript(layer_idx+1)} = {results['En_r']}",
-                f"Esr/E{to_subscript(layer_idx+1)} = {results['Esr_over_En_r']}",
-                f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)} = {results['En_over_Ed_r']}"
-            ]
-            
-            for formula in formulas:
-                pdf.cell(0, 10, formula, 0, 1)
-            
-            # Изчислено σr
-            if 'x_intercept' in locals() and x_intercept is not None:
-                sigma_r = round(x_intercept / 2, 3)
-                pdf.ln(5)
-                pdf.set_font('DejaVu', 'B', 12)
-                pdf.cell(0, 10, f"Изчислено σr = {sigma_r}", 0, 1)
-                
-                # Коефициент p
-                axle_load = st.session_state.get("axle_load", 100)
-                if axle_load == 100:
-                    p = 0.620
-                elif axle_load == 115:
-                    p = 0.633
-                else:
-                    p = None
-                
-                if p is not None:
-                    pdf.cell(0, 10, f"Коефициент p = {p:.3f} MPa (за осов товар {axle_load} kN)", 0, 1)
-                
-                # Крайно напрежение σR
-                sigma = st.session_state.get("final_sigma", None)
-                if p is not None and sigma is not None:
-                    sigma_final = 1.15 * p * sigma
-                    pdf.cell(0, 10, f"Крайно напрежение σR = 1.15 × {p:.3f} × {sigma:.3f} = {sigma_final:.3f} MPa", 0, 1)
-            
-            # Ръчно въведена стойност
-            if f'manual_sigma_{layer_idx}' in st.session_state.manual_sigma_values:
-                manual_value = st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}']
-                pdf.cell(0, 10, f"Ръчно отчетена стойност σR = {manual_value:.3f} MPa", 0, 1)
-            
-            # Резултат от проверката
-            if f'check_result_{layer_idx}' in st.session_state.check_results:
-                check_passed = st.session_state.check_results[f'check_result_{layer_idx}']
-                status = "УДОВЛЕТВОРИТЕЛНА" if check_passed else "НЕУДОВЛЕТВОРИТЕЛНА"
-                pdf.set_font('DejaVu', 'B', 12)
-                pdf.cell(0, 10, f"Проверка: {status}", 0, 1)
-        
-        # Запазване на PDF във временен файл
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
-        pdf.output(temp_file.name)
-        
-        # Четене на съдържанието на файла
-        with open(temp_file.name, 'rb') as f:
-            pdf_bytes = f.read()
-        
-        # Почистване на временния файл
-        os.unlink(temp_file.name)
-        
-        return pdf_bytes
-    except Exception as e:
-        st.error(f"Грешка при генериране на PDF: {e}")
-        return b""
 
 # Calculate button
 if st.button(f"Изчисли за пласт {layer_idx+1}"):
@@ -573,18 +399,6 @@ if layer_idx in st.session_state.layer_results:
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
 
-    # Бутон за експорт на PDF
-    if st.button("📄 Експорт към PDF"):
-        pdf_bytes = create_pdf()
-        if pdf_bytes:
-            st.success("PDF документът е генериран успешно!")
-            
-            # Предлагане на файла за изтегляне
-            b64 = base64.b64encode(pdf_bytes).decode()
-            href = f'<a href="data:application/octet-stream;base64,{b64}" download="изчисление_пласт_{layer_idx+1}.pdf">⬇️ Изтегли PDF документа</a>'
-            st.markdown(href, unsafe_allow_html=True)
-        else:
-            st.error("Грешка при генериране на PDF документа")
-
     # Линк към предишната страница
     st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
+        
