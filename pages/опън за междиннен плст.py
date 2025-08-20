@@ -1,4 +1,3 @@
-from datetime import datetime
 import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
@@ -11,7 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib import mathtext
 from io import BytesIO
-import datetime 
+ 
 
 # Опит за импорт на cairosvg (за векторни формули)
 try:
@@ -846,13 +845,6 @@ if layer_idx in st.session_state.layer_results:
                 pdf.cell(0, 10, "❌ Проверка: НЕУДОВЛЕТВОРЕНА", ln=True)
     
             pdf.set_text_color(0, 0, 0)
-        
-        # Footer
-        pdf.ln(10)
-        pdf.set_font('DejaVu', 'I', 8)
-        pdf.set_text_color(100, 100, 100)
-        generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        pdf.cell(0, 5, f"Генерирано на: {generated_at}", 0, 0, 'R')
         
         # Запазване на PDF
         pdf.cleanup_temp_files()
