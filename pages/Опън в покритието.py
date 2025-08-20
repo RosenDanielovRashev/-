@@ -315,7 +315,7 @@ class EnhancedPDF(FPDF):
 
     def footer(self):
         self.set_y(-15)
-        self.set_font('DejaVu', 'I', 8)
+        self.set_font('DejaVu', '', 8)
         self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
 
     def add_font_from_bytes(self, family, style, font_bytes):
@@ -369,7 +369,7 @@ class EnhancedPDF(FPDF):
             # Приблизителен вертикален интервал
             self.ln(line_gap + width * 0.22)
         except Exception:
-            self.set_font('DejaVu', 'I', 12)
+            self.set_font('DejaVu', '', 12)
             self.multi_cell(0, 8, formula_text)
             self.ln(5)
 
@@ -463,13 +463,13 @@ def generate_pdf_report():
             with open(bold_path, "rb") as f:
                 pdf.add_font_from_bytes('DejaVu', 'B', f.read())
             with open(italic_path, "rb") as f:
-                pdf.add_font_from_bytes('DejaVu', 'I', f.read())
+                pdf.add_font_from_bytes('DejaVu', '', f.read())
         else:
             from fpdf.fonts import FontsByFPDF
             fonts = FontsByFPDF()
             for style, data in [('', fonts.helvetica),
                                 ('B', fonts.helvetica_bold),
-                                ('I', fonts.helvetica_oblique)]:
+                                ('', fonts.helvetica_oblique)]:
                 with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
                     tmp_file.write(data)
                     pdf.add_font('DejaVu', style, tmp_file.name)
@@ -481,7 +481,7 @@ def generate_pdf_report():
     pdf.add_page()
     pdf.set_font('DejaVu', 'B', 18)
     pdf.cell(0, 15, 'ОПЪН В ПОКРИТИЕТО', ln=True, align='C')
-    pdf.set_font('DejaVu', 'I', 12)
+    pdf.set_font('DejaVu', '', 12)
     pdf.ln(6)
 
     # 1. Входни параметри
@@ -614,7 +614,7 @@ def generate_pdf_report():
 
     # Footer
     pdf.ln(10)
-    pdf.set_font('DejaVu', 'I', 8)
+    pdf.set_font('DejaVu', '', 8)
     pdf.set_text_color(100, 100, 100)
 
     pdf.cleanup_temp_files()
