@@ -2,6 +2,10 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 import numpy as np
+from fpdf import FPDF
+import base64
+import tempfile
+import os
 
 
 st.markdown("""
@@ -399,6 +403,166 @@ if layer_idx in st.session_state.layer_results:
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
 
+    # Функция за генериране на PDF отчет
+    def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, manual_value=None, check_passed=None):
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        
+        # Добавяне на шрифтове DejaVu
+        try:
+            font_path = os.path.join("pages", "fonts", "DejaVuSans.ttf")
+            pdf.add_font("DejaVu", "", font_path, uni=True)
+            pdf.add_font("DejaVu", "B", font_path.replace("DejaVuSans.ttf", "DejaVuSans-Bold.ttf"), uni=True)
+            pdf.set_font("DejaVu", "", 12)
+        except:
+            # Fallback към стандартни шрифтове ако DejaVu не е наличен
+            pdf.set_font("Arial", "", 12)
+        
+        pdf.add_page()
+        
+        # Заглавие
+        pdf.set_font("DejaVu", "B", 16)
+        pdf.cell(0, 10, "ОПЪННО НАПРЕЖЕНИЕ В МЕЖДИНЕН ПЛАСТ ОТ ПЪТНАТА КОНСТРУКЦИЯ", 0, 1, 'C')
+        pdf.ln(5)
+        
+        # 1. Входни параметри
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 10, "1. Входни параметри", 0, 1)
+        pdf.set_font("DejaVu", "", 12)
+        
+        pdf.cell(0, 10, f"Брой пластове (n): {len(h_values)}", 0, 1)
+        pdf.cell(0, 10, f"D: {D}", 0, 1)
+        
+        pdf.cell(0, 10, "Дебелини на пластовете (h):", 0, 1)
+        for i, h in enumerate(h_values):
+            pdf.cell(0, 10, f"  h{to_subscript(i+1)} = {h} cm", 0, 1)
+        
+        pdf.cell(0, 10, "Модули на еластичност (E):", 0, 1)
+        for i, E in enumerate(E_values):
+            pdf.cell(0, 10, f"  E{to_subscript(i+1)} = {E} MPa", 0, 1)
+        
+        pdf.cell(0, 10, "Модули на деформация (Ed):", 0, 1)
+        for i, Ed in enumerate(Ed_values):
+            pdf.cell(0, 10, f"  Ed{to_subscript(i+1)} = {Ed} MPa", 0, 1)
+        
+        pdf.ln(5)
+        
+        # 2. Формули за изчисление
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 10, "2. Формули за изчисление", 0, 1)
+        pdf.set_font("DejaVu", "", 12)
+        
+        formulas = [
+            r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
+            r"H_n = \sum_{i=1}^n h_i",
+            r"Esr = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}",
+            r"\frac{H_n}{D}",
+            r"\frac{Esr}{E_n}",
+            r"\frac{E_n}{Ed_n}",
+            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
+        ]
+        
+        for formula in formulas:
+            pdf.cell(0, 10, f"${formula}$", 0, 1)
+        
+        pdf.ln(5)
+        
+        # 3. Изчисления
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 10, "3. Изчисления", 0, 1)
+        pdf.set_font("DejaVu", "", 12)
+        
+        pdf.cell(0, 10, f"За пласт {layer_idx+1}:", 0, 1)
+        pdf.cell(0, 10, f"H{to_subscript(layer_idx)} = {results['H_n_1_r']} cm", 0, 1)
+        pdf.cell(0, 10, f"H{to_subscript(results['n_for_calc'])} = {results['H_n_r']} cm", 0, 1)
+        
+        if layer_idx > 0:
+            pdf.cell(0, 10, f"Esr = {results['Esr_r']} MPa", 0, 1)
+        else:
+            pdf.cell(0, 10, "Esr = 0 (няма предишни пластове)", 0, 1)
+        
+        pdf.cell(0, 10, f"H{to_subscript(results['n_for_calc'])}/D = {results['ratio_r']}", 0, 1)
+        pdf.cell(0, 10, f"E{to_subscript(layer_idx+1)} = {results['En_r']} MPa", 0, 1)
+        pdf.cell(0, 10, f"Esr/E{to_subscript(layer_idx+1)} = {results['Esr_over_En_r']}", 0, 1)
+        pdf.cell(0, 10, f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)} = {results['En_over_Ed_r']}", 0, 1)
+        
+        if sigma_r is not None:
+            pdf.cell(0, 10, f"σr = {sigma_r} MPa", 0, 1)
+        
+        if sigma_final is not None:
+            pdf.cell(0, 10, f"Крайно σR = {sigma_final:.3f} MPa", 0, 1)
+        
+        pdf.ln(5)
+        
+        # 4. Графика на номограмата
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 10, "4. Графика на номограмата", 0, 1)
+        
+        # Запазване на графиката като временно изображение
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
+                fig.write_image(tmpfile.name)
+                pdf.image(tmpfile.name, x=10, y=None, w=180)
+                os.unlink(tmpfile.name)
+        except Exception as e:
+            pdf.cell(0, 10, f"Грешка при добавяне на графиката: {e}", 0, 1)
+        
+        pdf.ln(5)
+        
+        # 5. Допустими опънни напрежения
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 10, "5. Допустими опънни напрежения", 0, 1)
+        
+        try:
+            pdf.image("Допустими опънни напрежения.png", x=10, y=None, w=180)
+        except Exception as e:
+            pdf.cell(0, 10, f"Грешка при добавяне на изображението: {e}", 0, 1)
+        
+        pdf.ln(5)
+        
+        # 6. Резултати и проверка
+        pdf.set_font("DejaVu", "B", 14)
+        pdf.cell(0, 10, "6. Резултати и проверка", 0, 1)
+        pdf.set_font("DejaVu", "", 12)
+        
+        if manual_value is not None:
+            pdf.cell(0, 10, f"Ръчно отчетена стойност σR: {manual_value} MPa", 0, 1)
+        
+        if check_passed is not None:
+            if check_passed:
+                pdf.cell(0, 10, "✅ Проверката е удовлетворена", 0, 1)
+            else:
+                pdf.cell(0, 10, "❌ Проверката НЕ е удовлетворена", 0, 1)
+        
+        # Запазване на PDF във временен файл
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+            pdf.output(tmpfile.name)
+            
+            # Четене на файла и връщане като base64
+            with open(tmpfile.name, "rb") as f:
+                pdf_bytes = f.read()
+            
+            os.unlink(tmpfile.name)
+            return pdf_bytes
+
+    # Добавяне на бутон за генериране на PDF отчет
+    if st.button("Генерирай PDF отчет"):
+        with st.spinner("Генериране на PDF..."):
+            # Вземете необходимите данни за отчета
+            sigma_r = st.session_state.get("final_sigma", None)
+            sigma_final = st.session_state.get("final_sigma_R", None)
+            manual_value = st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', None)
+            check_passed = st.session_state.check_results.get(f'check_result_{layer_idx}', None)
+            
+            # Генериране на PDF
+            pdf_bytes = generate_pdf_report(
+                layer_idx, results, D, sigma_r, sigma_final, manual_value, check_passed
+            )
+            
+            # Показване на линк за изтегляне
+            b64 = base64.b64encode(pdf_bytes).decode()
+            href = f'<a href="data:application/octet-stream;base64,{b64}" download="опън_за_междинен_пласт_отчет.pdf">Изтегли PDF отчет</a>'
+            st.markdown(href, unsafe_allow_html=True)
+
     # Линк към предишната страница
     st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
-        
