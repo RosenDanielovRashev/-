@@ -6,6 +6,11 @@ from fpdf import FPDF
 import base64
 import tempfile
 import os
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_agg import FigureCanvasAgg
+from matplotlib import mathtext
+import cairosvg
+from io import BytesIO
 
 st.markdown("""
     <style>
@@ -25,6 +30,62 @@ st.markdown("""
 
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
+# Функции за рендиране на математически формули
+def render_formula_to_svg(formula, output_path):
+    """Рендира формула като SVG чрез matplotlib.mathtext"""
+    try:
+        parser = mathtext.MathTextParser("path")
+        parser.to_svg(f"${formula}$", output_path)
+        return output_path
+    except Exception as e:
+        print(f"Грешка при рендиране на SVG: {e}")
+        raise
+
+def svg_to_png(svg_path, png_path=None, dpi=300):
+    """Конвертира SVG към PNG с висока резолюция"""
+    try:
+        cairosvg.svg2png(url=svg_path, write_to=png_path, dpi=dpi)
+        return png_path
+    except Exception as e:
+        print(f"Грешка при конвертиране SVG към PNG: {e}")
+        raise
+
+def render_formula_to_image_fallback(formula, fontsize=22, dpi=450):
+    """Fallback: рендва формула директно в PNG чрез matplotlib"""
+    try:
+        fig = plt.figure(figsize=(8, 2.5))
+        fig.text(0.05, 0.5, f'${formula}$', fontsize=fontsize)
+        plt.axis('off')
+        buf = BytesIO()
+        plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', transparent=True)
+        plt.close(fig)
+        buf.seek(0)
+        return buf
+    except Exception as e:
+        print(f"Грешка при fallback рендиране: {e}")
+        raise
+
+def formula_png_from_svg_or_fallback(formula_text, dpi=300):
+    """Създава PNG от формула чрез SVG→PNG или fallback директно към PNG"""
+    try:
+        # Опит за векторно рендиране (SVG → PNG)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".svg") as tmp_svg:
+            render_formula_to_svg(formula_text, tmp_svg.name)
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_png:
+                svg_to_png(tmp_svg.name, tmp_png.name, dpi=dpi)
+                return tmp_png.name
+    except Exception as e:
+        print(f"SVG метод се провали, опитвам fallback: {e}")
+        # Fallback: директно PNG от matplotlib
+        try:
+            buf = render_formula_to_image_fallback(formula_text, dpi=450)
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                tmp_file.write(buf.getvalue())
+                return tmp_file.name
+        except Exception as e2:
+            print(f"И двата метода се провалиха: {e2}")
+            return None
+            
 def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
@@ -454,7 +515,42 @@ if layer_idx in st.session_state.layer_results:
         st.error(f"Грешка при визуализацията: {e}")
 
     def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, manual_value=None, check_passed=None):
-        pdf = FPDF()
+        # Създаваме PDF клас с разширена функционалност
+        class EnhancedPDF(FPDF):
+            def add_latex_formula(self, formula_text, width=100, line_gap=12, align='L'):
+                """Добавя формула като изображение в PDF"""
+                try:
+                    png_path = formula_png_from_svg_or_fallback(formula_text)
+                    if png_path and os.path.exists(png_path):
+                        # Запазваме текущата позиция
+                        x = self.get_x()
+                        y = self.get_y()
+                        
+                        # Центриране ако е необходимо
+                        if align == 'C':
+                            x = (210 - width) / 2  # 210mm е ширината на A4
+                        
+                        self.image(png_path, x=x, y=y, w=width)
+                        self.ln(line_gap + width * 0.22)
+                        
+                        # Изтриване на временния файл
+                        try:
+                            os.unlink(png_path)
+                        except:
+                            pass
+                    else:
+                        # Fallback: показване като чист текст
+                        self.set_font("DejaVu", "I", 10)
+                        self.multi_cell(0, 8, formula_text)
+                        self.ln(5)
+                except Exception as e:
+                    print(f"Грешка при добавяне на формула: {e}")
+                    # Fallback
+                    self.set_font("DejaVu", "I", 10)
+                    self.multi_cell(0, 8, formula_text)
+                    self.ln(5)
+        
+        pdf = EnhancedPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
         
         # Добавяне на шрифтове DejaVu
@@ -550,7 +646,7 @@ if layer_idx in st.session_state.layer_results:
         
         for formula in formulas:
             pdf.cell(5, 8, "", 0, 0)  # Отстъп
-            pdf.cell(0, 8, f"${formula}$", 0, 1)
+            pdf.add_latex_formula(formula, width=180, line_gap=8, align='L')
         
         pdf.ln(5)
         
@@ -573,11 +669,10 @@ if layer_idx in st.session_state.layer_results:
             pdf.cell(col_widths_calc[1], 8, f"{results['Esr_r']} MPa", 0, 1)
             
             # Показване на формулата за Esr
-            pdf.set_font("DejaVu", "", 8)
             numerator = " + ".join([f"{results['E_values'][i]} \cdot {results['h_values'][i]}" for i in range(layer_idx)])
             denominator = " + ".join([f"{results['h_values'][i]}" for i in range(layer_idx)])
-            pdf.cell(0, 6, f"${r'Esr = \frac{' + numerator + '}{' + denominator + '} = ' + str(round(results['Esr_r']))}$", 0, 1)
-            pdf.set_font("DejaVu", "", 10)
+            esr_formula = fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {round(results['Esr_r'])}"
+            pdf.add_latex_formula(esr_formula, width=180, line_gap=6, align='L')
         else:
             pdf.cell(col_widths_calc[0], 8, "Esr:", 0, 0)
             pdf.cell(col_widths_calc[1], 8, "0 (няма предишни пластове)", 0, 1)
@@ -620,11 +715,14 @@ if layer_idx in st.session_state.layer_results:
             pdf.cell(col_widths_calc[1], 10, f"{sigma_final:.3f} MPa", 0, 1)
             
             # Показване на формулата за σR
-            pdf.set_font("DejaVu", "", 8)
-            pdf.cell(0, 8, f"$\\sigma_R = 1.15 \\cdot {p} \\cdot {sigma_r} = {sigma_final:.3f} \\, \\text{{MPa}}$", 0, 1)
-            pdf.set_font("DejaVu", "", 10)
+            if sigma_r is not None:
+                sigma_formula = fr"\sigma_R = 1.15 \cdot {p} \cdot {sigma_r} = {sigma_final:.3f}  \text{{MPa}}"
+                pdf.add_latex_formula(sigma_formula, width=180, line_gap=6, align='L')
         
         pdf.ln(5)
+        
+        # ... останалата част от функцията остава непроменена
+        # (секции 4, 5, 6 и т.н.)
         
         # 4. Графика на номограмата
         pdf.set_font("DejaVu", "B", 12)
