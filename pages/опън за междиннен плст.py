@@ -728,6 +728,8 @@ if layer_idx in st.session_state.layer_results:
             fill = not fill
     
         pdf.ln(5)
+
+        pdf.add_page()
         
         # 2. Формули за изчисление
         pdf.set_font('DejaVu', 'B', 14)
