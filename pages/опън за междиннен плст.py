@@ -463,53 +463,69 @@ if layer_idx in st.session_state.layer_results:
             font_path = os.path.join("pages", "fonts", "DejaVuSans.ttf")
             pdf.add_font("DejaVu", "", font_path, uni=True)
             pdf.add_font("DejaVu", "B", font_path.replace("DejaVuSans.ttf", "DejaVuSans-Bold.ttf"), uni=True)
-            pdf.set_font("DejaVu", "", 12)
+            pdf.set_font("DejaVu", "", 10)
         except:
             # Fallback към стандартни шрифтове ако DejaVu не е наличен
-            pdf.set_font("Arial", "", 12)
+            pdf.set_font("Arial", "", 10)
         
         pdf.add_page()
         
         # Заглавие
         pdf.set_font("DejaVu", "B", 16)
-        pdf.cell(0, 10, "ОПЪННО НАПРЕЖЕНИЕ В МЕЖДИНЕН ПЛАСТ ОТ ПЪТНАТА КОНСТРУКЦИЯ", 0, 1, 'C')
+        pdf.cell(0, 10, "ОПЪННО НАПРЕЖЕНИЕ В МЕЖДИНЕН ПЛАСТ", 0, 1, 'C')
+        pdf.set_font("DejaVu", "", 12)
+        pdf.cell(0, 8, "ОТ ПЪТНАТА КОНСТРУКЦИЯ - ФИГ. 9.3", 0, 1, 'C')
         pdf.ln(5)
+        
+        # Хоризонтална линия
+        pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+        pdf.ln(8)
         
         # 1. Входни параметри
-        pdf.set_font("DejaVu", "B", 14)
-        pdf.cell(0, 10, "1. Входни параметри", 0, 1)
-        pdf.set_font("DejaVu", "", 12)
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, "1. ВХОДНИ ПАРАМЕТРИ", 0, 1)
+        pdf.set_font("DejaVu", "", 10)
         
-        pdf.cell(0, 10, f"Брой пластове (n): {len(h_values)}", 0, 1)
-        pdf.cell(0, 10, f"D: {D}", 0, 1)
+        pdf.cell(40, 6, "Брой пластове (n):", 0, 0)
+        pdf.cell(0, 6, f"{len(h_values)}", 0, 1)
+        pdf.cell(40, 6, "D:", 0, 0)
+        pdf.cell(0, 6, f"{D}", 0, 1)
+        pdf.ln(2)
         
         # Създаване на таблица за входните параметри
-        pdf.cell(0, 10, "Таблица 1: Входни параметри на пластовете", 0, 1)
+        pdf.set_font("DejaVu", "B", 10)
+        pdf.cell(0, 8, "Таблица 1: Входни параметри на пластовете", 0, 1)
         
         # Колони на таблицата
-        col_widths = [30, 40, 40, 40]
+        col_widths = [25, 25, 35, 35]
         
         # Заглавия на колоните
-        pdf.set_font("DejaVu", "B", 12)
-        pdf.cell(col_widths[0], 10, "Пласт", 1, 0, 'C')
-        pdf.cell(col_widths[1], 10, "h [cm]", 1, 0, 'C')
-        pdf.cell(col_widths[2], 10, "E [MPa]", 1, 0, 'C')
-        pdf.cell(col_widths[3], 10, "Ed [MPa]", 1, 1, 'C')
+        pdf.set_font("DejaVu", "B", 10)
+        pdf.cell(col_widths[0], 8, "Пласт", 1, 0, 'C')
+        pdf.cell(col_widths[1], 8, "h [cm]", 1, 0, 'C')
+        pdf.cell(col_widths[2], 8, "E [MPa]", 1, 0, 'C')
+        pdf.cell(col_widths[3], 8, "Ed [MPa]", 1, 1, 'C')
         
         # Данни в таблицата
-        pdf.set_font("DejaVu", "", 12)
+        pdf.set_font("DejaVu", "", 10)
         for i in range(len(h_values)):
-            pdf.cell(col_widths[0], 10, f"Пласт {i+1}", 1, 0, 'C')
-            pdf.cell(col_widths[1], 10, f"{h_values[i]}", 1, 0, 'C')
-            pdf.cell(col_widths[2], 10, f"{E_values[i]}", 1, 0, 'C')
-            pdf.cell(col_widths[3], 10, f"{Ed_values[i]}", 1, 1, 'C')
+            # Алтернативно оцветяване на редовете
+            if i % 2 == 0:
+                pdf.set_fill_color(240, 240, 240)
+            else:
+                pdf.set_fill_color(255, 255, 255)
+                
+            pdf.cell(col_widths[0], 8, f"{i+1}", 1, 0, 'C', True)
+            pdf.cell(col_widths[1], 8, f"{h_values[i]}", 1, 0, 'C', True)
+            pdf.cell(col_widths[2], 8, f"{E_values[i]}", 1, 0, 'C', True)
+            pdf.cell(col_widths[3], 8, f"{Ed_values[i]}", 1, 1, 'C', True)
         
-        pdf.ln(5)
+        pdf.ln(8)
         
         # 2. Формули за изчисление
-        pdf.set_font("DejaVu", "B", 14)
-        pdf.cell(0, 10, "2. Формули за изчисление", 0, 1)
-        pdf.set_font("DejaVu", "", 12)
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, "2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ", 0, 1)
+        pdf.set_font("DejaVu", "", 10)
         
         formulas = [
             r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
@@ -522,55 +538,91 @@ if layer_idx in st.session_state.layer_results:
         ]
         
         for formula in formulas:
-            pdf.cell(0, 10, f"${formula}$", 0, 1)
+            pdf.cell(5, 6, "", 0, 0)  # Отстъп
+            pdf.cell(0, 6, f"${formula}$", 0, 1)
         
         pdf.ln(5)
         
         # 3. Изчисления
-        pdf.set_font("DejaVu", "B", 14)
-        pdf.cell(0, 10, "3. Изчисления", 0, 1)
-        pdf.set_font("DejaVu", "", 12)
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, f"3. ИЗЧИСЛЕНИЯ ЗА ПЛАСТ {layer_idx+1}", 0, 1)
+        pdf.set_font("DejaVu", "", 10)
         
-        pdf.cell(0, 10, f"За пласт {layer_idx+1}:", 0, 1)
-        pdf.cell(0, 10, f"H{to_subscript(layer_idx)} = {results['H_n_1_r']} cm", 0, 1)
-        pdf.cell(0, 10, f"H{to_subscript(results['n_for_calc'])} = {results['H_n_r']} cm", 0, 1)
+        # Създаване на таблица за резултатите
+        col_widths_calc = [70, 50]
+        
+        pdf.cell(col_widths_calc[0], 6, f"H{to_subscript(layer_idx)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{results['H_n_1_r']} cm", 0, 1)
+        
+        pdf.cell(col_widths_calc[0], 6, f"H{to_subscript(results['n_for_calc'])}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{results['H_n_r']} cm", 0, 1)
         
         if layer_idx > 0:
-            pdf.cell(0, 10, f"Esr = {results['Esr_r']} MPa", 0, 1)
+            pdf.cell(col_widths_calc[0], 6, "Esr:", 0, 0)
+            pdf.cell(col_widths_calc[1], 6, f"{results['Esr_r']} MPa", 0, 1)
         else:
-            pdf.cell(0, 10, "Esr = 0 (няма предишни пластове)", 0, 1)
+            pdf.cell(col_widths_calc[0], 6, "Esr:", 0, 0)
+            pdf.cell(col_widths_calc[1], 6, "0 (няма предишни пластове)", 0, 1)
         
-        pdf.cell(0, 10, f"H{to_subscript(results['n_for_calc'])}/D = {results['ratio_r']}", 0, 1)
-        pdf.cell(0, 10, f"E{to_subscript(layer_idx+1)} = {results['En_r']} MPa", 0, 1)
-        pdf.cell(0, 10, f"Esr/E{to_subscript(layer_idx+1)} = {results['Esr_over_En_r']}", 0, 1)
-        pdf.cell(0, 10, f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)} = {results['En_over_Ed_r']}", 0, 1)
+        pdf.cell(col_widths_calc[0], 6, f"H{to_subscript(results['n_for_calc'])}/D:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{results['ratio_r']}", 0, 1)
+        
+        pdf.cell(col_widths_calc[0], 6, f"E{to_subscript(layer_idx+1)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{results['En_r']} MPa", 0, 1)
+        
+        pdf.cell(col_widths_calc[0], 6, f"Esr/E{to_subscript(layer_idx+1)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{results['Esr_over_En_r']}", 0, 1)
+        
+        pdf.cell(col_widths_calc[0], 6, f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{results['En_over_Ed_r']}", 0, 1)
         
         if sigma_r is not None:
-            pdf.cell(0, 10, f"σr = {sigma_r} MPa", 0, 1)
+            pdf.cell(col_widths_calc[0], 6, "σr (от номограма):", 0, 0)
+            pdf.cell(col_widths_calc[1], 6, f"{sigma_r} MPa", 0, 1)
+        
+        # Информация за осов товар
+        axle_load = st.session_state.get("axle_load", 100)
+        pdf.cell(col_widths_calc[0], 6, "Осов товар:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{axle_load} kN", 0, 1)
+        
+        # Определяне на p според осовия товар
+        if axle_load == 100:
+            p = 0.620
+        elif axle_load == 115:
+            p = 0.633
+        else:
+            p = "неизвестен"
+        
+        pdf.cell(col_widths_calc[0], 6, "Коефициент p:", 0, 0)
+        pdf.cell(col_widths_calc[1], 6, f"{p} MPa", 0, 1)
         
         if sigma_final is not None:
-            pdf.cell(0, 10, f"Крайно σR = {sigma_final:.3f} MPa", 0, 1)
+            pdf.set_font("DejaVu", "B", 10)
+            pdf.cell(col_widths_calc[0], 8, "Крайно σR:", 0, 0)
+            pdf.cell(col_widths_calc[1], 8, f"{sigma_final:.3f} MPa", 0, 1)
+            pdf.set_font("DejaVu", "", 10)
         
         pdf.ln(5)
         
         # 4. Графика на номограмата
-        pdf.set_font("DejaVu", "B", 14)
-        pdf.cell(0, 10, "4. Графика на номограмата", 0, 1)
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, "4. ГРАФИКА НА НОМОГРАМАТА", 0, 1)
         
         # Запазване на графиката като временно изображение
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-                fig.write_image(tmpfile.name)
-                pdf.image(tmpfile.name, x=10, y=None, w=180)
+                fig.write_image(tmpfile.name, width=700, height=500)
+                pdf.image(tmpfile.name, x=10, y=None, w=190)
                 os.unlink(tmpfile.name)
         except Exception as e:
-            pdf.cell(0, 10, f"Грешка при добавяне на графиката: {e}", 0, 1)
+            pdf.set_font("DejaVu", "", 10)
+            pdf.cell(0, 6, f"Грешка при добавяне на графиката: {e}", 0, 1)
         
         pdf.ln(5)
         
         # 5. Допустими опънни напрежения
-        pdf.set_font("DejaVu", "B", 14)
-        pdf.cell(0, 10, "5. Допустими опънни напрежения", 0, 1)
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, "5. ДОПУСТИМИ ОПЪННИ НАПРЕЖЕНИЯ", 0, 1)
         
         try:
             # Try to find the image
@@ -584,32 +636,51 @@ if layer_idx in st.session_state.layer_results:
             img_found = False
             for path in image_paths:
                 try:
-                    pdf.image(path, x=10, y=None, w=180)
+                    pdf.image(path, x=10, y=None, w=190)
                     img_found = True
                     break
                 except:
                     continue
                     
             if not img_found:
-                pdf.cell(0, 10, "Изображението не е намерено", 0, 1)
+                pdf.set_font("DejaVu", "", 10)
+                pdf.cell(0, 6, "Изображението не е намерено", 0, 1)
         except Exception as e:
-            pdf.cell(0, 10, f"Грешка при добавяне на изображението: {e}", 0, 1)
+            pdf.set_font("DejaVu", "", 10)
+            pdf.cell(0, 6, f"Грешка при добавяне на изображението: {e}", 0, 1)
         
-        pdf.ln(5)
+        pdf.ln(8)
         
         # 6. Резултати и проверка
-        pdf.set_font("DejaVu", "B", 14)
-        pdf.cell(0, 10, "6. Резултати и проверка", 0, 1)
-        pdf.set_font("DejaVu", "", 12)
+        pdf.set_font("DejaVu", "B", 12)
+        pdf.cell(0, 8, "6. РЕЗУЛТАТИ И ПРОВЕРКА", 0, 1)
+        pdf.set_font("DejaVu", "", 10)
         
         if manual_value is not None:
-            pdf.cell(0, 10, f"Ръчно отчетена стойност σR: {manual_value} MPa", 0, 1)
+            pdf.cell(70, 6, "Ръчно отчетена стойност σR:", 0, 0)
+            pdf.cell(0, 6, f"{manual_value} MPa", 0, 1)
+        
+        if sigma_final is not None:
+            pdf.cell(70, 6, "Изчислена стойност σR:", 0, 0)
+            pdf.cell(0, 6, f"{sigma_final:.3f} MPa", 0, 1)
         
         if check_passed is not None:
+            pdf.ln(3)
             if check_passed:
-                pdf.cell(0, 10, "✅ Проверката е удовлетворена", 0, 1)
+                pdf.set_fill_color(220, 255, 220)
+                pdf.cell(0, 8, "✓ ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", 1, 1, 'C', True)
+                pdf.cell(0, 6, f"Изчисленото σR = {sigma_final:.3f} MPa ≤ {manual_value} MPa (допустимото σR)", 0, 1)
             else:
-                pdf.cell(0, 10, "❌ Проверката НЕ е удовлетворена", 0, 1)
+                pdf.set_fill_color(255, 220, 220)
+                pdf.cell(0, 8, "✗ ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", 1, 1, 'C', True)
+                pdf.cell(0, 6, f"Изчисленото σR = {sigma_final:.3f} MPa > {manual_value} MPa (допустимото σR)", 0, 1)
+        
+        # Добавяне на дата и час на генериране
+        pdf.ln(10)
+        pdf.set_font("DejaVu", "I", 8)
+        from datetime import datetime
+        generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        pdf.cell(0, 5, f"Генерирано на: {generated_at}", 0, 0, 'R')
         
         # Запазване на PDF във временен файл
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
