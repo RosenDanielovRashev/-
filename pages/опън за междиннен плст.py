@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib import mathtext
 from io import BytesIO
+import datetime 
 
 # Опит за импорт на cairosvg (за векторни формули)
 try:
