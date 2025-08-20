@@ -9,3 +9,5 @@ kaleido==0.2.1
 imgkit==1.2.2
 wkhtmltopdf==0.2
 cairosvg
+cairocffi==1.6.0
+CairoSVG==2.7.1
