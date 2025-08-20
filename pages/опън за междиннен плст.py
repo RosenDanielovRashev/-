@@ -486,39 +486,50 @@ if layer_idx in st.session_state.layer_results:
         pdf.cell(0, 8, "1. ВХОДНИ ПАРАМЕТРИ", 0, 1)
         pdf.set_font("DejaVu", "", 10)
         
-        pdf.cell(40, 6, "Брой пластове (n):", 0, 0)
-        pdf.cell(0, 6, f"{len(h_values)}", 0, 1)
-        pdf.cell(40, 6, "D:", 0, 0)
-        pdf.cell(0, 6, f"{D}", 0, 1)
-        pdf.ln(2)
-        
-        # Създаване на таблица за входните параметри
-        pdf.set_font("DejaVu", "B", 10)
-        pdf.cell(0, 8, "Таблица 1: Входни параметри на пластовете", 0, 1)
-        
-        # Колони на таблицата
-        col_widths = [25, 25, 35, 35]
+        # Таблица с входни параметри (форматирана като в снимката)
+        col_widths = [60, 40, 40]
         
         # Заглавия на колоните
         pdf.set_font("DejaVu", "B", 10)
-        pdf.cell(col_widths[0], 8, "Пласт", 1, 0, 'C')
-        pdf.cell(col_widths[1], 8, "h [cm]", 1, 0, 'C')
-        pdf.cell(col_widths[2], 8, "E [MPa]", 1, 0, 'C')
-        pdf.cell(col_widths[3], 8, "Ed [MPa]", 1, 1, 'C')
+        pdf.cell(col_widths[0], 8, "Параметър", 1, 0, 'C')
+        pdf.cell(col_widths[1], 8, "Стойност", 1, 0, 'C')
+        pdf.cell(col_widths[2], 8, "Мерна единица", 1, 1, 'C')
         
         # Данни в таблицата
         pdf.set_font("DejaVu", "", 10)
+        
+        # Диаметър D
+        pdf.cell(col_widths[0], 8, "Диаметър D", 1, 0)
+        pdf.cell(col_widths[1], 8, f"{D}", 1, 0, 'C')
+        pdf.cell(col_widths[2], 8, "cm", 1, 1, 'C')
+        
+        # Брой пластове
+        pdf.cell(col_widths[0], 8, "Брой пластове", 1, 0)
+        pdf.cell(col_widths[1], 8, f"{len(h_values)}", 1, 0, 'C')
+        pdf.cell(col_widths[2], 8, "", 1, 1, 'C')
+        
+        # Данни за всеки пласт
         for i in range(len(h_values)):
-            # Алтернативно оцветяване на редовете
-            if i % 2 == 0:
-                pdf.set_fill_color(240, 240, 240)
-            else:
-                pdf.set_fill_color(255, 255, 255)
-                
-            pdf.cell(col_widths[0], 8, f"{i+1}", 1, 0, 'C', True)
-            pdf.cell(col_widths[1], 8, f"{h_values[i]}", 1, 0, 'C', True)
-            pdf.cell(col_widths[2], 8, f"{E_values[i]}", 1, 0, 'C', True)
-            pdf.cell(col_widths[3], 8, f"{Ed_values[i]}", 1, 1, 'C', True)
+            # Ei
+            pdf.cell(col_widths[0], 8, f"Пласт {i+1} - Ei", 1, 0)
+            pdf.cell(col_widths[1], 8, f"{E_values[i]}", 1, 0, 'C')
+            pdf.cell(col_widths[2], 8, "MPa", 1, 1, 'C')
+            
+            # hi (закръглено до 2 знака)
+            pdf.cell(col_widths[0], 8, f"Пласт {i+1} - hi", 1, 0)
+            pdf.cell(col_widths[1], 8, f"{round(h_values[i], 2)}", 1, 0, 'C')
+            pdf.cell(col_widths[2], 8, "cm", 1, 1, 'C')
+        
+        # Ed
+        pdf.cell(col_widths[0], 8, "Ed", 1, 0)
+        pdf.cell(col_widths[1], 8, f"{Ed_values[layer_idx]}", 1, 0, 'C')
+        pdf.cell(col_widths[2], 8, "MPa", 1, 1, 'C')
+        
+        # Осова тежест
+        axle_load = st.session_state.get("axle_load", 100)
+        pdf.cell(col_widths[0], 8, "Осова тежест", 1, 0)
+        pdf.cell(col_widths[1], 8, f"{axle_load}", 1, 0, 'C')
+        pdf.cell(col_widths[2], 8, "kN", 1, 1, 'C')
         
         pdf.ln(8)
         
