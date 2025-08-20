@@ -7,7 +7,6 @@ import base64
 import tempfile
 import os
 
-
 st.markdown("""
     <style>
         .streamlit-expanderHeader {
@@ -38,7 +37,7 @@ if 'manual_sigma_values' not in st.session_state:
 if 'check_results' not in st.session_state:
     st.session_state.check_results = {}
 
-# Проверка за данни от główny файл
+# Проверка за данни от główny файł
 use_auto_data = False
 if 'layers_data_all' in st.session_state and 'final_D_all' in st.session_state:
     layers_data = st.session_state.layers_data_all
@@ -152,8 +151,45 @@ if layer_idx in st.session_state.layer_results:
 
     # Visualization
     try:
-        df_original = pd.read_csv("danni_1.csv")
-        df_new = pd.read_csv("Оразмеряване на опън за междиннен плстH_D_1.csv")
+        # Try to find the CSV files in different locations
+        csv_paths = [
+            "danni_1.csv",
+            "./danni_1.csv",
+            "pages/danni_1.csv",
+            "../danni_1.csv"
+        ]
+        
+        df_original = None
+        for path in csv_paths:
+            try:
+                df_original = pd.read_csv(path)
+                break
+            except:
+                continue
+                
+        if df_original is None:
+            st.error("Файлът 'danni_1.csv' не е намерен. Моля, уверете се, че файлът съществува.")
+            return
+
+        csv_paths2 = [
+            "Оразмеряване на опън за междиннен плстH_D_1.csv",
+            "./Оразмеряване на опън за междиннен плстH_D_1.csv",
+            "pages/Оразмеряване на опън за междиннен плстH_D_1.csv",
+            "../Оразмеряване на опън за междиннен плстH_D_1.csv"
+        ]
+        
+        df_new = None
+        for path in csv_paths2:
+            try:
+                df_new = pd.read_csv(path)
+                break
+            except:
+                continue
+                
+        if df_new is None:
+            st.error("Файлът 'Оразмеряване на опън за междиннен плстH_D_1.csv' не е намерен.")
+            return
+
         df_new.rename(columns={'Esr/Ei': 'sr_Ei'}, inplace=True)
 
         fig = go.Figure()
@@ -262,6 +298,47 @@ if layer_idx in st.session_state.layer_results:
                                 name='Вертикална линия до y=2.5'
                             ))
 
+                            # Calculate sigma_r
+                            sigma_r = round(x_intercept / 2, 3)
+                            st.markdown(f"**Изчислено σr = {sigma_r}**")
+                            
+                            # Запазваме стойността в session_state
+                            st.session_state.final_sigma = sigma_r
+
+                            # Вземане на осов товар от първата страница
+                            axle_load = st.session_state.get("axle_load", 100)
+                            
+                            # Определяне на p според осовия товар
+                            if axle_load == 100:
+                                p = 0.620
+                            elif axle_load == 115:
+                                p = 0.633
+                            else:
+                                p = None
+                            st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
+                            if p is not None:
+                                st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
+                            else:
+                                st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
+                                
+                            # Вземаме sigma от session_state, ако има
+                            sigma = st.session_state.get("final_sigma", None)
+
+                            # Променлива за крайното σR
+                            sigma_final = None
+                            
+                            if p is not None and sigma is not None:
+                                sigma_final = 1.15 * p * sigma
+                                st.markdown("### Формула за изчисление на крайното напрежение σR:")
+                                st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
+                                st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
+                                st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
+                                
+                                # Запазваме крайната стойност за проверката
+                                st.session_state["final_sigma_R"] = sigma_final
+                            else:
+                                st.warning("❗ Липсва p или σR от номограмата за изчисление.")
+
         # --- Добавяне на невидим trace за втората ос (за да се покаже мащабът)
         fig.add_trace(go.Scatter(
             x=[0, 1],
@@ -299,107 +376,79 @@ if layer_idx in st.session_state.layer_results:
 
         st.plotly_chart(fig, use_container_width=True)
 
-        st.image("Допустими опънни напрежения.png", caption="Допустими опънни напрежения", width=600)
+        # Try to find the image in different locations
+        image_paths = [
+            "Допустими опънни напрежения.png",
+            "./Допустими опънни напрежения.png",
+            "pages/Допустими опънни напрежения.png",
+            "../Допустими опънни напрежения.png"
+        ]
         
-        # Проверка дали x_intercept е дефинирана и не е None
-        if ('x_intercept' in locals()) and (x_intercept is not None):
-            sigma_r = round(x_intercept / 2, 3)
-            st.markdown(f"**Изчислено σr = {sigma_r}**")
-            
-            # Запазваме стойността в session_state
-            st.session_state.final_sigma = sigma_r
-
-            # Вземане на осов товар от първата страница
-            axle_load = st.session_state.get("axle_load", 100)
-            
-            # Определяне на p според осовия товар
-            if axle_load == 100:
-                p = 0.620
-            elif axle_load == 115:
-                p = 0.633
-            else:
-                p = None
-            st.markdown(f"### 💡 Стойност на коефициент p според осов товар:")
-            if p is not None:
-                st.success(f"p = {p:.3f} MPa (за осов товар {axle_load} kN)")
-            else:
-                st.warning("❗ Не е зададен валиден осов товар. Не може да се изчисли p.")
+        img_found = False
+        for path in image_paths:
+            try:
+                st.image(path, caption="Допустими опънни напрежения", width=600)
+                img_found = True
+                break
+            except:
+                continue
                 
-            # Вземаме sigma от session_state, ако има
-            sigma = st.session_state.get("final_sigma", None)
+        if not img_found:
+            st.warning("Изображението 'Допустими опънни напрежения.png' не е намерено.")
 
-            # Променлива за крайното σR
-            sigma_final = None
+        # Секция за ръчно въвеждане
+        st.markdown(
+            """
+            <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
+                <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        # Инициализираме ръчната стойност за този пласт, ако не съществува
+        if f'manual_sigma_{layer_idx}' not in st.session_state.manual_sigma_values:
+            st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = sigma_r if 'sigma_r' in locals() else 0.0
+
+        # Поле за ръчно въвеждане
+        manual_value = st.number_input(
+            label="Въведете ръчно отчетена стойност σR [MPa]",
+            min_value=0.0,
+            max_value=20.0,
+            value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r if 'sigma_r' in locals() else 0.0),
+            step=0.1,
+            key=f"manual_sigma_input_{layer_idx}",
+            label_visibility="visible"
+        )
+        
+        # Запазваме ръчно въведената стойност
+        st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
+        
+        # Проверка на условието (без бутон, автоматично при промяна)
+        sigma_to_compare = st.session_state.get("final_sigma_R", None)
+        
+        if sigma_to_compare is not None:
+            # Проверяваме дали вече имаме резултат за този пласт
+            if f'check_result_{layer_idx}' not in st.session_state.check_results:
+                st.session_state.check_results[f'check_result_{layer_idx}'] = None
             
-            if p is not None and sigma is not None:
-                sigma_final = 1.15 * p * sigma
-                st.markdown("### Формула за изчисление на крайното напрежение σR:")
-                st.latex(r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}")
-                st.latex(rf"\sigma_R = 1.15 \times {p:.3f} \times {sigma:.3f} = {sigma_final:.3f} \text{{ MPa}}")
-                st.success(f"✅ Крайно напрежение σR = {sigma_final:.3f} MPa")
-                
-                # Запазваме крайната стойност за проверката
-                st.session_state["final_sigma_R"] = sigma_final
+            # Проверка на условието
+            check_passed = sigma_to_compare <= manual_value
+            st.session_state.check_results[f'check_result_{layer_idx}'] = check_passed
+            
+            # Показваме резултата
+            if check_passed:
+                st.success(
+                    f"✅ Проверката е удовлетворена: "
+                    f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
+                )
             else:
-                st.warning("❗ Липсва p или σR от номограмата за изчисление.")
-
-
-    
-            # Секция за ръчно въвеждане
-            st.markdown(
-                """
-                <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
-                    <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-            # Инициализираме ръчната стойност за този пласт, ако не съществува
-            if f'manual_sigma_{layer_idx}' not in st.session_state.manual_sigma_values:
-                st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = sigma_r
-
-            # Поле за ръчно въвеждане
-            manual_value = st.number_input(
-                label="Въведете ръчно отчетена стойност σR [MPa]",
-                min_value=0.0,
-                max_value=20.0,
-                value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r),
-                step=0.1,
-                key=f"manual_sigma_input_{layer_idx}",
-                label_visibility="visible"
-            )
-            
-            # Запазваме ръчно въведената стойност
-            st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
-            
-            # Проверка на условието (без бутон, автоматично при промяна)
-            sigma_to_compare = st.session_state.get("final_sigma_R", None)
-            
-            if sigma_to_compare is not None:
-                # Проверяваме дали вече имаме резултат за този пласт
-                if f'check_result_{layer_idx}' not in st.session_state.check_results:
-                    st.session_state.check_results[f'check_result_{layer_idx}'] = None
-                
-                # Проверка на условието
-                check_passed = sigma_to_compare <= manual_value
-                st.session_state.check_results[f'check_result_{layer_idx}'] = check_passed
-                
-                # Показваме резултата
-                if check_passed:
-                    st.success(
-                        f"✅ Проверката е удовлетворена: "
-                        f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
-                    )
-                else:
-                    st.error(
-                        f"❌ Проверката НЕ е удовлетворена: "
-                        f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
-                    )
-            else:
-                st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
+                st.error(
+                    f"❌ Проверката НЕ е удовлетворена: "
+                    f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
+                )
         else:
-            st.markdown("**σr = -** (Няма изчислена стойност)")
+            st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
@@ -524,7 +573,25 @@ if layer_idx in st.session_state.layer_results:
         pdf.cell(0, 10, "5. Допустими опънни напрежения", 0, 1)
         
         try:
-            pdf.image("Допустими опънни напрежения.png", x=10, y=None, w=180)
+            # Try to find the image
+            image_paths = [
+                "Допустими опънни напрежения.png",
+                "./Допустими опънни напрежения.png",
+                "pages/Допустими опънни напрежения.png",
+                "../Допустими опънни напрежения.png"
+            ]
+            
+            img_found = False
+            for path in image_paths:
+                try:
+                    pdf.image(path, x=10, y=None, w=180)
+                    img_found = True
+                    break
+                except:
+                    continue
+                    
+            if not img_found:
+                pdf.cell(0, 10, "Изображението не е намерено", 0, 1)
         except Exception as e:
             pdf.cell(0, 10, f"Грешка при добавяне на изображението: {e}", 0, 1)
         
@@ -574,6 +641,5 @@ if layer_idx in st.session_state.layer_results:
             href = f'<a href="data:application/octet-stream;base64,{b64}" download="опън_за_междинен_пласт_отчет.pdf">Изтегли PDF отчет</a>'
             st.markdown(href, unsafe_allow_html=True)
 
-    # Линк към предишната страница
-    st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
-[file content end]
+# Линк към предишната страница
+st.markdown('[Към Оразмеряване на пътна конструкция](orazmeriavane_patna_konstrukcia.py)')
