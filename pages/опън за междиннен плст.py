@@ -666,10 +666,10 @@ def generate_pdf_report_2():
 
     pdf.ln(10)
 
-    # 2. Формули за изчисление (векторен рендер)
+    # 2. Формули за изчисление
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
-
+    
     formulas_section2 = [
         r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
         r"H_n = \sum_{i=1}^n h_i", 
@@ -679,43 +679,42 @@ def generate_pdf_report_2():
         r"\frac{E_n}{Ed_n}",
         r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
     ]
+    
     pdf.add_formula_section("Основни формули за изчисление:", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=-3)
 
-    # 3. Изчисления (с числени замествания)
-    pdf.set_font('DejaVu', 'B', 14)
-    pdf.cell(0, 10, '3. Изчисления', ln=True)
+    pdf.ln(5)
 
+    # 3. Резултати от изчисленията
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '3. Резултати от изчисленията', ln=True)
+    
     if layer_idx in st.session_state.layer_results:
         results = st.session_state.layer_results[layer_idx]
         
-        # Изчислителни формули с числени стойности
+        # Числени замествания
+        num = sum(E_values[i] * h_values[i] for i in range(layer_idx))
+        den = sum(h_values[i] for i in range(layer_idx))
+        num_str = " + ".join([f"{E_values[i]:.2f} \\times {h_values[i]:.2f}" for i in range(layer_idx)])
+        den_str = " + ".join([f"{h_values[i]:.2f}" for i in range(layer_idx)])
+        
+        formulas_section3 = [
+            fr"H_{{{layer_idx}}} = {den_str} = {results['H_n_1_r']:.2f} \, \text{{cm}}",
+            fr"H_{{{results['n_for_calc']}}} = {' + '.join([f'{h:.2f}' for h in h_values[:results['n_for_calc']]])} = {results['H_n_r']:.2f} \, \text{{cm}}"
+        ]
+        
         if layer_idx > 0:
-            h_terms = " + ".join([f"{h_values[i]:.2f}" for i in range(layer_idx)])
-            formulas_section3 = [
-                fr"H_{{{layer_idx}}} = {h_terms} = {results['H_n_1_r']} \, \text{{cm}}",
-                fr"H_{{{results['n_for_calc']}}} = {' + '.join([f'{h:.2f}' for h in h_values[:results['n_for_calc']]])} = {results['H_n_r']} \, \text{{cm}}"
-            ]
-            
-            numerator = " + ".join([f"{E_values[i]:.2f} \times {h_values[i]:.2f}" for i in range(layer_idx)])
-            denominator = " + ".join([f"{h_values[i]:.2f}" for i in range(layer_idx)])
-            formulas_section3.append(fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {results['Esr_r']} \, \text{{MPa}}")
-        else:
-            formulas_section3 = [
-                fr"H_0 = 0 \, \text{{cm}}",
-                fr"H_1 = {h_values[0]:.2f} = {results['H_n_r']} \, \text{{cm}}",
-                "Esr = 0 \, \text{MPa}"
-            ]
+            formulas_section3.append(fr"Esr = \frac{{{num_str}}}{{{den_str}}} = {results['Esr_r']:.2f} \, \text{{MPa}}")
         
         formulas_section3.extend([
-            fr"\frac{{H_n}}{{D}} = \frac{{{results['H_n_r']}}}{{{D}}} = {results['ratio_r']}",
-            fr"E_{{{layer_idx+1}}} = {results['En_r']} \, \text{{MPa}}",
-            fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = \frac{{{results['Esr_r']}}}{{{results['En_r']}}} = {results['Esr_over_En_r']}",
-            fr"\frac{{E_{{{layer_idx+1}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']}}}{{{results['Ed_r']}}} = {results['En_over_Ed_r']}"
+            fr"\frac{{H_n}}{{D}} = \frac{{{results['H_n_r']:.2f}}}{{{D:.2f}}} = {results['ratio_r']:.3f}",
+            fr"E_{{{layer_idx+1}}} = {results['En_r']:.2f} \, \text{{MPa}}",
+            fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = \frac{{{results['Esr_r']:.2f}}}{{{results['En_r']:.2f}}} = {results['Esr_over_En_r']:.3f}",
+            fr"\frac{{E_{{{layer_idx+1}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']:.2f}}}{{{results['Ed_r']:.2f}}} = {results['En_over_Ed_r']:.3f}"
         ])
         
         if 'final_sigma' in st.session_state:
-            formulas_section3.append(fr"\sigma_R^{{\mathrm{{номограма}}}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
-
+            formulas_section3.append(fr"\sigma_R^{{номограма}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}")
+        
         axle_load = st.session_state.get("axle_load", 100)
         p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
         if p_loc and 'final_sigma' in st.session_state:
@@ -728,10 +727,158 @@ def generate_pdf_report_2():
     pdf.ln(5)
 
     # 4. Графика
-    if "fig" in st.session_state:
+    try:
+        df_original = pd.read_csv("danni_1.csv")
+        df_new = pd.read_csv("Оразмеряване на опън за междиннен плстH_D_1.csv")
+        df_new.rename(columns={'Esr/Ei': 'sr_Ei'}, inplace=True)
+
+        fig = go.Figure()
+
+        # Add isolines from original df
+        if 'Ei/Ed' in df_original.columns:
+            for level in sorted(df_original['Ei/Ed'].unique()):
+                df_level = df_original[df_original['Ei/Ed'] == level].sort_values(by='H/D')
+                fig.add_trace(go.Scatter(
+                    x=df_level['H/D'], y=df_level['y'],
+                    mode='lines', name=f'Ei/Ed = {round(level,3)}',
+                    line=dict(width=2)
+                ))
+
+        # Add isolines from new df
+        if 'sr_Ei' in df_new.columns:
+            for sr_Ei in sorted(df_new['sr_Ei'].unique()):
+                df_level = df_new[df_new['sr_Ei'] == sr_Ei].sort_values(by='H/D')
+                fig.add_trace(go.Scatter(
+                    x=df_level['H/D'], y=df_level['y'],
+                    mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
+                    line=dict(width=2)
+                ))
+
+        # Interpolation and marking points
+        if layer_idx in st.session_state.layer_results:
+            results = st.session_state.layer_results[layer_idx]
+            if layer_idx > 0:
+                sr_Ei_values = sorted(df_new['sr_Ei'].unique())
+                target_sr_Ei = results['Esr_over_En_r']
+                target_Hn_D = results['ratio_r']
+
+                y_at_ratio = None
+                if min(sr_Ei_values) <= target_sr_Ei <= max(sr_Ei_values):
+                    if target_sr_Ei in sr_Ei_values:
+                        df_target = df_new[df_new['sr_Ei'] == target_sr_Ei].sort_values(by='H/D')
+                        y_at_ratio = np.interp(target_Hn_D, df_target['H/D'], df_target['y'])
+                    else:
+                        for i in range(len(sr_Ei_values)-1):
+                            if sr_Ei_values[i] < target_sr_Ei < sr_Ei_values[i+1]:
+                                df_lower = df_new[df_new['sr_Ei'] == sr_Ei_values[i]].sort_values(by='H/D')
+                                df_upper = df_new[df_new['sr_Ei'] == sr_Ei_values[i+1]].sort_values(by='H/D')
+                                
+                                y_lower = np.interp(target_Hn_D, df_lower['H/D'], df_lower['y'])
+                                y_upper = np.interp(target_Hn_D, df_upper['H/D'], df_upper['y'])
+                                
+                                y_at_ratio = y_lower + (y_upper - y_lower) * (target_sr_Ei - sr_Ei_values[i]) / (sr_Ei_values[i+1] - sr_Ei_values[i])
+                                break
+
+                if y_at_ratio is not None:
+                    # Вертикална линия (синя)
+                    fig.add_trace(go.Scatter(
+                        x=[target_Hn_D, target_Hn_D], y=[0, y_at_ratio],
+                        mode='lines', line=dict(color='blue', dash='dash'),
+                        name='Вертикална линия'
+                    ))
+
+                    # Червена точка
+                    fig.add_trace(go.Scatter(
+                        x=[target_Hn_D], y=[y_at_ratio],
+                        mode='markers', marker=dict(color='red', size=10),
+                        name='Точка на интерполация'
+                    ))
+
+                    # Пресечна точка (оранжева)
+                    Ei_Ed_target = results['En_over_Ed_r']
+                    if 'Ei/Ed' in df_original.columns:
+                        Ei_Ed_values = sorted(df_original['Ei/Ed'].unique())
+                        if min(Ei_Ed_values) <= Ei_Ed_target <= max(Ei_Ed_values):
+                            x_intercept = None
+                            if Ei_Ed_target in Ei_Ed_values:
+                                df_level = df_original[df_original['Ei/Ed'] == Ei_Ed_target].sort_values(by='H/D')
+                                x_intercept = np.interp(y_at_ratio, df_level['y'], df_level['H/D'])
+                            else:
+                                for i in range(len(Ei_Ed_values)-1):
+                                    if Ei_Ed_values[i] < Ei_Ed_target < Ei_Ed_values[i+1]:
+                                        df_lower = df_original[df_original['Ei/Ed'] == Ei_Ed_values[i]].sort_values(by='H/D')
+                                        df_upper = df_original[df_original['Ei/Ed'] == Ei_Ed_values[i+1]].sort_values(by='H/D')
+                                        
+                                        x_lower = np.interp(y_at_ratio, df_lower['y'], df_lower['H/D'])
+                                        x_upper = np.interp(y_at_ratio, df_upper['y'], df_upper['H/D'])
+                                        
+                                        x_intercept = x_lower + (x_upper - x_lower) * (Ei_Ed_target - Ei_Ed_values[i]) / (Ei_Ed_values[i+1] - Ei_Ed_values[i])
+                                        break
+
+                            if x_intercept is not None:
+                                fig.add_trace(go.Scatter(
+                                    x=[x_intercept], y=[y_at_ratio],
+                                    mode='markers', marker=dict(color='orange', size=12),
+                                    name='Пресечна точка'
+                                ))
+                                # Хоризонтална линия между червената и оранжевата точка
+                                fig.add_trace(go.Scatter(
+                                    x=[target_Hn_D, x_intercept],
+                                    y=[y_at_ratio, y_at_ratio],
+                                    mode='lines',
+                                    line=dict(color='green', dash='dash'),
+                                    name='Линия между червена и оранжева точка'
+                                ))
+
+                                # Вертикална линия от оранжева точка до y=2.5
+                                fig.add_trace(go.Scatter(
+                                    x=[x_intercept, x_intercept],
+                                    y=[y_at_ratio, 2.5],
+                                    mode='lines',
+                                    line=dict(color='purple', dash='dash'),
+                                    name='Вертикална линия до y=2.5'
+                                ))
+
+        # --- Добавяне на невидим trace за втората ос (за да се покаже мащабът)
+        fig.add_trace(go.Scatter(
+            x=[0, 1],
+            y=[None, None],  # y не влияе
+            mode='lines',
+            line=dict(color='rgba(0,0,0,0)'),
+            showlegend=False,
+            hoverinfo='skip',
+            xaxis='x2'  # Свързваме с втората ос
+        ))
+
+        fig.update_layout(
+            title='Графика на изолинии',
+            xaxis=dict(
+                title='H/D',
+                showgrid=True,
+                zeroline=False,
+            ),
+            xaxis2=dict(
+                overlaying='x',
+                side='top',
+                range=[0, 1],
+                showgrid=False,
+                zeroline=False,
+                tickvals=[0, 0.25, 0.5, 0.75, 1],
+                ticktext=['0', '0.25', '0.5', '0.75', '1'],
+                title='σr'
+            ),
+            yaxis=dict(
+                title='y',
+                range=[0, 3]
+            ),
+            showlegend=False
+        )
+
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, '4. Графика на номограмата', ln=True)
-        pdf.add_plotly_figure(st.session_state["fig"], width=160)
+        pdf.add_plotly_figure(fig, width=160)
+    except Exception as e:
+        st.error(f"Грешка при създаване на графика за PDF: {e}")
 
     # 5. Допустими напрежения
     img_path = "Допустими опънни напрежения.png"
@@ -757,7 +904,7 @@ def generate_pdf_report_2():
         pdf.set_font('DejaVu', '', 10)
         for label, val in [
             ('Изчислено σR', f"{st.session_state.final_sigma_R:.3f} MPa"),
-            ('Допустимо σR (ръчно)', f"{manual_value:.3f} MPa")
+            ('Допустимо σR (ръчно)', f"{manual_value:.2f} MPa")
         ]:
             pdf.set_fill_color(245, 245, 245) if label.startswith('Изчислено') else pdf.set_fill_color(255, 255, 255)
             pdf.cell(90, 8, label, border=1, fill=True)
