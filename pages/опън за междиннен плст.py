@@ -233,6 +233,8 @@ if layer_idx in st.session_state.layer_results:
                                     
                                     x_lower = np.interp(y_at_ratio, df_lower['y'], df_lower['H/D'])
                                     x_upper = np.interp(y_at_ratio, df_upper['y'], df_upper['H/D'])
+                                    
+                                    # ПОПРАВЕНО: Правилно отстъпване и изчисление
                                     x_intercept = x_lower + (x_upper - x_lower) * (Ei_Ed_target - Ei_Ed_values[i]) / (Ei_Ed_values[i+1] - Ei_Ed_values[i])
                                     break
 
