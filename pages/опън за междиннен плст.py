@@ -453,7 +453,6 @@ if layer_idx in st.session_state.layer_results:
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
 
-    # Функция за генериране на PDF отчет
     def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, manual_value=None, check_passed=None):
         pdf = FPDF()
         pdf.set_auto_page_break(auto=True, margin=15)
@@ -538,6 +537,7 @@ if layer_idx in st.session_state.layer_results:
         pdf.cell(0, 8, "2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ", 0, 1)
         pdf.set_font("DejaVu", "", 10)
         
+        # По-добро форматиране на формулите
         formulas = [
             r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
             r"H_n = \sum_{i=1}^n h_i",
@@ -549,8 +549,8 @@ if layer_idx in st.session_state.layer_results:
         ]
         
         for formula in formulas:
-            pdf.cell(5, 6, "", 0, 0)  # Отстъп
-            pdf.cell(0, 6, f"${formula}$", 0, 1)
+            pdf.cell(5, 8, "", 0, 0)  # Отстъп
+            pdf.cell(0, 8, f"${formula}$", 0, 1)
         
         pdf.ln(5)
         
@@ -562,39 +562,46 @@ if layer_idx in st.session_state.layer_results:
         # Създаване на таблица за резултатите
         col_widths_calc = [70, 50]
         
-        pdf.cell(col_widths_calc[0], 6, f"H{to_subscript(layer_idx)}:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{results['H_n_1_r']} cm", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, f"H{to_subscript(layer_idx)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{results['H_n_1_r']} cm", 0, 1)
         
-        pdf.cell(col_widths_calc[0], 6, f"H{to_subscript(results['n_for_calc'])}:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{results['H_n_r']} cm", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, f"H{to_subscript(results['n_for_calc'])}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{results['H_n_r']} cm", 0, 1)
         
         if layer_idx > 0:
-            pdf.cell(col_widths_calc[0], 6, "Esr:", 0, 0)
-            pdf.cell(col_widths_calc[1], 6, f"{results['Esr_r']} MPa", 0, 1)
+            pdf.cell(col_widths_calc[0], 8, "Esr:", 0, 0)
+            pdf.cell(col_widths_calc[1], 8, f"{results['Esr_r']} MPa", 0, 1)
+            
+            # Показване на формулата за Esr
+            pdf.set_font("DejaVu", "", 8)
+            numerator = " + ".join([f"{results['E_values'][i]} \cdot {results['h_values'][i]}" for i in range(layer_idx)])
+            denominator = " + ".join([f"{results['h_values'][i]}" for i in range(layer_idx)])
+            pdf.cell(0, 6, f"${r'Esr = \frac{' + numerator + '}{' + denominator + '} = ' + str(round(results['Esr_r']))}$", 0, 1)
+            pdf.set_font("DejaVu", "", 10)
         else:
-            pdf.cell(col_widths_calc[0], 6, "Esr:", 0, 0)
-            pdf.cell(col_widths_calc[1], 6, "0 (няма предишни пластове)", 0, 1)
+            pdf.cell(col_widths_calc[0], 8, "Esr:", 0, 0)
+            pdf.cell(col_widths_calc[1], 8, "0 (няма предишни пластове)", 0, 1)
         
-        pdf.cell(col_widths_calc[0], 6, f"H{to_subscript(results['n_for_calc'])}/D:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{results['ratio_r']}", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, f"H{to_subscript(results['n_for_calc'])}/D:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{results['ratio_r']}", 0, 1)
         
-        pdf.cell(col_widths_calc[0], 6, f"E{to_subscript(layer_idx+1)}:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{results['En_r']} MPa", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, f"E{to_subscript(layer_idx+1)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{results['En_r']} MPa", 0, 1)
         
-        pdf.cell(col_widths_calc[0], 6, f"Esr/E{to_subscript(layer_idx+1)}:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{results['Esr_over_En_r']}", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, f"Esr/E{to_subscript(layer_idx+1)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{results['Esr_over_En_r']}", 0, 1)
         
-        pdf.cell(col_widths_calc[0], 6, f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)}:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{results['En_over_Ed_r']}", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, f"E{to_subscript(layer_idx+1)}/Ed{to_subscript(layer_idx+1)}:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{results['En_over_Ed_r']}", 0, 1)
         
         if sigma_r is not None:
-            pdf.cell(col_widths_calc[0], 6, "σr (от номограма):", 0, 0)
-            pdf.cell(col_widths_calc[1], 6, f"{sigma_r} MPa", 0, 1)
+            pdf.cell(col_widths_calc[0], 8, "σr (от номограма):", 0, 0)
+            pdf.cell(col_widths_calc[1], 8, f"{sigma_r} MPa", 0, 1)
         
         # Информация за осов товар
         axle_load = st.session_state.get("axle_load", 100)
-        pdf.cell(col_widths_calc[0], 6, "Осов товар:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{axle_load} kN", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, "Осов товар:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{axle_load} kN", 0, 1)
         
         # Определяне на p според осовия товар
         if axle_load == 100:
@@ -604,13 +611,17 @@ if layer_idx in st.session_state.layer_results:
         else:
             p = "неизвестен"
         
-        pdf.cell(col_widths_calc[0], 6, "Коефициент p:", 0, 0)
-        pdf.cell(col_widths_calc[1], 6, f"{p} MPa", 0, 1)
+        pdf.cell(col_widths_calc[0], 8, "Коефициент p:", 0, 0)
+        pdf.cell(col_widths_calc[1], 8, f"{p} MPa", 0, 1)
         
         if sigma_final is not None:
             pdf.set_font("DejaVu", "B", 10)
-            pdf.cell(col_widths_calc[0], 8, "Крайно σR:", 0, 0)
-            pdf.cell(col_widths_calc[1], 8, f"{sigma_final:.3f} MPa", 0, 1)
+            pdf.cell(col_widths_calc[0], 10, "Крайно σR:", 0, 0)
+            pdf.cell(col_widths_calc[1], 10, f"{sigma_final:.3f} MPa", 0, 1)
+            
+            # Показване на формулата за σR
+            pdf.set_font("DejaVu", "", 8)
+            pdf.cell(0, 8, f"$\\sigma_R = 1.15 \\cdot {p} \\cdot {sigma_r} = {sigma_final:.3f} \\, \\text{{MPa}}$", 0, 1)
             pdf.set_font("DejaVu", "", 10)
         
         pdf.ln(5)
@@ -619,15 +630,23 @@ if layer_idx in st.session_state.layer_results:
         pdf.set_font("DejaVu", "B", 12)
         pdf.cell(0, 8, "4. ГРАФИКА НА НОМОГРАМАТА", 0, 1)
         
-        # Запазване на графиката като временно изображение
+        # Запазване на графиката като временно изображение с по-висока резолюция
         try:
             with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
-                fig.write_image(tmpfile.name, width=700, height=500)
+                # Експорт във формат SVG за по-добро качество
+                fig.write_image(tmpfile.name, format="png", width=1000, height=700, scale=2)
                 pdf.image(tmpfile.name, x=10, y=None, w=190)
                 os.unlink(tmpfile.name)
         except Exception as e:
-            pdf.set_font("DejaVu", "", 10)
-            pdf.cell(0, 6, f"Грешка при добавяне на графиката: {e}", 0, 1)
+            # Ако SVG не се поддържа, опитайте с PNG
+            try:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmpfile:
+                    fig.write_image(tmpfile.name, width=1000, height=700, scale=2)
+                    pdf.image(tmpfile.name, x=10, y=None, w=190)
+                    os.unlink(tmpfile.name)
+            except Exception as e2:
+                pdf.set_font("DejaVu", "", 10)
+                pdf.cell(0, 6, f"Грешка при добавяне на графиката: {e2}", 0, 1)
         
         pdf.ln(5)
         
@@ -647,6 +666,7 @@ if layer_idx in st.session_state.layer_results:
             img_found = False
             for path in image_paths:
                 try:
+                    # Опит за зареждане на изображението с по-висока резолюция
                     pdf.image(path, x=10, y=None, w=190)
                     img_found = True
                     break
@@ -668,12 +688,12 @@ if layer_idx in st.session_state.layer_results:
         pdf.set_font("DejaVu", "", 10)
         
         if manual_value is not None:
-            pdf.cell(70, 6, "Ръчно отчетена стойност σR:", 0, 0)
-            pdf.cell(0, 6, f"{manual_value} MPa", 0, 1)
+            pdf.cell(70, 8, "Ръчно отчетена стойност σR:", 0, 0)
+            pdf.cell(0, 8, f"{manual_value} MPa", 0, 1)
         
         if sigma_final is not None:
-            pdf.cell(70, 6, "Изчислена стойност σR:", 0, 0)
-            pdf.cell(0, 6, f"{sigma_final:.3f} MPa", 0, 1)
+            pdf.cell(70, 8, "Изчислена стойност σR:", 0, 0)
+            pdf.cell(0, 8, f"{sigma_final:.3f} MPa", 0, 1)
         
         if check_passed is not None:
             pdf.ln(3)
@@ -703,7 +723,7 @@ if layer_idx in st.session_state.layer_results:
             
             os.unlink(tmpfile.name)
             return pdf_bytes
-
+        
     # Добавяне на бутон за генериране на PDF отчет
     if st.button("Генерирай PDF отчет"):
         with st.spinner("Генериране на PDF..."):
