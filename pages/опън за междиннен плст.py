@@ -9,8 +9,14 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib import mathtext
-import cairosvg
 from io import BytesIO
+
+# Опит за импорт на cairosvg (за векторни формули)
+try:
+    import cairosvg  # pip install cairosvg
+    _HAS_CAIROSVG = True
+except Exception:
+    _HAS_CAIROSVG = False
 
 st.markdown("""
     <style>
