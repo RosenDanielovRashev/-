@@ -281,44 +281,6 @@ if layer_idx in st.session_state.layer_results:
                             line=dict(width=2)
                         ))
 
-                # Функция за добавяне на изолинии с етикети
-                def add_isoline_with_label(fig, df, x_col, y_col, group_col, color, text_position='middle right'):
-                    """Добавя изолинии с етикети към графиката"""
-                    for value in sorted(df[group_col].unique()):
-                        df_level = df[df[group_col] == value].sort_values(by=x_col)
-                        
-                        # Добавяме изолинията
-                        fig.add_trace(go.Scatter(
-                            x=df_level[x_col], y=df_level[y_col],
-                            mode='lines',
-                            name=f'{group_col} = {round(value,3)}',
-                            line=dict(width=2, color=color),
-                            showlegend=False
-                        ))
-                        
-                        # Добавяме етикет (текст) в средата на линията
-                        mid_idx = len(df_level) // 2
-                        if mid_idx < len(df_level):
-                            x_mid = df_level[x_col].iloc[mid_idx]
-                            y_mid = df_level[y_col].iloc[mid_idx]
-                            
-                            fig.add_trace(go.Scatter(
-                                x=[x_mid], y=[y_mid],
-                                mode='text',
-                                text=[f'{round(value,2)}'],
-                                textposition=text_position,
-                                textfont=dict(size=8, color=color),
-                                showlegend=False,
-                                hoverinfo='skip'
-                            ))
-                
-                # В основния код за визуализация, заменете секциите за добавяне на изолинии с:
-                if 'Ei/Ed' in df_original.columns:
-                    add_isoline_with_label(fig, df_original, 'H/D', 'y', 'Ei/Ed', 'blue', 'middle right')
-                
-                if 'sr_Ei' in df_new.columns:
-                    add_isoline_with_label(fig, df_new, 'H/D', 'y', 'sr_Ei', 'red', 'middle left')             
-
                 # Interpolation and marking points
                 x_intercept = None  # Initialize x_intercept
                 if layer_idx > 0:
