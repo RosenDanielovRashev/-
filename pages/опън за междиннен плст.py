@@ -833,7 +833,7 @@ if layer_idx in st.session_state.layer_results:
             formulas_section3.append(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
             formulas_section3.append(fr"\sigma_R = 1.15 \times {p:.3f} \times {sigma_r:.3f} = {sigma_final:.3f} \, \text{{MPa}}")
         
-        pdf.add_formula_section("Изчислителни формули:", formulas_section3, columns=2, col_width=95, img_width=85, row_gap=-3)
+        pdf.add_formula_section("", formulas_section3, columns=2, col_width=95, img_width=85, row_gap=-3)
         
         pdf.ln(5)
      
