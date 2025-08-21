@@ -294,18 +294,17 @@ if layer_idx in st.session_state.layer_results:
                 
                 # Add isolines from new df
                 if 'sr_Ei' in df_new.columns:
-                    sr_levels = sorted(df_new['sr_Ei'].unique())
-                    for i, sr_Ei in enumerate(sr_levels):
+                    for sr_Ei in sorted(df_new['sr_Ei'].unique()):
                         df_level = df_new[df_new['sr_Ei'] == sr_Ei].sort_values(by='H/D')
                         
-                        # Разпределяме етикетите равномерно по вертикала
-                        y_positions = np.linspace(0.5, 2.5, len(sr_levels))
-                        target_y = y_positions[i]
-                        
-                        # Намираме най-близката точка до целевата y позиция
-                        closest_idx = (df_level['y'] - target_y).abs().idxmin()
-                        x_mid = df_level.loc[closest_idx, 'H/D']
-                        y_mid = df_level.loc[closest_idx, 'y']
+                        # Избираме различна позиция за всяка линия
+                        if len(df_level) > 10:
+                            mid_idx = 2 * len(df_level) // 3  # 2/3 от пътя
+                        else:
+                            mid_idx = len(df_level) // 2
+                            
+                        x_mid = df_level['H/D'].iloc[mid_idx]
+                        y_mid = df_level['y'].iloc[mid_idx]
                         
                         fig.add_trace(go.Scatter(
                             x=df_level['H/D'], y=df_level['y'],
@@ -318,7 +317,7 @@ if layer_idx in st.session_state.layer_results:
                             mode='text',
                             text=[f'{round(sr_Ei,2)}'],
                             textposition='middle left',
-                            textfont=dict(size=8, color='red'),
+                            textfont=dict(size=8, color='red'),  # По-малък размер
                             showlegend=False,
                             hoverinfo='skip'
                         ))
