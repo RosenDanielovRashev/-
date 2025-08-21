@@ -724,8 +724,6 @@ if layer_idx in st.session_state.layer_results:
         pdf.add_page()
         pdf.set_font('DejaVu', 'B', 18)
         pdf.cell(0, 15, 'ОПЪН В МЕЖДИНЕН ПЛАСТ', ln=True, align='C')
-        pdf.set_font('DejaVu', 'I', 12)
-        pdf.cell(0, 10, 'ОТ ПЪТНАТА КОНСТРУКЦИЯ - ФИГ. 9.3', 0, 1, 'C')
         pdf.ln(6)
         
         # 1. Входни параметри
