@@ -933,4 +933,4 @@ if layer_idx in st.session_state.layer_results:
             st.markdown(href, unsafe_allow_html=True)
 
 # Линк към предишната страница
-st.markdown('[Към Оразмеряване на пътна конструкция](orazmeriavane_patna_konstrukcia.py)')
+st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
