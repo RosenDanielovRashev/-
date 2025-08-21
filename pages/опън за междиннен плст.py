@@ -261,62 +261,67 @@ if layer_idx in st.session_state.layer_results:
 
                 fig = go.Figure()
 
-                # Add isolines from original df - само всеки втори/трети етикет
+                # Add isolines from original df
                 if 'Ei/Ed' in df_original.columns:
                     levels = sorted(df_original['Ei/Ed'].unique())
                     for i, level in enumerate(levels):
                         df_level = df_original[df_original['Ei/Ed'] == level].sort_values(by='H/D')
+                        
+                        # Разпределяме етикетите равномерно по вертикала
+                        y_positions = np.linspace(0.5, 2.5, len(levels))
+                        target_y = y_positions[i]
+                        
+                        # Намираме най-близката точка до целевата y позиция
+                        closest_idx = (df_level['y'] - target_y).abs().idxmin()
+                        x_mid = df_level.loc[closest_idx, 'H/D']
+                        y_mid = df_level.loc[closest_idx, 'y']
                         
                         fig.add_trace(go.Scatter(
                             x=df_level['H/D'], y=df_level['y'],
                             mode='lines', name=f'Ei/Ed = {round(level,3)}',
                             line=dict(width=2)
                         ))
-                        
-                        # Добавяме етикет само за всеки трети елемент
-                        if i % 3 == 0 and len(df_level) > 5:
-                            mid_idx = len(df_level) // 2
-                            x_mid = df_level['H/D'].iloc[mid_idx]
-                            y_mid = df_level['y'].iloc[mid_idx]
-                            
-                            fig.add_trace(go.Scatter(
-                                x=[x_mid], y=[y_mid],
-                                mode='text',
-                                text=[f'{round(level,2)}'],
-                                textposition='middle right',
-                                textfont=dict(size=8, color='blue'),
-                                showlegend=False,
-                                hoverinfo='skip'
-                            ))
+                        # Добавяме етикет за изолинията
+                        fig.add_trace(go.Scatter(
+                            x=[x_mid], y=[y_mid],
+                            mode='text',
+                            text=[f'{round(level,2)}'],
+                            textposition='middle right',
+                            textfont=dict(size=8, color='blue'),
+                            showlegend=False,
+                            hoverinfo='skip'
+                        ))
                 
-                # Add isolines from new df - само всеки втори/трети етикет
+                # Add isolines from new df
                 if 'sr_Ei' in df_new.columns:
                     sr_levels = sorted(df_new['sr_Ei'].unique())
                     for i, sr_Ei in enumerate(sr_levels):
                         df_level = df_new[df_new['sr_Ei'] == sr_Ei].sort_values(by='H/D')
+                        
+                        # Разпределяме етикетите равномерно по вертикала
+                        y_positions = np.linspace(0.5, 2.5, len(sr_levels))
+                        target_y = y_positions[i]
+                        
+                        # Намираме най-близката точка до целевата y позиция
+                        closest_idx = (df_level['y'] - target_y).abs().idxmin()
+                        x_mid = df_level.loc[closest_idx, 'H/D']
+                        y_mid = df_level.loc[closest_idx, 'y']
                         
                         fig.add_trace(go.Scatter(
                             x=df_level['H/D'], y=df_level['y'],
                             mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
                             line=dict(width=2)
                         ))
-                        
-                        # Добавяме етикет само за всеки трети елемент
-                        if i % 3 == 0 and len(df_level) > 5:
-                            mid_idx = len(df_level) // 2
-                            x_mid = df_level['H/D'].iloc[mid_idx]
-                            y_mid = df_level['y'].iloc[mid_idx]
-                            
-                            fig.add_trace(go.Scatter(
-                                x=[x_mid], y=[y_mid],
-                                mode='text',
-                                text=[f'{round(sr_Ei,2)}'],
-                                textposition='middle left',
-                                textfont=dict(size=8, color='red'),
-                                showlegend=False,
-                                hoverinfo='skip'
-                            ))
-
+                        # Добавяме етикет за изолинията
+                        fig.add_trace(go.Scatter(
+                            x=[x_mid], y=[y_mid],
+                            mode='text',
+                            text=[f'{round(sr_Ei,2)}'],
+                            textposition='middle left',
+                            textfont=dict(size=8, color='red'),
+                            showlegend=False,
+                            hoverinfo='skip'
+                        ))
                 # Interpolation and marking points
                 x_intercept = None  # Initialize x_intercept
                 if layer_idx > 0:
