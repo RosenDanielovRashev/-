@@ -479,8 +479,8 @@ if layer_idx in st.session_state.layer_results:
                         title='y',
                         range=[0, 3]
                     ),
-                    showlegend=False,
-                    margin=dict(t=100)  # Увеличава горния margin
+                    showlegend=False
+                   
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
