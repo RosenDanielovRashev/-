@@ -768,7 +768,9 @@ if layer_idx in st.session_state.layer_results:
         pdf.ln(5)
 
         pdf.add_page()
-        
+
+        pdf.ln(6)
+     
         # 2. Формули за изчисление
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
@@ -833,6 +835,8 @@ if layer_idx in st.session_state.layer_results:
         pdf.ln(5)
      
         pdf.add_page()
+
+        pdf.ln(6)
      
         # 4. Графика на номограмата
         pdf.set_font("DejaVu", "B", 12)
@@ -853,6 +857,8 @@ if layer_idx in st.session_state.layer_results:
             st.error(f"Грешка при експорт на графиката за PDF: {e}")
          
         pdf.add_page()
+
+        pdf.ln(6)
      
         # 5. Допустими напрежения
         img_path = "Допустими опънни напрежения.png"
