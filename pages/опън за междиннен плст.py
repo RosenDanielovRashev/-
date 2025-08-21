@@ -287,7 +287,7 @@ if layer_idx in st.session_state.layer_results:
                             mode='text',
                             text=[f'{round(level,2)}'],
                             textposition='middle right',
-                            textfont=dict(size=8, color='blue'),
+                            textfont=dict(size=10, color='blue'),
                             showlegend=False,
                             hoverinfo='skip'
                         ))
@@ -317,7 +317,7 @@ if layer_idx in st.session_state.layer_results:
                             mode='text',
                             text=[f'{round(sr_Ei,2)}'],
                             textposition='middle left',
-                            textfont=dict(size=8, color='red'),  # По-малък размер
+                            textfont=dict(size=10, color='red'),  # По-малък размер
                             showlegend=False,
                             hoverinfo='skip'
                         ))
