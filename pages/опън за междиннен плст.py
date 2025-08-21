@@ -801,7 +801,19 @@ if layer_idx in st.session_state.layer_results:
         pdf.set_font("DejaVu", "B", 12)
         pdf.cell(0, 8, "4. ГРАФИКА НА НОМОГРАМАТА", 0, 1)
         
-        # Запазване на графиката като временно изображение с по-висока резолюция
+        try:
+            # Запазване на графиката като временно изображение
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_img:
+                # Експортиране на фигурата с висока резолюция
+                fig.write_image(tmp_img.name, format='png', width=1000, height=750, scale=2)
+                pdf.image(tmp_img.name, x=10, w=190)
+                pdf.ln(10)
+                # Маркиране за изтриване по-късно
+                pdf.temp_image_files.append(tmp_img.name)
+        except Exception as e:
+            pdf.set_font('DejaVu', '', 10)
+            pdf.cell(0, 6, f"Грешка при добавяне на графиката: {e}", 0, 1)
+            st.error(f"Грешка при експорт на графиката за PDF: {e}")
         
         # 5. Допустими напрежения
         img_path = "Допустими опънни напрежения.png"
