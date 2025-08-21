@@ -783,14 +783,11 @@ if layer_idx in st.session_state.layer_results:
             r"Esr = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}",
             r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
         ]
-        pdf.add_formula_section("Основни формули за изчисление:", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=-3)
-        
+
         # 3. Изчисления (с числени замествания)
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, f'3. Изчисления за пласт {layer_idx+1}', ln=True)
         
-        # Изчислителни формули със стойности
-        formulas_section3 = []
         
         # H_{n-1}
         if layer_idx > 0:
@@ -842,7 +839,7 @@ if layer_idx in st.session_state.layer_results:
      
         # 4. Графика на номограмата
         pdf.set_font("DejaVu", "B", 12)
-        pdf.cell(0, 8, "4. ГРАФИКА НА НОМОГРАМАТА", 0, 1)
+        pdf.cell(0, 8, "4. ГРАФИКА", 0, 1)
         
         try:
             # Запазване на графиката като временно изображение
