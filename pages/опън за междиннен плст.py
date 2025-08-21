@@ -739,9 +739,6 @@ if layer_idx in st.session_state.layer_results:
             r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
             r"H_n = \sum_{i=1}^n h_i",
             r"Esr = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}",
-            r"\frac{H_n}{D}",
-            r"\frac{Esr}{E_n}",
-            r"\frac{E_n}{Ed_n}",
             r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
         ]
         pdf.add_formula_section("Основни формули за изчисление:", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=-3)
