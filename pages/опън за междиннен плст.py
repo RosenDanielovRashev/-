@@ -748,7 +748,7 @@ if layer_idx in st.session_state.layer_results:
         params = [
             ("Диаметър D", f"{D:.2f}", "cm"),
             ("Брой пластове", f"{len(h_values)}", ""),
-            ("Осова тежест", f"{axle_load}", "kN")
+            ("Осова тежест", f"{axle_load}", "kN"),
             ("Пласт за проверка", f"{layer_idx+1}", "")
         ]
         
