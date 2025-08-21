@@ -563,12 +563,14 @@ if layer_idx in st.session_state.layer_results:
 
     def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, manual_value=None, check_passed=None):
         # Създаваме PDF клас с разширена функционалност
+        # В началото на файла, заменете дефиницията на класа EnhancedPDF с тази от втория файл:
+        
         class EnhancedPDF(FPDF):
             def __init__(self):
                 super().__init__()
                 self.temp_font_files = []
                 self.temp_image_files = []
-                
+        
             def footer(self):
                 self.set_y(-15)
                 self.set_font('DejaVu', 'I', 8)
@@ -656,16 +658,16 @@ if layer_idx in st.session_state.layer_results:
                 self.set_font('DejaVu', 'B', 12)
                 self.cell(0, 8, title, ln=True)
                 self.ln(2)
-    
+        
                 # Групираме по броя колони
                 rows = [formulas[i:i+columns] for i in range(0, len(formulas), columns)]
-    
+        
                 for row in rows:
                     # Начална X позиция
                     start_x = 10
                     self.set_x(start_x)
                     max_row_height = 0
-    
+        
                     for idx, formula in enumerate(row):
                         try:
                             png_path = self._formula_png_from_svg_or_fallback(formula)
@@ -678,12 +680,11 @@ if layer_idx in st.session_state.layer_results:
                         # Преместваме в следващата колона
                         self.set_x(start_x + col_width * (idx + 1))
                         max_row_height = max(max_row_height, img_width * 0.28)
-    
+        
                     # Нов ред с малък промеждутък
                     self.ln(max(18, int(max_row_height)) + row_gap)
-    
-                self.ln(4)
         
+                self.ln(4)
         pdf = EnhancedPDF()
         pdf.set_auto_page_break(auto=True, margin=20)
         
