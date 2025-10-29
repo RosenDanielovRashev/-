@@ -477,7 +477,7 @@ if layer_idx in st.session_state.layer_results:
                     ),
                     yaxis=dict(
                         title='y',
-                        range=[0, 3]
+                        range=[0, 2.7]
                     ),
                     showlegend=False
                    
