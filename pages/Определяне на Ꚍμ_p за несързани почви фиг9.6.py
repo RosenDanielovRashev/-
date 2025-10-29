@@ -5,6 +5,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
+# Добавете тези нови импорти:
+import os
+import tempfile
+import base64
+from io import BytesIO
+from datetime import datetime
+from fpdf import FPDF  # Това е ключовият импорт, който липсва
+from PIL import Image
+import plotly.io as pio
+
 st.markdown("""
     <style>
         .streamlit-expanderHeader {
