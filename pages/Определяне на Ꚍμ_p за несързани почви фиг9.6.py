@@ -712,3 +712,332 @@ else:
 
 # Линк към предишната страница
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
+
+# -------------------------------------------------
+# PDF Генерация за Определяне на Ꚍμ_p за несързани почви
+# -------------------------------------------------
+
+class TauMuPDF(FPDF):
+    def __init__(self):
+        super().__init__()
+        self.temp_font_files = []
+        self.temp_image_files = []
+
+    def footer(self):
+        self.set_y(-15)
+        self.set_font('DejaVu', '', 8)
+        self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
+
+    def add_font_from_bytes(self, family, style, font_bytes):
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+            tmp_file.write(font_bytes)
+            tmp_file_path = tmp_file.name
+            self.temp_font_files.append(tmp_file_path)
+            self.add_font(family, style, tmp_file_path)
+
+    def add_plotly_figure(self, fig, width=180):
+        try:
+            import plotly.io as pio
+            img_bytes = pio.to_image(
+                fig,
+                format="png",
+                width=1200,
+                height=900,
+                scale=3,
+                engine="kaleido"
+            )
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                tmp_file.write(img_bytes)
+                tmp_file_path = tmp_file.name
+                self.temp_image_files.append(tmp_file_path)
+            self.image(tmp_file_path, x=10, w=width)
+            self.ln(10)
+            return True
+        except Exception as e:
+            print(f"Грешка при добавяне на Plotly фигура: {e}")
+            return False
+
+    def add_matplotlib_figure(self, fig, width=180):
+        try:
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                fig.savefig(tmp_file.name, dpi=300, bbox_inches='tight', format='png')
+                tmp_file_path = tmp_file.name
+                self.temp_image_files.append(tmp_file_path)
+            self.image(tmp_file_path, x=10, w=width)
+            self.ln(10)
+            return True
+        except Exception as e:
+            print(f"Грешка при добавяне на Matplotlib фигура: {e}")
+            return False
+
+    def cleanup_temp_files(self):
+        for file_path in self.temp_font_files + self.temp_image_files:
+            try:
+                os.unlink(file_path)
+            except Exception as e:
+                print(f"Грешка при изтриване на временен файл: {e}")
+
+def generate_taumu_pdf_report():
+    pdf = TauMuPDF()
+    pdf.set_auto_page_break(auto=True, margin=20)
+
+    # Зареждане на шрифтове
+    try:
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+    except NameError:
+        base_dir = os.getcwd()
+    font_dir = os.path.join(base_dir, "fonts")
+    os.makedirs(font_dir, exist_ok=True)
+
+    sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
+    bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
+    italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
+
+    try:
+        if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
+            with open(sans_path, "rb") as f:
+                pdf.add_font_from_bytes('DejaVu', '', f.read())
+            with open(bold_path, "rb") as f:
+                pdf.add_font_from_bytes('DejaVu', 'B', f.read())
+            with open(italic_path, "rb") as f:
+                pdf.add_font_from_bytes('DejaVu', '', f.read())
+        else:
+            # Fallback шрифтове
+            from fpdf.fonts import FontsByFPDF
+            fonts = FontsByFPDF()
+            for style, data in [('', fonts.helvetica),
+                                ('B', fonts.helvetica_bold),
+                                ('', fonts.helvetica_oblique)]:
+                with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
+                    tmp_file.write(data)
+                    pdf.add_font('DejaVu', style, tmp_file.name)
+    except Exception as e:
+        st.error(f"Грешка при зареждане на шрифтове: {e}")
+        return b""
+
+    # Заглавна страница
+    pdf.add_page()
+    pdf.set_font('DejaVu', 'B', 18)
+    pdf.cell(0, 15, 'ОПРЕДЕЛЯНЕ НА Ꚍμ/p ЗА НЕСЪРЗАНИ ПОЧВИ', ln=True, align='C')
+    pdf.set_font('DejaVu', '', 12)
+    pdf.cell(0, 10, 'Фигура 9.6 - maxH/D=1.5', ln=True, align='C')
+    pdf.ln(10)
+
+    # 1. Входни параметри
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '1. Входни параметри', ln=True)
+
+    # Основна таблица с параметри
+    col_width = 45
+    row_height = 8
+
+    pdf.set_font('DejaVu', 'B', 10)
+    pdf.set_fill_color(200, 220, 255)
+    pdf.cell(col_width, row_height, 'Параметър', border=1, align='C', fill=True)
+    pdf.cell(col_width, row_height, 'Стойност', border=1, align='C', fill=True)
+    pdf.cell(col_width, row_height, 'Мерна единица', border=1, align='C', fill=True)
+    pdf.ln(row_height)
+
+    pdf.set_font('DejaVu', '', 9)
+    fill = False
+    
+    # Основни параметри
+    basic_params = [
+        ("Диаметър D", f"{st.session_state.get('fig9_6_D', '34.0')}", "cm"),
+        ("Брой пластове", f"{n}", ""),
+        ("Осова товарност", f"{st.session_state.get('axle_load', 100)}", "kN"),
+    ]
+    
+    for param_name, param_val, param_unit in basic_params:
+        pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
+        pdf.cell(col_width, row_height, param_name, border=1, fill=True)
+        pdf.cell(col_width, row_height, param_val, border=1, align='C', fill=True)
+        pdf.cell(col_width, row_height, param_unit, border=1, align='C', fill=True)
+        pdf.ln(row_height)
+        fill = not fill
+
+    pdf.ln(5)
+
+    # Таблица за пластовете
+    pdf.set_font('DejaVu', 'B', 12)
+    pdf.cell(0, 10, 'Параметри на пластовете:', ln=True)
+    
+    pdf.set_font('DejaVu', 'B', 9)
+    pdf.set_fill_color(200, 220, 255)
+    col_widths = [20, 25, 25, 25, 25]
+    headers = ['Пласт', 'h (cm)', 'Ei (MPa)', 'Ed (MPa)', 'Fi (°)']
+    
+    for i, header in enumerate(headers):
+        pdf.cell(col_widths[i], row_height, header, border=1, align='C', fill=True)
+    pdf.ln(row_height)
+
+    pdf.set_font('DejaVu', '', 9)
+    fill = False
+    for i in range(n):
+        pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
+        pdf.cell(col_widths[0], row_height, f"{i+1}", border=1, align='C', fill=True)
+        pdf.cell(col_widths[1], row_height, f"{h_values[i]}", border=1, align='C', fill=True)
+        pdf.cell(col_widths[2], row_height, f"{Ei_values[i]}", border=1, align='C', fill=True)
+        pdf.cell(col_widths[3], row_height, f"{Ed_values[i]}", border=1, align='C', fill=True)
+        pdf.cell(col_widths[4], row_height, f"{Fi_values[i]}", border=1, align='C', fill=True)
+        pdf.ln(row_height)
+        fill = not fill
+
+    pdf.ln(10)
+
+    # 2. Изчисления
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '2. Изчисления', ln=True)
+
+    # Избрани пластове
+    pdf.set_font('DejaVu', 'B', 11)
+    pdf.cell(0, 8, f'Избран пласт за проверка: Пласт {layer_idx+1}', ln=True)
+    
+    pdf.set_font('DejaVu', '', 10)
+    pdf.cell(0, 6, f'H = {H:.2f} cm', ln=True)
+    pdf.cell(0, 6, f'Esr = {Esr:.0f} MPa', ln=True)
+    pdf.cell(0, 6, f'Eo = Ed{layer_idx+1} = {Eo} MPa', ln=True)
+    pdf.cell(0, 6, f'H/D = {ratio:.3f}', ln=True)
+    pdf.cell(0, 6, f'Esr/Eo = {Esr_over_Eo:.3f}', ln=True)
+    
+    if 'x_orange' in locals() and x_orange is not None:
+        pdf.cell(0, 6, f'Ꚍμ/p = {sigma_r:.3f}', ln=True)
+        pdf.cell(0, 6, f'τμ = {tau_mu:.6f} MPa', ln=True)
+    else:
+        pdf.cell(0, 6, 'Ꚍμ/p = - (Няма изчислена стойност)', ln=True)
+    
+    if tau_b is not None:
+        pdf.cell(0, 6, f'τb = {tau_b:.6f} MPa', ln=True)
+    
+    pdf.ln(5)
+
+    # 3. Коефициенти и проверка
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '3. Коефициенти и проверка', ln=True)
+
+    # Таблица с коефициенти
+    pdf.set_font('DejaVu', 'B', 10)
+    pdf.set_fill_color(200, 220, 255)
+    coeff_headers = ['Коефициент', 'Стойност']
+    coeff_widths = [60, 60]
+    
+    for i, header in enumerate(coeff_headers):
+        pdf.cell(coeff_widths[i], row_height, header, border=1, align='C', fill=True)
+    pdf.ln(row_height)
+
+    pdf.set_font('DejaVu', '', 9)
+    coefficients = [
+        ('K₁', f"{K1:.2f}"),
+        ('K₂', f"{K2:.2f}"),
+        ('K₃', f"{K3:.2f}"),
+        ('C', f"{C:.3f}"),
+        ('d', '1.15'),
+        ('f', '0.65'),
+    ]
+    
+    fill = False
+    for coeff_name, coeff_val in coefficients:
+        pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
+        pdf.cell(coeff_widths[0], row_height, coeff_name, border=1, fill=True)
+        pdf.cell(coeff_widths[1], row_height, coeff_val, border=1, align='C', fill=True)
+        pdf.ln(row_height)
+        fill = not fill
+
+    pdf.ln(5)
+
+    # Формули и резултат от проверката
+    pdf.set_font('DejaVu', 'B', 11)
+    pdf.cell(0, 8, 'Формула за проверка:', ln=True)
+    pdf.set_font('DejaVu', '', 10)
+    pdf.multi_cell(0, 6, f'K = (K₁ × K₂) / (d × f) × (1/K₃) = ({K1:.2f} × {K2:.2f}) / (1.15 × 0.65) × (1/{K3:.2f}) = {K:.3f}')
+    pdf.multi_cell(0, 6, f'τ_dop = K × C = {K:.3f} × {C:.3f} = {tau_dop:.6f} MPa')
+    
+    if 'tau_mu' in locals() and tau_b is not None:
+        pdf.multi_cell(0, 6, f'τμ + τb = {tau_mu:.6f} + {tau_b:.6f} = {left_side:.6f} MPa')
+    
+    pdf.ln(3)
+    
+    # Резултат от проверката
+    pdf.set_font('DejaVu', 'B', 12)
+    if left_side <= right_side:
+        pdf.set_text_color(0, 100, 0)
+        pdf.cell(0, 10, '✅ Условието е изпълнено', ln=True)
+    else:
+        pdf.set_text_color(150, 0, 0)
+        pdf.cell(0, 10, '❌ Условието НЕ е изпълнено', ln=True)
+    
+    pdf.set_text_color(0, 0, 0)
+
+    # 4. Графики
+    pdf.set_font('DejaVu', 'B', 14)
+    pdf.cell(0, 10, '4. Графики', ln=True)
+
+    # Добавяне на Plotly графиката
+    if 'fig' in locals():
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(0, 8, 'Графика на изолинии и точки:', ln=True)
+        pdf.add_plotly_figure(fig, width=160)
+
+    # Добавяне на Matplotlib графиката за τb
+    if 'tau_b_fig' in locals() and tau_b_fig is not None:
+        pdf.set_font('DejaVu', '', 10)
+        pdf.cell(0, 8, 'Номограма за активно напрежение на срязване (τb):', ln=True)
+        pdf.add_matplotlib_figure(tau_b_fig, width=160)
+
+    # 5. Таблица 9.8
+    img_path_9_8 = "9.8 Таблица.png"
+    if os.path.exists(img_path_9_8):
+        pdf.set_font('DejaVu', 'B', 14)
+        pdf.cell(0, 10, '5. Таблица 9.8', ln=True)
+        
+        try:
+            from PIL import Image
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                img = Image.open(img_path_9_8)
+                img.save(tmp_file, format='PNG')
+                tmp_file_path = tmp_file.name
+                pdf.temp_image_files.append(tmp_file_path)
+            pdf.image(tmp_file_path, x=10, w=160)
+            pdf.ln(10)
+        except Exception as e:
+            pdf.set_font('DejaVu', '', 10)
+            pdf.cell(0, 8, f'Грешка при зареждане на таблицата: {e}', ln=True)
+
+    # Дата и час на генериране
+    pdf.ln(10)
+    pdf.set_font('DejaVu', '', 8)
+    pdf.set_text_color(100, 100, 100)
+    pdf.cell(0, 8, f'Генерирано на: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}', ln=True)
+
+    pdf.cleanup_temp_files()
+    return pdf.output(dest='S')
+
+# -------------------------------------------------
+# Бутон за генериране на PDF
+# -------------------------------------------------
+st.markdown("---")
+st.subheader("Генериране на PDF отчет")
+
+if st.button("📄 Генерирай PDF отчет за Ꚍμ/p"):
+    with st.spinner('Генериране на PDF отчет...'):
+        try:
+            # Импортиране на необходимите библиотеки
+            import tempfile
+            import base64
+            import os
+            from datetime import datetime
+            from fpdf import FPDF
+            
+            pdf_bytes = generate_taumu_pdf_report()
+            if pdf_bytes:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+                    tmpfile.write(pdf_bytes)
+                with open(tmpfile.name, "rb") as f:
+                    base64_pdf = base64.b64encode(f.read()).decode('utf-8')
+                    download_link = f'<a href="data:application/octet-stream;base64,{base64_pdf}" download="taumu_p_analiza_report.pdf">Свали PDF отчет</a>'
+                    st.markdown(download_link, unsafe_allow_html=True)
+                    st.success("✅ PDF отчетът е успешно генериран!")
+            else:
+                st.error("Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
+        except Exception as e:
+            st.error(f"Грешка при генериране на PDF: {str(e)}")
