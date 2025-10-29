@@ -747,7 +747,6 @@ class TauMuPDF(FPDF):
 
     def add_plotly_figure(self, fig, width=180):
         try:
-            import plotly.io as pio
             img_bytes = pio.to_image(
                 fig,
                 format="png",
@@ -791,7 +790,7 @@ def generate_taumu_pdf_report():
     pdf = TauMuPDF()
     pdf.set_auto_page_break(auto=True, margin=20)
 
-    # Зареждане на шрифтове
+    # Зареждане на шрифтове - същите като във файла "Опън в покритието.py"
     try:
         base_dir = os.path.dirname(os.path.abspath(__file__))
     except NameError:
@@ -812,15 +811,10 @@ def generate_taumu_pdf_report():
             with open(italic_path, "rb") as f:
                 pdf.add_font_from_bytes('DejaVu', '', f.read())
         else:
-            # Fallback шрифтове
-            from fpdf.fonts import FontsByFPDF
-            fonts = FontsByFPDF()
-            for style, data in [('', fonts.helvetica),
-                                ('B', fonts.helvetica_bold),
-                                ('', fonts.helvetica_oblique)]:
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
-                    tmp_file.write(data)
-                    pdf.add_font('DejaVu', style, tmp_file.name)
+            # Fallback към вградените шрифтове на FPDF
+            pdf.add_font_from_bytes('DejaVu', '', b'')  # Празни байтове за вградени шрифтове
+            pdf.add_font_from_bytes('DejaVu', 'B', b'')
+            pdf.add_font_from_bytes('DejaVu', '', b'')
     except Exception as e:
         st.error(f"Грешка при зареждане на шрифтове: {e}")
         return b""
@@ -837,32 +831,30 @@ def generate_taumu_pdf_report():
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '1. Входни параметри', ln=True)
 
-    # Основна таблица с параметри
-    col_width = 45
+    col_width = 60
     row_height = 8
 
-    pdf.set_font('DejaVu', 'B', 10)
+    pdf.set_font('DejaVu', 'B', 11)
     pdf.set_fill_color(200, 220, 255)
     pdf.cell(col_width, row_height, 'Параметър', border=1, align='C', fill=True)
     pdf.cell(col_width, row_height, 'Стойност', border=1, align='C', fill=True)
     pdf.cell(col_width, row_height, 'Мерна единица', border=1, align='C', fill=True)
     pdf.ln(row_height)
 
-    pdf.set_font('DejaVu', '', 9)
-    fill = False
-    
-    # Основни параметри
-    basic_params = [
+    pdf.set_font('DejaVu', '', 10)
+    params = [
         ("Диаметър D", f"{st.session_state.get('fig9_6_D', '34.0')}", "cm"),
         ("Брой пластове", f"{n}", ""),
         ("Осова товарност", f"{st.session_state.get('axle_load', 100)}", "kN"),
+        ("Избран пласт", f"{layer_idx + 1}", ""),
     ]
-    
-    for param_name, param_val, param_unit in basic_params:
+
+    fill = False
+    for p_name, p_val, p_unit in params:
         pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
-        pdf.cell(col_width, row_height, param_name, border=1, fill=True)
-        pdf.cell(col_width, row_height, param_val, border=1, align='C', fill=True)
-        pdf.cell(col_width, row_height, param_unit, border=1, align='C', fill=True)
+        pdf.cell(col_width, row_height, p_name, border=1, fill=True)
+        pdf.cell(col_width, row_height, p_val, border=1, align='C', fill=True)
+        pdf.cell(col_width, row_height, p_unit, border=1, align='C', fill=True)
         pdf.ln(row_height)
         fill = not fill
 
@@ -872,11 +864,11 @@ def generate_taumu_pdf_report():
     pdf.set_font('DejaVu', 'B', 12)
     pdf.cell(0, 10, 'Параметри на пластовете:', ln=True)
     
-    pdf.set_font('DejaVu', 'B', 9)
-    pdf.set_fill_color(200, 220, 255)
-    col_widths = [20, 25, 25, 25, 25]
+    col_widths = [25, 30, 30, 30, 30]
     headers = ['Пласт', 'h (cm)', 'Ei (MPa)', 'Ed (MPa)', 'Fi (°)']
     
+    pdf.set_font('DejaVu', 'B', 10)
+    pdf.set_fill_color(200, 220, 255)
     for i, header in enumerate(headers):
         pdf.cell(col_widths[i], row_height, header, border=1, align='C', fill=True)
     pdf.ln(row_height)
@@ -899,26 +891,29 @@ def generate_taumu_pdf_report():
     pdf.set_font('DejaVu', 'B', 14)
     pdf.cell(0, 10, '2. Изчисления', ln=True)
 
-    # Избрани пластове
-    pdf.set_font('DejaVu', 'B', 11)
-    pdf.cell(0, 8, f'Избран пласт за проверка: Пласт {layer_idx+1}', ln=True)
-    
     pdf.set_font('DejaVu', '', 10)
-    pdf.cell(0, 6, f'H = {H:.2f} cm', ln=True)
-    pdf.cell(0, 6, f'Esr = {Esr:.0f} MPa', ln=True)
-    pdf.cell(0, 6, f'Eo = Ed{layer_idx+1} = {Eo} MPa', ln=True)
-    pdf.cell(0, 6, f'H/D = {ratio:.3f}', ln=True)
-    pdf.cell(0, 6, f'Esr/Eo = {Esr_over_Eo:.3f}', ln=True)
-    
+    calculations = [
+        f"H = {H:.2f} cm",
+        f"Esr = {Esr:.0f} MPa", 
+        f"Eo = Ed{layer_idx+1} = {Eo} MPa",
+        f"H/D = {ratio:.3f}",
+        f"Esr/Eo = {Esr_over_Eo:.3f}",
+    ]
+
     if 'x_orange' in locals() and x_orange is not None:
-        pdf.cell(0, 6, f'Ꚍμ/p = {sigma_r:.3f}', ln=True)
-        pdf.cell(0, 6, f'τμ = {tau_mu:.6f} MPa', ln=True)
+        calculations.extend([
+            f"Ꚍμ/p = {sigma_r:.3f}",
+            f"τμ = {tau_mu:.6f} MPa"
+        ])
     else:
-        pdf.cell(0, 6, 'Ꚍμ/p = - (Няма изчислена стойност)', ln=True)
-    
+        calculations.append("Ꚍμ/p = - (Няма изчислена стойност)")
+
     if tau_b is not None:
-        pdf.cell(0, 6, f'τb = {tau_b:.6f} MPa', ln=True)
-    
+        calculations.append(f"τb = {tau_b:.6f} MPa")
+
+    for calc in calculations:
+        pdf.cell(0, 6, calc, ln=True)
+
     pdf.ln(5)
 
     # 3. Коефициенти и проверка
@@ -926,13 +921,11 @@ def generate_taumu_pdf_report():
     pdf.cell(0, 10, '3. Коефициенти и проверка', ln=True)
 
     # Таблица с коефициенти
+    coeff_widths = [40, 40]
     pdf.set_font('DejaVu', 'B', 10)
     pdf.set_fill_color(200, 220, 255)
-    coeff_headers = ['Коефициент', 'Стойност']
-    coeff_widths = [60, 60]
-    
-    for i, header in enumerate(coeff_headers):
-        pdf.cell(coeff_widths[i], row_height, header, border=1, align='C', fill=True)
+    pdf.cell(coeff_widths[0], row_height, 'Коефициент', border=1, align='C', fill=True)
+    pdf.cell(coeff_widths[1], row_height, 'Стойност', border=1, align='C', fill=True)
     pdf.ln(row_height)
 
     pdf.set_font('DejaVu', '', 9)
@@ -944,7 +937,7 @@ def generate_taumu_pdf_report():
         ('d', '1.15'),
         ('f', '0.65'),
     ]
-    
+
     fill = False
     for coeff_name, coeff_val in coefficients:
         pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
@@ -955,16 +948,17 @@ def generate_taumu_pdf_report():
 
     pdf.ln(5)
 
-    # Формули и резултат от проверката
+    # Формули и резултат
     pdf.set_font('DejaVu', 'B', 11)
     pdf.cell(0, 8, 'Формула за проверка:', ln=True)
     pdf.set_font('DejaVu', '', 10)
+    
     pdf.multi_cell(0, 6, f'K = (K₁ × K₂) / (d × f) × (1/K₃) = ({K1:.2f} × {K2:.2f}) / (1.15 × 0.65) × (1/{K3:.2f}) = {K:.3f}')
     pdf.multi_cell(0, 6, f'τ_dop = K × C = {K:.3f} × {C:.3f} = {tau_dop:.6f} MPa')
     
     if 'tau_mu' in locals() and tau_b is not None:
         pdf.multi_cell(0, 6, f'τμ + τb = {tau_mu:.6f} + {tau_b:.6f} = {left_side:.6f} MPa')
-    
+
     pdf.ln(3)
     
     # Резултат от проверката
@@ -986,22 +980,26 @@ def generate_taumu_pdf_report():
     if 'fig' in locals():
         pdf.set_font('DejaVu', '', 10)
         pdf.cell(0, 8, 'Графика на изолинии и точки:', ln=True)
-        pdf.add_plotly_figure(fig, width=160)
+        success = pdf.add_plotly_figure(fig, width=160)
+        if not success:
+            pdf.cell(0, 6, 'Грешка при добавяне на графиката', ln=True)
 
     # Добавяне на Matplotlib графиката за τb
     if 'tau_b_fig' in locals() and tau_b_fig is not None:
         pdf.set_font('DejaVu', '', 10)
         pdf.cell(0, 8, 'Номограма за активно напрежение на срязване (τb):', ln=True)
-        pdf.add_matplotlib_figure(tau_b_fig, width=160)
+        success = pdf.add_matplotlib_figure(tau_b_fig, width=160)
+        if not success:
+            pdf.cell(0, 6, 'Грешка при добавяне на τb графиката', ln=True)
 
     # 5. Таблица 9.8
     img_path_9_8 = "9.8 Таблица.png"
     if os.path.exists(img_path_9_8):
+        pdf.add_page()
         pdf.set_font('DejaVu', 'B', 14)
         pdf.cell(0, 10, '5. Таблица 9.8', ln=True)
         
         try:
-            from PIL import Image
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
                 img = Image.open(img_path_9_8)
                 img.save(tmp_file, format='PNG')
@@ -1013,7 +1011,7 @@ def generate_taumu_pdf_report():
             pdf.set_font('DejaVu', '', 10)
             pdf.cell(0, 8, f'Грешка при зареждане на таблицата: {e}', ln=True)
 
-    # Дата и час на генериране
+    # Дата на генериране
     pdf.ln(10)
     pdf.set_font('DejaVu', '', 8)
     pdf.set_text_color(100, 100, 100)
@@ -1031,13 +1029,6 @@ st.subheader("Генериране на PDF отчет")
 if st.button("📄 Генерирай PDF отчет за Ꚍμ/p"):
     with st.spinner('Генериране на PDF отчет...'):
         try:
-            # Импортиране на необходимите библиотеки
-            import tempfile
-            import base64
-            import os
-            from datetime import datetime
-            from fpdf import FPDF
-            
             pdf_bytes = generate_taumu_pdf_report()
             if pdf_bytes:
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
