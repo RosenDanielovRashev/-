@@ -638,14 +638,20 @@ layer_values = st.session_state.K_values[current_layer_key]
 if 'C' not in layer_values:
     layer_values['C'] = 1.0  # Добавяме 'C' ако липсва
 
-with cols[0]:
-    K1 = st.number_input("K₁", 
-                        value=layer_values['K1'], 
-                        step=0.1, 
-                        format="%.2f",
-                        key=f"K1_{layer_idx}",
-                        on_change=lambda: layer_values.update({'K1': st.session_state[f"K1_{layer_idx}"]}))
+# K1 е фиксирана на 0.6
+K1 = 0.6
+layer_values['K1'] = K1
 
+with cols[0]:
+    K1 = st.number_input(
+        "K₁",
+        value=0.6,               # <-- фиксирана стойност
+        step=0.1,
+        format="%.2f",
+        key=f"K1_{layer_idx}",
+        disabled=True            # <-- така не може да се променя
+    )
+    
 with cols[1]:
     K2 = st.number_input("K₂", 
                         value=layer_values['K2'], 
