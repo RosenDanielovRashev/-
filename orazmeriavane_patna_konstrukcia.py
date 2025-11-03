@@ -472,7 +472,7 @@ if all_data_ready:
             st.success("✅ Данните са запазени за междинния пласт!")
             st.page_link("pages/опън за междиннен плст.py", label="Към Опън в междинен пласт", icon="📄")
 
-        if st.button("📊 Kъм срязване несързани почви maxH/D=4 (фиг9.5)'", type="primary", use_container_width=True, key="to_fig9_5"):
+        if st.button("📊 Kъм срязване сързани почви maxH/D=4 (фиг9.5)'", type="primary", use_container_width=True, key="to_fig9_5"):
             st.session_state.fig9_5_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_5_h = [layer["h"] for layer in st.session_state.layers_data]
             st.session_state.fig9_5_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
