@@ -455,7 +455,7 @@ if all_data_ready:
             st.success("✅ Данните за фиг.9.4 са готови!")
             st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.4.py", label="Към Ꚍμ_p (фиг9.4)", icon="📈")
 
-        if st.button("📊 Изпрати към 'Ꚍμ_p несързани почви maxH/D=1.5 (фиг9.6)'", type="primary", use_container_width=True, key="to_fig9_6"):
+        if st.button("📊 Kъм срязване несързани почви maxH/D=1.5 (фиг9.6)'", type="primary", use_container_width=True, key="to_fig9_6"):
             st.session_state.fig9_6_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_6_h = [layer["h"] for layer in st.session_state.layers_data]
             st.session_state.fig9_6_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
@@ -482,7 +482,7 @@ if all_data_ready:
             st.success("✅ Данните за фиг.9.5 са готови!")
             st.page_link("pages/Определяне на Ꚍμ_p за сързани почви фиг9.5.py", label="Към Ꚍμ_p (фиг9.5)", icon="📈")
         
-        if st.button("📊 Изпрати към 'Ꚍμ_p несързани почви maxH/D=2(фиг9.7)'", type="primary", use_container_width=True, key="to_fig9_7"):
+        if st.button("📊 Kъм срязване несързани почви maxH/D=2(фиг9.7)'", type="primary", use_container_width=True, key="to_fig9_7"):
             st.session_state.fig9_7_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.fig9_7_h = [layer["h"] for layer in st.session_state.layers_data]
             st.session_state.fig9_7_Ei = [layer["Ei"] for layer in st.session_state.layers_data]
