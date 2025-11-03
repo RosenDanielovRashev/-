@@ -665,6 +665,12 @@ if layers and all("h" in layer and layer["h"] is not None for layer in layers):
     st.write(f"Обща дебелина на всички пластове: **{total_h:.2f} cm**")
 
 
+# Проверка на сумата на дебелините
+if layers and all("h" in layer and layer["h"] is not None for layer in layers):
+    total_h = sum(layer["h"] for layer in layers)
+    st.write(f"Обща дебелина на всички пластове: **{total_h:.2f} cm**")
+
+
 st.markdown("---")
 # Check z vs sum of thicknesses
 if all('h' in layer for layer in st.session_state.layers_data):
