@@ -504,38 +504,48 @@ st.image("5.1. Таблица.png", width=800)
 st.markdown("---")
 st.subheader("Редактиране на пластове")
 
-# Layer editing
+# Редактиране на пластове
 for i in range(st.session_state.num_layers):
+    # Разделяне на реда на три колони
     col1, col2, col3 = st.columns([2, 3, 3])
-    
+
     with col1:
-        st.markdown(f"**Пласт {i+1}**")
-    
+        st.markdown(f"### 🧱 Пласт {i + 1}")
+        # Ако имаш име на материала, можеш да го покажеш тук:
+        if 'name' in st.session_state.layers_data[i]:
+            st.markdown(f"**Материал:** {st.session_state.layers_data[i]['name']}")
+        st.markdown("---")
+
     with col2:
+        st.markdown("**Дебелина (cm)**")
         if 'h' in st.session_state.layers_data[i]:
             new_h = st.number_input(
-                "Дебелина (cm)",
+                "",
                 min_value=0.1,
                 step=0.1,
                 value=float(st.session_state.layers_data[i]['h']),
-                key=f"h_edit_{i}_unique_{st.session_state.layers_data[i].get('h', 0)}",
+                key=f"h_edit_{i}_{st.session_state.layers_data[i].get('h', 0)}",
                 label_visibility="collapsed"
             )
             st.session_state.layers_data[i]['h'] = new_h
         else:
-            st.markdown("Дебелина: -")
-    
+            st.markdown("_Дебелина: няма данни_")
+
     with col3:
-        st.session_state.lambda_values[i] = st.number_input(
-            "λ коефициент",
+        st.markdown("**λ коефициент (W/m·K)**")
+        new_lambda = st.number_input(
+            "",
             min_value=0.0,
             max_value=4.0,
             step=0.01,
-            value=st.session_state.lambda_values[i],
-            key=f"lambda_{i}_unique_{st.session_state.lambda_values[i]}",
+            value=float(st.session_state.lambda_values[i]),
+            key=f"lambda_{i}_{st.session_state.lambda_values[i]}",
             label_visibility="collapsed"
         )
+        st.session_state.lambda_values[i] = new_lambda
 
+    # Разделител между пластовете
+    st.divider()
 # Thermal parameters
 st.markdown("---")
 st.subheader("Топлинни параметри")
