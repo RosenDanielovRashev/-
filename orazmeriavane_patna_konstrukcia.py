@@ -633,7 +633,7 @@ if layers and lambda_values and len(layers) == len(lambda_values):
         R0 = sum(terms)
 
         # Формула със символи
-        symbolic_terms = [f"\\frac{{h_{i+1}}}}{{\\lambda_{i+1}}}" for i in range(len(terms))]
+        symbolic_terms = [f"\\frac{{{{h_{i+1}}}}}{{{{\\lambda_{i+1}}}}}" for i in range(len(terms))]
         symbolic_formula = " + ".join(symbolic_terms)
 
         # Формула със заместени стойности (с преобразуване cm → m)
