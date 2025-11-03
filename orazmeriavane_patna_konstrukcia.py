@@ -621,16 +621,37 @@ if layers and lambda_values and len(layers) == len(lambda_values):
     # Проверка дали всеки слой има зададена дебелина 'h'
     if all("h" in layer and layer["h"] is not None for layer in layers):
         # Изчисляваме R₀ = Σ(h_i / λ_i)
-        terms = [layer["h"] / lam for layer, lam in zip(layers, lambda_values) if lam != 0]
+        terms = []
+        for i, (layer, lam) in enumerate(zip(layers, lambda_values)):
+            h_val = layer["h"]
+            if lam != 0:
+                terms.append(h_val / lam)
+            else:
+                st.warning(f"λ_{i+1} не може да бъде 0!")
+                st.stop()
+
         R0 = sum(terms)
 
-        # Създаваме LaTeX представяне на формулата
-        formula_parts = [f"\\frac{{h_{i+1}}}{{\\lambda_{i+1}}}" for i in range(len(terms))]
-        formula_str = " + ".join(formula_parts)
+        # Формула със символи
+        symbolic_terms = [f"\\frac{{h_{i+1}}}{{\\lambda_{i+1}}}" for i in range(len(terms))]
+        symbolic_formula = " + ".join(symbolic_terms)
 
-        st.latex(rf"""
-        R_0 = {formula_str} = {R0:.3f}\ \text{{m²K/W}}
-        """)
+        # Формула със заместени стойности
+        numeric_terms = [
+            f"\\frac{{{layer['h']:.2f}}}{{{lam:.2f}}}"
+            for layer, lam in zip(layers, lambda_values)
+        ]
+        numeric_formula = " + ".join(numeric_terms)
+
+        # Показваме символна формула
+        st.latex(rf"R_0 = {symbolic_formula}")
+
+        # Показваме заместената формула с реални числа
+        st.latex(rf"R_0 = {numeric_formula}")
+
+        # Показваме крайния резултат
+        st.latex(rf"R_0 = {R0:.3f}\ \text{{m²K/W}}")
+
     else:
         st.warning("Моля, задайте дебелини (h) за всички пластове преди изчисление.")
 else:
