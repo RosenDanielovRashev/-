@@ -582,7 +582,7 @@ fig.update_layout(
         ticktext=[f"{(0.150 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" 
                  for x in np.linspace(xaxis_min, xaxis_max, 11)],
         ticklabeloverflow="allow",
-        title='φ',
+        title='Ꚍμ/p',
         fixedrange=True
     ),
     yaxis=dict(
