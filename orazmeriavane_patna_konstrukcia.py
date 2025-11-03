@@ -532,7 +532,7 @@ for i in range(st.session_state.num_layers):
             st.markdown("_Дебелина: няма данни_")
 
     with col3:
-        st.markdown("**λ коефициент **")
+        st.markdown("λ коефициент ")
         new_lambda = st.number_input(
             "",
             min_value=0.0,
