@@ -594,7 +594,7 @@ if lambda_op > 0:
         "z₁ (cm)",
         min_value=1,
         step=1,
-        value=100,
+        value=50,
         key="z1_input"
     )
     st.markdown("""
