@@ -436,7 +436,7 @@ for i, layer in enumerate(st.session_state.layers_data):
 if all_data_ready:
     cols = st.columns(2)
     with cols[0]:
-        if st.button("📤 Изпрати към 'Опън в покритието'", type="primary", use_container_width=True):
+        if st.button("📤 Към Опън в долния оласт на покритието", type="primary", use_container_width=True):
             st.session_state.final_Ed_list = [layer["Ed"] for layer in st.session_state.layers_data]
             st.session_state.Ei_list = [layer["Ei"] for layer in st.session_state.layers_data]
             st.session_state.hi_list = [layer["h"] for layer in st.session_state.layers_data]
