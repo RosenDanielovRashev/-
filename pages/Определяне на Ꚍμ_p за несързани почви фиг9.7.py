@@ -644,10 +644,14 @@ K1 = 0.6
 layer_values['K1'] = K1
 
 with cols[0]:
-    # K1 е фиксирана на 0.6
-    K1 = 0.6
-    layer_values['K1'] = K1
-    st.metric("K₁", f"{K1}")
+    K1 = st.number_input(
+        "K₁",
+        value=0.6,               # <-- фиксирана стойност
+        step=0.1,
+        format="%.2f",
+        key=f"K1_{layer_idx}",
+        disabled=True            # <-- така не може да се променя
+    )
     
 with cols[1]:
     K2 = st.number_input("K₂", 
