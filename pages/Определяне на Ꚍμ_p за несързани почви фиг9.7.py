@@ -658,7 +658,8 @@ with cols[0]:
 with cols[0]:
     K1 = st.number_input("K₁",
                          value=layer_values['K1'], 
-                         step=0.1, format="%.2f", 
+                         step=0.1, 
+                         format="%.2f", 
                          key=f"K1_{layer_idx}", 
                          on_change=lambda: layer_values.update({'K1': st.session_state[f"K1_{layer_idx}"]}))
 with cols[1]:
