@@ -644,8 +644,10 @@ K1 = 0.6
 layer_values['K1'] = K1
 
 with cols[0]:
-    st.markdown("**K₁**")
-    st.markdown(f"**{K1}**")
+    # K1 е фиксирана на 0.6
+    K1 = 0.6
+    layer_values['K1'] = K1
+    st.metric("K₁", f"{K1}")
     
 with cols[1]:
     K2 = st.number_input("K₂", 
