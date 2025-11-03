@@ -662,8 +662,7 @@ st.markdown("---")
 # Check z vs sum of thicknesses
 if all('h' in layer for layer in st.session_state.layers_data):
     sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
-    
-    st.markdown("---")
+
     st.subheader("Проверка на изискванията")
     
     col1, col2 = st.columns(2)
