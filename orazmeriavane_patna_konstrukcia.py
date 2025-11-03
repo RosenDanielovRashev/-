@@ -510,7 +510,7 @@ for i in range(st.session_state.num_layers):
     col1, col2, col3 = st.columns([2, 3, 3])
 
     with col1:
-        st.markdown(f"### 🧱 Пласт {i + 1}")
+        st.markdown(f"###  Пласт {i + 1}")
         # Ако имаш име на материала, можеш да го покажеш тук:
         if 'name' in st.session_state.layers_data[i]:
             st.markdown(f"**Материал:** {st.session_state.layers_data[i]['name']}")
