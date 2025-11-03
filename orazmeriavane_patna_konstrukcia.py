@@ -466,7 +466,7 @@ if all_data_ready:
             st.page_link("pages/Определяне на Ꚍμ_p за несързани почви фиг9.6.py", label="Към Ꚍμ_p (фиг9.6)", icon="📈")
     
     with cols[1]:
-        if st.button("📤 Изпрати към 'Опън в междинен пласт'", type="primary", use_container_width=True, key="to_intermediate"):
+        if st.button("📤 Към Опън в междинен пласт'", type="primary", use_container_width=True, key="to_intermediate"):
             st.session_state.layers_data_all = st.session_state.layers_data
             st.session_state.final_D_all = st.session_state.final_D
             st.success("✅ Данните са запазени за междинния пласт!")
