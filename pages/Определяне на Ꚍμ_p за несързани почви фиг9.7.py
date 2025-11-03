@@ -640,12 +640,14 @@ if 'C' not in layer_values:
     layer_values['C'] = 1.0  # Добавяме 'C' ако липсва
 
 with cols[0]:
-    K1 = st.number_input("K₁", 
-                        value=layer_values['K1'], 
-                        step=0.1, 
-                        format="%.2f",
-                        key=f"K1_{layer_idx}",
-                        on_change=lambda: layer_values.update({'K1': st.session_state[f"K1_{layer_idx}"]}))
+    st.number_input(
+        "K₁",
+        value=layer_values['0.6'],
+        step=0.1,
+        format="%.2f",
+        key=f"K1_{layer_idx}",
+        disabled=True  # ❗️Нов параметър, поддържан в Streamlit ≥1.25
+    )
 
 with cols[1]:
     K2 = st.number_input("K₂", 
