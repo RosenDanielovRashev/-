@@ -613,17 +613,36 @@ else:
 st.markdown("---")
 st.subheader("Изчисление на R₀")
 
-if all('h' in layer for layer in st.session_state.layers_data):
-    sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
-    sum_lambda = sum(st.session_state.lambda_values)
-    R0 = sum_h / sum_lambda if sum_lambda != 0 else 0
-    
-    st.latex(rf"""
-    R_0 = \frac{{\sum_{{i=0}}^n h_i}}{{\sum_{{i=0}}^n \lambda_i}} = 
-    \frac{{{sum_h:.2f}}}{{{sum_lambda:.2f}}} = {R0:.2f}\ \text{{cm}}
-    """)
+layers = st.session_state.get("layers_data", [])
+lambda_values = st.session_state.get("lambda_values", [])
+
+# Проверка дали имаме нужните данни
+if layers and lambda_values and len(layers) == len(lambda_values):
+    # Проверка дали всеки слой има зададена дебелина 'h'
+    if all("h" in layer and layer["h"] is not None for layer in layers):
+        # Изчисляваме R₀ = Σ(h_i / λ_i)
+        terms = [layer["h"] / lam for layer, lam in zip(layers, lambda_values) if lam != 0]
+        R0 = sum(terms)
+
+        # Създаваме LaTeX представяне на формулата
+        formula_parts = [f"\\frac{{h_{i+1}}}{{\\lambda_{i+1}}}" for i in range(len(terms))]
+        formula_str = " + ".join(formula_parts)
+
+        st.latex(rf"""
+        R_0 = {formula_str} = {R0:.3f}\ \text{{m²K/W}}
+        """)
+    else:
+        st.warning("Моля, задайте дебелини (h) за всички пластове преди изчисление.")
 else:
-    st.warning("Моля, задайте дебелини за всички пластове преди изчисление")
+    st.warning("Моля, уверете се, че броят на пластовете и λ-стойностите съвпадат.")
+
+st.markdown("---")
+
+# Проверка на сумата на дебелините
+if layers and all("h" in layer and layer["h"] is not None for layer in layers):
+    total_h = sum(layer["h"] for layer in layers)
+    st.write(f"Обща дебелина на всички пластове: **{total_h:.2f} cm**")
+
 
 st.markdown("---")
 # Check z vs sum of thicknesses
