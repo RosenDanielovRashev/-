@@ -657,19 +657,6 @@ if layers and lambda_values and len(layers) == len(lambda_values):
 else:
     st.warning("Моля, уверете се, че броят на пластовете и λ-стойностите съвпадат.")
 
-st.markdown("---")
-
-# Проверка на сумата на дебелините
-if layers and all("h" in layer and layer["h"] is not None for layer in layers):
-    total_h = sum(layer["h"] for layer in layers)
-    st.write(f"Обща дебелина на всички пластове: **{total_h:.2f} cm**")
-
-
-# Проверка на сумата на дебелините
-if layers and all("h" in layer and layer["h"] is not None for layer in layers):
-    total_h = sum(layer["h"] for layer in layers)
-    st.write(f"Обща дебелина на всички пластове: **{total_h:.2f} cm**")
-
 
 st.markdown("---")
 # Check z vs sum of thicknesses
