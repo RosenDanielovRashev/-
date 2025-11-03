@@ -620,12 +620,12 @@ lambda_values = st.session_state.get("lambda_values", [])
 if layers and lambda_values and len(layers) == len(lambda_values):
     # Проверка дали всеки слой има зададена дебелина 'h'
     if all("h" in layer and layer["h"] is not None for layer in layers):
-        # Изчисляваме R₀ = Σ(h_i / λ_i)
         terms = []
         for i, (layer, lam) in enumerate(zip(layers, lambda_values)):
-            h_val = layer["h"]
+            h_cm = layer["h"]
+            h_m = h_cm / 100  # преобразуваме cm → m
             if lam != 0:
-                terms.append(h_val / lam)
+                terms.append(h_m / lam)
             else:
                 st.warning(f"λ_{i+1} не може да бъде 0!")
                 st.stop()
@@ -633,12 +633,12 @@ if layers and lambda_values and len(layers) == len(lambda_values):
         R0 = sum(terms)
 
         # Формула със символи
-        symbolic_terms = [f"\\frac{{h_{i+1}}}{{\\lambda_{i+1}}}" for i in range(len(terms))]
+        symbolic_terms = [f"\\frac{{h_{i+1}}}}{{\\lambda_{i+1}}}" for i in range(len(terms))]
         symbolic_formula = " + ".join(symbolic_terms)
 
-        # Формула със заместени стойности
+        # Формула със заместени стойности (с преобразуване cm → m)
         numeric_terms = [
-            f"\\frac{{{layer['h']:.2f}}}{{{lam:.2f}}}"
+            f"\\frac{{{layer['h'] / 100:.3f}}}{{{lam:.3f}}}"
             for layer, lam in zip(layers, lambda_values)
         ]
         numeric_formula = " + ".join(numeric_terms)
@@ -646,7 +646,7 @@ if layers and lambda_values and len(layers) == len(lambda_values):
         # Показваме символна формула
         st.latex(rf"R_0 = {symbolic_formula}")
 
-        # Показваме заместената формула с реални числа
+        # Показваме заместената формула с реални стойности
         st.latex(rf"R_0 = {numeric_formula}")
 
         # Показваме крайния резултат
