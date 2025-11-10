@@ -747,37 +747,22 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             st.error(f"❌ Грешка при зареждане на DejaVu шрифт: {font_error}")
             st.stop()
         
-        # МОДЕРНИЗИРАНО ЗАГЛАВИЕ
+        # ЗАГЛАВИЕ (стария стил)
         title_style = ParagraphStyle(
             'CustomTitle',
-            fontSize=26,
+            fontSize=24,
             spaceAfter=40,
             alignment=1,
-            textColor=colors.HexColor('#2C5530'),
+            textColor=colors.HexColor('#006064'),
             fontName=font_name,
-            leading=32,
-            borderPadding=10,
-            backColor=colors.HexColor('#F0F7F4')
+            leading=30,
         )
         
-        # Header с градиент ефект
-        header_table = Table([["ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ"]], colWidths=[160*mm])
-        header_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C5530')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 18),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 15),
-            ('TOPPADDING', (0, 0), (-1, 0), 15),
-            ('BOX', (0, 0), (-1, 0), 1, colors.HexColor('#1A3C27')),
-            ('ROUNDEDCORNERS', [10, 10, 10, 10]),
-        ]))
+        title = Paragraph("ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ", title_style)
+        story.append(title)
+        story.append(Spacer(1, 30))
         
-        story.append(header_table)
-        story.append(Spacer(1, 25))
-        
-        # МОДЕРНИЗИРАНА ТАБЛИЦА С ИНФОРМАЦИЯ
+        # МОДЕРНА ТАБЛИЦА С ИНФОРМАЦИЯ
         info_style = ParagraphStyle(
             'InfoStyle',
             parent=styles['Normal'],
@@ -786,9 +771,6 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             fontName=font_name,
             textColor=colors.HexColor('#333333')
         )
-        
-        story.append(Paragraph("ОСНОВНИ ПАРАМЕТРИ", info_style))
-        story.append(Spacer(1, 12))
         
         # Създаване на модерна таблица
         table_data = [
@@ -821,51 +803,33 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             # Grid и border
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
-            ('ROUNDEDCORNERS', [5, 5, 5, 5]),
         ]))
         
         story.append(info_table)
         story.append(Spacer(1, 25))
         
-        # МОДЕРНИЗИРАНА ЛЕГЕНДА
-        section_style = ParagraphStyle(
-            'SectionStyle',
+        # ЛЕГЕНДА С ПРОСТ СТИЛ
+        legend_title_style = ParagraphStyle(
+            'LegendTitleStyle',
             parent=styles['Normal'],
             fontSize=12,
-            spaceAfter=15,
+            spaceAfter=12,
             fontName=font_name,
-            textColor=colors.HexColor('#2C5530'),
-            borderPadding=5,
-            leftIndent=0
+            textColor=colors.HexColor('#2C5530')
         )
         
         legend_style = ParagraphStyle(
             'LegendStyle',
             parent=styles['Normal'],
             fontSize=10,
-            spaceAfter=8,
+            spaceAfter=6,
             fontName=font_name,
             textColor=colors.HexColor('#4B5563'),
-            leftIndent=10,
-            bulletIndent=0
+            leftIndent=0
         )
         
-        # Легенда в модерен контейнер
-        legend_container = Table([["ТЕХНИЧЕСКА ЛЕГЕНДА"]], colWidths=[160*mm])
-        legend_container.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E8F4EA')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#2C5530')),
-            ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 11),
-            ('ALIGN', (0, 0), (-1, 0), 'LEFT'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
-            ('TOPPADDING', (0, 0), (-1, 0), 8),
-            ('LEFTPADDING', (0, 0), (-1, 0), 10),
-            ('BOX', (0, 0), (-1, 0), 0.5, colors.HexColor('#4A7C59')),
-        ]))
-        
-        story.append(legend_container)
-        story.append(Spacer(1, 12))
+        story.append(Paragraph("ЛЕГЕНДА", legend_title_style))
+        story.append(Spacer(1, 8))
         
         # Елементи на легендата с bullet points
         legend_items = [
@@ -882,7 +846,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
         
         story.append(Spacer(1, 30))
         
-        # МОДЕРНИЗИРАНА ДАТА
+        # ДАТА С ПРОСТ СТИЛ
         date_style = ParagraphStyle(
             'DateStyle',
             parent=styles['Normal'],
@@ -893,20 +857,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
         )
         
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        date_table = Table([[f"📄 Генерирано на: {current_date}"]], colWidths=[160*mm])
-        date_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F3F4F6')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#6B7280')),
-            ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('ALIGN', (0, 0), (-1, 0), 'RIGHT'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-            ('TOPPADDING', (0, 0), (-1, 0), 5),
-            ('RIGHTPADDING', (0, 0), (-1, 0), 5),
-            ('BOX', (0, 0), (-1, 0), 0.25, colors.HexColor('#D1D5DB')),
-        ]))
-        
-        story.append(date_table)
+        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
         
         # Генериране на PDF
         doc.build(story)
