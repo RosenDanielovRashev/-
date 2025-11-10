@@ -735,6 +735,9 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
                               bottomMargin=10*mm)
         story = []
         
+        # Зареждане на стиловете
+        styles = getSampleStyleSheet()
+        
         # Регистриране на DejaVu шрифт от локалната директория
         try:
             pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
