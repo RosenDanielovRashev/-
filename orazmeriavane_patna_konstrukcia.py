@@ -726,9 +726,13 @@ st.subheader("Генериране на отчет")
 
 if st.button("📄 Генерирай PDF отчет (само заглавие)", type="primary"):
     try:
-        # Създаване на PDF документ
+        # Създаване на PDF документ с narrow margins
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        doc = SimpleDocTemplate(buffer, pagesize=A4, 
+                              leftMargin=10*mm, 
+                              rightMargin=10*mm,
+                              topMargin=10*mm,
+                              bottomMargin=10*mm)
         story = []
         
         # Регистриране на DejaVu шрифт от локалната директория
@@ -757,7 +761,7 @@ if st.button("📄 Генерирай PDF отчет (само заглавие)
         
         title = Paragraph(title_text, title_style)
         story.append(title)
-        story.append(Spacer(1, 200))  # Много голямо разстояние до края на страницата
+        story.append(Spacer(1, 250))  # Много голямо разстояние до края на страницата
         
         # Генериране на PDF
         doc.build(story)
