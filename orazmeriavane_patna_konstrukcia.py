@@ -762,17 +762,17 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
         story.append(title)
         story.append(Spacer(1, 30))
         
-        # МОДЕРНА ТАБЛИЦА С ИНФОРМАЦИЯ
+        # МОДЕРНА ТАБЛИЦА С ИНФОРМАЦИЯ (20% по-малка)
         info_style = ParagraphStyle(
             'InfoStyle',
             parent=styles['Normal'],
-            fontSize=11,
-            spaceAfter=8,
+            fontSize=9,  # По-малък шрифт
+            spaceAfter=6,
             fontName=font_name,
             textColor=colors.HexColor('#333333')
         )
         
-        # Създаване на модерна таблица
+        # Създаване на по-малка таблица
         table_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ"],
             ["Осов товар", f"{st.session_state.axle_load} kN"],
@@ -780,25 +780,26 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             ["Брой пластове", str(st.session_state.num_layers)]
         ]
         
-        info_table = Table(table_data, colWidths=[100*mm, 60*mm])
+        # 20% по-малки ширини на колоните (80*0.8=64, 60*0.8=48)
+        info_table = Table(table_data, colWidths=[64*mm, 48*mm])
         info_table.setStyle(TableStyle([
             # Header стил
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 12),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),  # По-малък шрифт
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
-            ('TOPPADDING', (0, 0), (-1, 0), 10),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),  # По-малко padding
+            ('TOPPADDING', (0, 0), (-1, 0), 5),     # По-малко padding
             
             # Данни стил
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
             ('FONTNAME', (0, 1), (-1, -1), font_name),
-            ('FONTSIZE', (0, 1), (-1, -1), 11),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),     # По-малък шрифт
             ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
-            ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3), # По-малко padding
+            ('TOPPADDING', (0, 1), (-1, -1), 3),    # По-малко padding
             
             # Grid и border
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
