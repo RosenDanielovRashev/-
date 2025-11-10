@@ -713,22 +713,57 @@ def fig_to_image(fig):
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
-if st.button("🧾 Генерирай PDF отчет", use_container_width=True):
-    buffer = io.BytesIO()
-    c = canvas.Canvas(buffer, pagesize=A4)
+# Генериране на PDF отчет само със заглавие
+st.markdown("---")
+st.subheader("Генериране на отчет")
 
-    # Заглавие в PDF
-    title = "Отчет за пътната конструкция"
-    c.setFont("Helvetica-Bold", 22)
-    c.drawCentredString(300, 780, title)
-
-    c.showPage()
-    c.save()
-    buffer.seek(0)
-
-    st.download_button(
-        label="⬇️ Изтегли PDF отчет",
-        data=buffer,
-        file_name="otchet_patna_konstrukcia.pdf",
-        mime="application/pdf"
-    )
+if st.button("📄 Генерирай PDF отчет (само заглавие)", type="primary"):
+    try:
+        # Създаване на PDF документ
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(buffer, pagesize=A4)
+        story = []
+        
+        # Регистриране на DejaVu шрифт от локалната директория
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            font_name = 'DejaVuSans-Bold'
+            st.success("✅ DejaVu шрифтът е зареден успешно!")
+        except Exception as font_error:
+            st.error(f"❌ Грешка при зареждане на DejaVu шрифт: {font_error}")
+            font_name = 'Helvetica-Bold'
+        
+        # САМО ЗАГЛАВИЕ с DejaVu шрифт
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            fontSize=20,
+            spaceAfter=30,
+            alignment=1,  # центрирано
+            textColor=colors.HexColor('#006064'),
+            fontName=font_name
+        )
+        
+        title = Paragraph("ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ С НЯКОЛКО ПЛАСТОВЕ", title_style)
+        story.append(title)
+        story.append(Spacer(1, 50))
+        
+        # Генериране на PDF
+        doc.build(story)
+        
+        # Запазване и изтегляне
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
+        
+        st.success("✅ PDF отчетът е генериран успешно!")
+        
+        # Бутон за изтегляне
+        st.download_button(
+            label="📥 Изтегли PDF отчет",
+            data=pdf_data,
+            file_name=f"Заглавие_Пътна_Конструкция_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+            mime="application/pdf"
+        )
+        
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {e}")
