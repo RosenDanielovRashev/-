@@ -748,7 +748,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             st.error(f"❌ Грешка при зареждане на DejaVu шрифт: {font_error}")
             st.stop()
         
-        # ЗАГЛАВИЕ (стария стил)
+        # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
             'CustomTitle',
             fontSize=24,
@@ -962,15 +962,20 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
                             height=400
                         )
                         
-                        # Конвертиране на графиката в изображение
-                        img_bytes = pio.to_image(fig, format="png", width=600, height=400)
-                        img = ImageReader(BytesIO(img_bytes))
+                        # Конвертиране на графиката в изображение и запазване във временен файл
+                        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+                            img_bytes = pio.to_image(fig, format="png", width=600, height=400)
+                            tmp_file.write(img_bytes)
+                            tmp_file_path = tmp_file.name
                         
-                        # Добавяне на изображението в PDF
+                        # Добавяне на изображението в PDF от временния файл
                         story.append(Paragraph(f"Графика на пласт {i+1}:", legend_style))
                         story.append(Spacer(1, 5))
-                        story.append(Image(img, width=400, height=250))
+                        story.append(Image(tmp_file_path, width=400, height=250))
                         story.append(Spacer(1, 20))
+                        
+                        # Изтриване на временния файл
+                        os.unlink(tmp_file_path)
                         
                     except Exception as plot_error:
                         error_msg = f"Грешка при генериране на графика за пласт {i+1}: {plot_error}"
