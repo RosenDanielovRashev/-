@@ -14,6 +14,15 @@ import requests
 from io import BytesIO
 import plotly.express as px
 
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.utils import ImageReader
+import io
+
 
 st.set_page_config(layout="wide")
 
@@ -711,14 +720,6 @@ def fig_to_image(fig):
 # ===============================================================
 # 🧾 ГЕНЕРИРАНЕ НА ПОДРОБЕН PDF ОТЧЕТ
 # ===============================================================
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak
-from reportlab.lib import colors
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib.utils import ImageReader
-import io
 
 st.markdown("---")
 st.subheader("📄 Подробен PDF отчет")
