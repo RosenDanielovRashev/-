@@ -720,232 +720,153 @@ def fig_to_image(fig):
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
-# Генериране на PDF отчет със заглавие и информация
+# Генериране на PDF отчет със заглавие, таблици и графики
 st.markdown("---")
 st.subheader("Генериране на отчет")
 
-if st.button("📄 Генерирай PDF отчет (с информация)", type="primary"):
+if st.button("📄 Генерирай PDF отчет (с графики)", type="primary"):
     try:
-        # Създаване на PDF документ с narrow margins
         buffer = io.BytesIO()
-        doc = SimpleDocTemplate(buffer, pagesize=A4, 
-                              leftMargin=15*mm, 
-                              rightMargin=15*mm,
-                              topMargin=15*mm,
-                              bottomMargin=15*mm)
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            leftMargin=15 * mm,
+            rightMargin=15 * mm,
+            topMargin=15 * mm,
+            bottomMargin=15 * mm
+        )
         story = []
-        
-        # Зареждане на стиловете
         styles = getSampleStyleSheet()
-        
-        # Регистриране на DejaVu шрифт от локалната директория
-        try:
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
-            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
-            font_name = 'DejaVuSans-Bold'
-            st.success("✅ DejaVu шрифтът е зареден успешно!")
-        except Exception as font_error:
-            st.error(f"❌ Грешка при зареждане на DejaVu шрифт: {font_error}")
-            st.stop()
-        
-        # ЗАГЛАВИЕ
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            fontSize=24,
-            spaceAfter=40,
-            alignment=1,
-            textColor=colors.HexColor('#006064'),
-            fontName=font_name,
-            leading=30,
-        )
-        
-        title = Paragraph("ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ", title_style)
-        story.append(title)
-        story.append(Spacer(1, 30))
-        
-        # МОДЕРНА ТАБЛИЦА С ИНФОРМАЦИЯ (20% по-малка, ляво подравняване)
-        info_style = ParagraphStyle(
-            'InfoStyle',
-            parent=styles['Normal'],
-            fontSize=9,
-            spaceAfter=6,
-            fontName=font_name,
-            textColor=colors.HexColor('#333333')
-        )
 
-        # Създаване на по-малка таблица с ляво подравняване
-        table_data = [
+        # Зареждане на шрифт
+        pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+        font_name = 'DejaVuSans-Bold'
+
+        # Заглавие
+        title_style = ParagraphStyle(
+            'Title',
+            fontName=font_name,
+            fontSize=20,
+            alignment=1,
+            spaceAfter=20,
+            textColor=colors.HexColor('#006064')
+        )
+        story.append(Paragraph("ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ", title_style))
+        story.append(Spacer(1, 15))
+
+        # Инфо таблица
+        info_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ"],
             ["Осов товар", f"{st.session_state.axle_load} kN"],
             ["Диаметър D", f"{st.session_state.final_D} cm"],
             ["Брой пластове", str(st.session_state.num_layers)]
         ]
-
-        # 20% по-малки ширини на колоните с ляво подравняване
-        info_table = Table(table_data, colWidths=[64*mm, 48*mm], hAlign='LEFT')
+        info_table = Table(info_data, colWidths=[64 * mm, 48 * mm])
         info_table.setStyle(TableStyle([
-            # Header стил
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('ALIGN', (0, 0), (-1, 0), 'LEFT'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-            ('TOPPADDING', (0, 0), (-1, 0), 5),
-            ('LEFTPADDING', (0, 0), (-1, 0), 8),
-            ('RIGHTPADDING', (0, 0), (-1, 0), 8),
-            
-            # Данни стил
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
-            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
-            ('FONTNAME', (0, 1), (-1, -1), font_name),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
-            ('ALIGN', (0, 1), (-1, -1), 'LEFT'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
-            ('TOPPADDING', (0, 1), (-1, -1), 3),
-            ('LEFTPADDING', (0, 1), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 1), (-1, -1), 8),
-            
-            # Grid и border
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey)
         ]))
-
         story.append(info_table)
         story.append(Spacer(1, 25))
-        
-        # ЛЕГЕНДА С ПРОСТ СТИЛ
-        legend_title_style = ParagraphStyle(
-            'LegendTitleStyle',
-            parent=styles['Normal'],
-            fontSize=12,
-            spaceAfter=12,
-            fontName=font_name,
-            textColor=colors.HexColor('#2C5530')
-        )
-        
-        legend_style = ParagraphStyle(
-            'LegendStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            spaceAfter=6,
-            fontName=font_name,
-            textColor=colors.HexColor('#4B5563'),
-            leftIndent=0
-        )
-        
-        story.append(Paragraph("ЛЕГЕНДА", legend_title_style))
-        story.append(Spacer(1, 8))
-        
-        # Елементи на легендата с bullet points
-        legend_items = [
-            "D – Диаметър на отпечатък на колелото",
-            "Ed – Модул на еластичност на повърхността под пласта",
-            "Ei – Модул на еластичност на пласта",
-            "Ee – Модул на еластичност на повърхността на пласта", 
-            "h – Дебелина на пласта"
-        ]
-        
-        for item in legend_items:
-            p = Paragraph(f"• {item}", legend_style)
-            story.append(p)
-        
-        story.append(Spacer(1, 30))
-        
-        # ИНФОРМАЦИЯ ЗА ВСЕКИ ПЛАСТ
-        section_title_style = ParagraphStyle(
-            'SectionTitleStyle',
-            parent=styles['Normal'],
-            fontSize=14,
-            spaceAfter=15,
-            fontName=font_name,
-            textColor=colors.HexColor('#2C5530'),
-            alignment=1
-        )
-        
-        story.append(Paragraph("ДАННИ ЗА ПЛАСТОВЕТЕ", section_title_style))
-        story.append(Spacer(1, 20))
-        
-        # Добавяне на информация за всеки пласт
+
+        # Всеки пласт + графика
         for i, layer in enumerate(st.session_state.layers_data):
-            if "Ed" in layer:  # Само ако пластът е изчислен
-                # Заглавие на пласта
-                layer_title_style = ParagraphStyle(
-                    'LayerTitleStyle',
-                    parent=styles['Normal'],
-                    fontSize=12,
-                    spaceAfter=10,
-                    fontName=font_name,
-                    textColor=colors.HexColor('#4A7C59'),
-                    backColor=colors.HexColor('#F0F7F4'),
-                    borderPadding=5
-                )
-                
-                story.append(Paragraph(f"ПЛАСТ {i+1}", layer_title_style))
-                
-                # Данни за пласта
-                layer_data = [
-                    ["Параметър", "Стойност", "Единица"],
-                    ["Ei", f"{layer['Ei']:.0f}", "MPa"],
-                    ["Ee", f"{layer['Ee']:.0f}", "MPa"],
-                    ["Ed", f"{layer['Ed']:.0f}", "MPa"],
-                    ["h", f"{layer['h']:.2f}", "cm"],
-                    ["h/D", f"{layer.get('hD_point', 0):.3f}", ""],
-                    ["Ed/Ei", f"{layer.get('EdEi_point', 0):.3f}", ""],
-                    ["Ee/Ei", f"{layer['Ee']/layer['Ei']:.3f}", ""]
-                ]
-                
-                layer_table = Table(layer_data, colWidths=[50*mm, 40*mm, 25*mm], hAlign='LEFT')
-                layer_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                    ('FONTNAME', (0, 0), (-1, 0), font_name),
-                    ('FONTSIZE', (0, 0), (-1, 0), 9),
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
-                    ('FONTNAME', (0, 1), (-1, -1), font_name),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-                    ('LEFTPADDING', (0, 0), (-1, -1), 6),
-                    ('RIGHTPADDING', (0, 0), (-1, -1), 6),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
-                    ('TOPPADDING', (0, 0), (-1, -1), 4),
-                ]))
-                
-                story.append(layer_table)
-                story.append(Spacer(1, 15))
-        
-        # ДАТА С ПРОСТ СТИЛ
-        date_style = ParagraphStyle(
-            'DateStyle',
-            parent=styles['Normal'],
+            if "Ed" not in layer:
+                continue
+
+            # Заглавие на пласт
+            story.append(Paragraph(f"ПЛАСТ {i + 1}", ParagraphStyle(
+                'LayerTitle',
+                fontName=font_name,
+                fontSize=14,
+                textColor=colors.HexColor('#2C5530'),
+                spaceAfter=10
+            )))
+
+            # Таблица с данни
+            table_data = [
+                ["Параметър", "Стойност", "Единица"],
+                ["Ei", f"{layer['Ei']:.0f}", "MPa"],
+                ["Ee", f"{layer['Ee']:.0f}", "MPa"],
+                ["Ed", f"{layer['Ed']:.0f}", "MPa"],
+                ["h", f"{layer['h']:.2f}", "cm"],
+                ["h/D", f"{layer.get('hD_point', 0):.3f}", ""],
+                ["Ed/Ei", f"{layer.get('EdEi_point', 0):.3f}", ""],
+                ["Ee/Ei", f"{layer['Ee']/layer['Ei']:.3f}", ""]
+            ]
+            table = Table(table_data, colWidths=[50 * mm, 40 * mm, 25 * mm])
+            table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), font_name),
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+                ('FONTNAME', (0, 1), (-1, -1), font_name),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ]))
+            story.append(table)
+            story.append(Spacer(1, 10))
+
+            # ГЕНЕРИРАНЕ НА ГРАФИКА
+            fig = go.Figure()
+            for val, group in data.groupby("Ee_over_Ei"):
+                group_sorted = group.sort_values("h_over_D")
+                fig.add_trace(go.Scatter(
+                    x=group_sorted["h_over_D"],
+                    y=group_sorted["Ed_over_Ei"],
+                    mode='lines',
+                    name=f"Ee/Ei = {val:.2f}"
+                ))
+
+            if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
+                hD = layer["hD_point"]
+                EdEi = layer["Ed"] / layer["Ei"]
+                fig.add_trace(go.Scatter(
+                    x=[hD], y=[EdEi],
+                    mode='markers',
+                    marker=dict(color='red', size=10),
+                    name='Резултат'
+                ))
+
+            fig.update_layout(
+                title=f"Ed / Ei в зависимост от h / D — Пласт {i + 1}",
+                xaxis_title="h / D",
+                yaxis_title="Ed / Ei",
+                showlegend=False,
+                template="plotly_white"
+            )
+
+            img = fig_to_image(fig)
+            img_buffer = io.BytesIO()
+            img.save(img_buffer, format="PNG")
+            img_buffer.seek(0)
+            story.append(ImageReader(img_buffer))
+            story.append(Spacer(1, 20))
+
+        # Дата
+        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+        story.append(Spacer(1, 10))
+        story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle(
+            'Date',
             fontSize=9,
             alignment=2,
-            fontName=font_name,
-            textColor=colors.HexColor('#6B7280')
-        )
-        
-        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
-        
-        # Генериране на PDF
+            textColor=colors.grey,
+            fontName=font_name
+        )))
+
         doc.build(story)
-        
-        # Запазване и изтегляне
         buffer.seek(0)
-        pdf_data = buffer.getvalue()
-        
-        st.success("✅ PDF отчетът е генериран успешно!")
-        
-        # Бутон за изтегляне
+        st.success("✅ PDF отчетът с графики е готов!")
         st.download_button(
-            label="📥 Изтегли PDF отчет",
-            data=pdf_data,
+            "📥 Изтегли PDF отчет",
+            buffer,
             file_name=f"Пътна_Конструкция_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
             mime="application/pdf"
         )
-        
-    except Exception as e:
-        st.error(f"Грешка при генериране на PDF: {e}")
+
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
