@@ -721,10 +721,25 @@ def fig_to_image(fig):
         st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
-# --- Генериране на отчет ---
 st.markdown("---")
-st.header("📄 Генериране на отчет")
+st.header("📄 Генериране на PDF отчет")
 
-if st.button("🧾 Генерирай отчет", use_container_width=True):
-    st.markdown("## 🏗️ Отчет за пътната конструкция")
-    st.success("✅ Заглавието на отчета е генерирано успешно!")
+if st.button("🧾 Генерирай PDF отчет", use_container_width=True):
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+
+    # Заглавие в PDF
+    title = "Отчет за пътната конструкция"
+    c.setFont("Helvetica-Bold", 22)
+    c.drawCentredString(300, 780, title)
+
+    c.showPage()
+    c.save()
+    buffer.seek(0)
+
+    st.download_button(
+        label="⬇️ Изтегли PDF отчет",
+        data=buffer,
+        file_name="otchet_patna_konstrukcia.pdf",
+        mime="application/pdf"
+    )
