@@ -719,7 +719,6 @@ def fig_to_image(fig):
         st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
-
 # Генериране на PDF отчет със заглавие и информация
 st.markdown("---")
 st.subheader("Генериране на отчет")
@@ -746,7 +745,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             st.success("✅ DejaVu шрифтът е зареден успешно!")
         except Exception as font_error:
             st.error(f"❌ Грешка при зареждане на DejaVu шрифт: {font_error}")
-            font_name = 'Helvetica-Bold'
+            st.stop()  # Спираме програмата ако няма DejaVu шрифт
         
         # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
@@ -769,7 +768,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             parent=styles['Normal'],
             fontSize=12,
             spaceAfter=12,
-            fontName='Helvetica-Bold'
+            fontName=font_name
         )
         
         # Таблица с информацията
@@ -789,7 +788,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006064')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 12),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f5f5f5')),
@@ -805,15 +804,19 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             parent=styles['Normal'],
             fontSize=10,
             spaceAfter=6,
-            fontName='Helvetica'
+            fontName=font_name
         )
         
         story.append(Paragraph("Легенда:", info_style))
         story.append(Paragraph("• Осов товар – Натоварване от ос на превозно средство", legend_style))
         story.append(Paragraph("• D – Диаметър на отпечатък на колелото", legend_style))
         story.append(Paragraph("• Брой пластове – Общ брой на пластовете в конструкцията", legend_style))
+        story.append(Paragraph("• Ed – Модул на еластичност на повърхността под пласта", legend_style))
+        story.append(Paragraph("• Ei – Модул на еластичност на пласта", legend_style))
+        story.append(Paragraph("• Ee – Модул на еластичност на повърхността на пласта", legend_style))
+        story.append(Paragraph("• h – Дебелина на пласта", legend_style))
         
-        story.append(Spacer(1, 50))
+        story.append(Spacer(1, 30))
         
         # Дата на генериране
         date_style = ParagraphStyle(
@@ -821,7 +824,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             parent=styles['Normal'],
             fontSize=10,
             alignment=2,  # right alignment
-            fontName='Helvetica'
+            fontName=font_name
         )
         
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
