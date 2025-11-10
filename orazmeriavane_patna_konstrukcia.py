@@ -719,6 +719,7 @@ def fig_to_image(fig):
         st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
+
 # Генериране на PDF отчет със заглавие и информация
 st.markdown("---")
 st.subheader("Генериране на отчет")
@@ -762,7 +763,6 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
         story.append(title)
         story.append(Spacer(1, 30))
         
-
         # МОДЕРНА ТАБЛИЦА С ИНФОРМАЦИЯ (20% по-малка, ляво подравняване)
         info_style = ParagraphStyle(
             'InfoStyle',
@@ -772,7 +772,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             fontName=font_name,
             textColor=colors.HexColor('#333333')
         )
-        
+
         # Създаване на по-малка таблица с ляво подравняване
         table_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ"],
@@ -780,9 +780,9 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             ["Диаметър D", f"{st.session_state.final_D} cm"],
             ["Брой пластове", str(st.session_state.num_layers)]
         ]
-        
+
         # 20% по-малки ширини на колоните с ляво подравняване
-        info_table = Table(table_data, colWidths=[64*mm, 48*mm], hAlign='LEFT')  # Важно: hAlign='LEFT'
+        info_table = Table(table_data, colWidths=[64*mm, 48*mm], hAlign='LEFT')
         info_table.setStyle(TableStyle([
             # Header стил
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
@@ -810,7 +810,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
         ]))
-        
+
         story.append(info_table)
         story.append(Spacer(1, 25))
         
@@ -851,6 +851,132 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             story.append(p)
         
         story.append(Spacer(1, 30))
+        
+        # ИНФОРМАЦИЯ ЗА ВСЕКИ ПЛАСТ
+        section_title_style = ParagraphStyle(
+            'SectionTitleStyle',
+            parent=styles['Normal'],
+            fontSize=14,
+            spaceAfter=15,
+            fontName=font_name,
+            textColor=colors.HexColor('#2C5530'),
+            alignment=1
+        )
+        
+        story.append(Paragraph("ДАННИ ЗА ПЛАСТОВЕТЕ", section_title_style))
+        story.append(Spacer(1, 20))
+        
+        # Добавяне на информация за всеки пласт
+        for i, layer in enumerate(st.session_state.layers_data):
+            if "Ed" in layer:  # Само ако пластът е изчислен
+                # Заглавие на пласта
+                layer_title_style = ParagraphStyle(
+                    'LayerTitleStyle',
+                    parent=styles['Normal'],
+                    fontSize=12,
+                    spaceAfter=10,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#4A7C59'),
+                    backColor=colors.HexColor('#F0F7F4'),
+                    borderPadding=5
+                )
+                
+                story.append(Paragraph(f"ПЛАСТ {i+1}", layer_title_style))
+                
+                # Данни за пласта
+                layer_data = [
+                    ["Параметър", "Стойност", "Единица"],
+                    ["Ei", f"{layer['Ei']:.0f}", "MPa"],
+                    ["Ee", f"{layer['Ee']:.0f}", "MPa"],
+                    ["Ed", f"{layer['Ed']:.0f}", "MPa"],
+                    ["h", f"{layer['h']:.2f}", "cm"],
+                    ["h/D", f"{layer.get('hD_point', 0):.3f}", ""],
+                    ["Ed/Ei", f"{layer.get('EdEi_point', 0):.3f}", ""],
+                    ["Ee/Ei", f"{layer['Ee']/layer['Ei']:.3f}", ""]
+                ]
+                
+                layer_table = Table(layer_data, colWidths=[50*mm, 40*mm, 25*mm], hAlign='LEFT')
+                layer_table.setStyle(TableStyle([
+                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                    ('FONTNAME', (0, 0), (-1, 0), font_name),
+                    ('FONTSIZE', (0, 0), (-1, 0), 9),
+                    ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+                    ('FONTNAME', (0, 1), (-1, -1), font_name),
+                    ('FONTSIZE', (0, 1), (-1, -1), 8),
+                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+                    ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                    ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                    ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                    ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ]))
+                
+                story.append(layer_table)
+                story.append(Spacer(1, 15))
+                
+                # Добавяне на графиката за пласта
+                if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
+                    try:
+                        # Създаване на графиката
+                        fig = go.Figure()
+                        
+                        # Добавяне на изолинии
+                        for value, group in data.groupby("Ee_over_Ei"):
+                            group_sorted = group.sort_values("h_over_D")
+                            fig.add_trace(go.Scatter(
+                                x=group_sorted["h_over_D"],
+                                y=group_sorted["Ed_over_Ei"],
+                                mode='lines',
+                                name=f"Ee/Ei = {value:.2f}",
+                                line=dict(width=1)
+                            ))
+                        
+                        # Добавяне на интерполационната линия и точка
+                        hD_point = layer['hD_point']
+                        EdEi_point = layer['Ed'] / layer['Ei']
+                        
+                        if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
+                            fig.add_trace(go.Scatter(
+                                x=[hD_point, hD_point],
+                                y=[layer['y_low'], layer['y_high']],
+                                mode='lines',
+                                line=dict(color='purple', dash='dash', width=2),
+                                name=f"Интерполация"
+                            ))
+                            fig.add_trace(go.Scatter(
+                                x=[hD_point],
+                                y=[EdEi_point],
+                                mode='markers',
+                                marker=dict(color='red', size=10),
+                                name='Резултат'
+                            ))
+                        
+                        fig.update_layout(
+                            title=f"Графика за пласт {i+1}",
+                            xaxis_title="h / D",
+                            yaxis_title="Ed / Ei",
+                            showlegend=True,
+                            legend=dict(orientation="h", yanchor="bottom", y=1.02),
+                            width=600,
+                            height=400
+                        )
+                        
+                        # Конвертиране на графиката в изображение
+                        img_bytes = pio.to_image(fig, format="png", width=600, height=400)
+                        img = ImageReader(BytesIO(img_bytes))
+                        
+                        # Добавяне на изображението в PDF
+                        story.append(Paragraph(f"Графика на пласт {i+1}:", legend_style))
+                        story.append(Spacer(1, 5))
+                        story.append(Image(img, width=400, height=250))
+                        story.append(Spacer(1, 20))
+                        
+                    except Exception as plot_error:
+                        error_msg = f"Грешка при генериране на графика за пласт {i+1}: {plot_error}"
+                        story.append(Paragraph(error_msg, legend_style))
+                
+                story.append(Spacer(1, 15))
         
         # ДАТА С ПРОСТ СТИЛ
         date_style = ParagraphStyle(
