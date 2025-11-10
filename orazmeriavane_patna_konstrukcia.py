@@ -892,21 +892,27 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 leftIndent=20
             )
 
-            # Информация за пласта - кратко и ясно
-            story.append(Paragraph("ПАРАМЕТРИ:", layer_info_style))
-            story.append(Spacer(1, 3))  # По-малко разстояние
-            
+            # Изчислителни параметри за конкретния пласт
             hD_point = layer.get('hD_point', 0)
             EdEi_point = layer.get('EdEi_point', 0)
             EeEi_ratio = layer['Ee'] / layer['Ei']
             
-            story.append(Paragraph(f"• Ei = {layer['Ei']:.0f} MPa", layer_value_style))
-            story.append(Paragraph(f"• Ee = {layer['Ee']:.0f} MPa", layer_value_style))
-            story.append(Paragraph(f"• Ed = {layer['Ed']:.0f} MPa", layer_value_style))
-            story.append(Paragraph(f"• h = {layer['h']:.2f} cm", layer_value_style))
-            story.append(Paragraph(f"• h/D = {hD_point:.3f}", layer_value_style))
-            story.append(Paragraph(f"• Ed/Ei = {EdEi_point:.3f}", layer_value_style))
-            story.append(Paragraph(f"• Ee/Ei = {EeEi_ratio:.3f}", layer_value_style))
+            # Информация за пласта - кратко и ясно
+            story.append(Paragraph("ИЗЧИСЛЕНИЯ:", layer_info_style))
+            story.append(Spacer(1, 3))  # По-малко разстояние
+            
+            # Добавяне на изчислителните формули
+            if mode == "Ed / Ei":
+                story.append(Paragraph(f"• Ed = Ei × (Ed/Ei) = {layer['Ei']:.0f} × {EdEi_point:.3f} = {layer['Ed']:.0f} MPa", layer_value_style))
+            else:
+                story.append(Paragraph(f"• h = D × (h/D) = {st.session_state.final_D} × {hD_point:.3f} = {layer['h']:.2f} cm", layer_value_style))
+            
+            story.append(Paragraph(f"• Ee/Ei = {layer['Ee']:.0f} / {layer['Ei']:.0f} = {EeEi_ratio:.3f}", layer_value_style))
+            story.append(Paragraph(f"• h/D = {layer['h']:.1f} / {st.session_state.final_D} = {hD_point:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.3f}", layer_value_style))
+            
+            if 'low_iso' in layer and 'high_iso' in layer:
+                story.append(Paragraph(f"• Интерполация между Ee/Ei = {layer['low_iso']:.3f} и {layer['high_iso']:.3f}", layer_value_style))
             
             story.append(Spacer(1, 8))  # По-малко разстояние
 
