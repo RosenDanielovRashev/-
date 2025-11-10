@@ -914,74 +914,6 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
                 
                 story.append(layer_table)
                 story.append(Spacer(1, 15))
-                
-                # Добавяне на графиката за пласта
-                if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
-                    try:
-                        # Създаване на графиката
-                        fig = go.Figure()
-                        
-                        # Добавяне на изолинии
-                        for value, group in data.groupby("Ee_over_Ei"):
-                            group_sorted = group.sort_values("h_over_D")
-                            fig.add_trace(go.Scatter(
-                                x=group_sorted["h_over_D"],
-                                y=group_sorted["Ed_over_Ei"],
-                                mode='lines',
-                                name=f"Ee/Ei = {value:.2f}",
-                                line=dict(width=1)
-                            ))
-                        
-                        # Добавяне на интерполационната линия и точка
-                        hD_point = layer['hD_point']
-                        EdEi_point = layer['Ed'] / layer['Ei']
-                        
-                        if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
-                            fig.add_trace(go.Scatter(
-                                x=[hD_point, hD_point],
-                                y=[layer['y_low'], layer['y_high']],
-                                mode='lines',
-                                line=dict(color='purple', dash='dash', width=2),
-                                name=f"Интерполация"
-                            ))
-                            fig.add_trace(go.Scatter(
-                                x=[hD_point],
-                                y=[EdEi_point],
-                                mode='markers',
-                                marker=dict(color='red', size=10),
-                                name='Резултат'
-                            ))
-                        
-                        fig.update_layout(
-                            title=f"Графика за пласт {i+1}",
-                            xaxis_title="h / D",
-                            yaxis_title="Ed / Ei",
-                            showlegend=True,
-                            legend=dict(orientation="h", yanchor="bottom", y=1.02),
-                            width=600,
-                            height=400
-                        )
-                        
-                        # Конвертиране на графиката в изображение и запазване във временен файл
-                        with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                            img_bytes = pio.to_image(fig, format="png", width=600, height=400)
-                            tmp_file.write(img_bytes)
-                            tmp_file_path = tmp_file.name
-                        
-                        # Добавяне на изображението в PDF от временния файл
-                        story.append(Paragraph(f"Графика на пласт {i+1}:", legend_style))
-                        story.append(Spacer(1, 5))
-                        story.append(Image(tmp_file_path, width=400, height=250))
-                        story.append(Spacer(1, 20))
-                        
-                        # Изтриване на временния файл
-                        os.unlink(tmp_file_path)
-                        
-                    except Exception as plot_error:
-                        error_msg = f"Грешка при генериране на графика за пласт {i+1}: {plot_error}"
-                        story.append(Paragraph(error_msg, legend_style))
-                
-                story.append(Spacer(1, 15))
         
         # ДАТА С ПРОСТ СТИЛ
         date_style = ParagraphStyle(
@@ -1013,5 +945,7 @@ if st.button("📄 Генерирай PDF отчет (с информация)",
             mime="application/pdf"
         )
         
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {e}")
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
