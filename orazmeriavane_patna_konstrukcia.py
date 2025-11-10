@@ -720,11 +720,11 @@ def fig_to_image(fig):
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
-# Генериране на PDF отчет само със заглавие
+# Генериране на PDF отчет със заглавие и информация
 st.markdown("---")
 st.subheader("Генериране на отчет")
 
-if st.button("📄 Генерирай PDF отчет (само заглавие)", type="primary"):
+if st.button("📄 Генерирай PDF отчет (с информация)", type="primary"):
     try:
         # Създаване на PDF документ с narrow margins
         buffer = io.BytesIO()
@@ -745,46 +745,84 @@ if st.button("📄 Генерирай PDF отчет (само заглавие)
             st.error(f"❌ Грешка при зареждане на DejaVu шрифт: {font_error}")
             font_name = 'Helvetica-Bold'
         
-        # САМО ЗАГЛАВИЕ с DejaVu шрифт и по-големи разстояния
+        # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
             'CustomTitle',
             fontSize=24,
-            spaceAfter=100,  # По-голямо разстояние след заглавието
-            alignment=1,  # центрирано
+            spaceAfter=30,
+            alignment=1,
             textColor=colors.HexColor('#006064'),
             fontName=font_name,
-            leading=30,  # По-голямо разстояние между редовете
+            leading=30,
         )
         
-        # Разделяне на заглавието на два реда
-        title_text = "ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ"
-        
-        title = Paragraph(title_text, title_style)
+        title = Paragraph("ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ", title_style)
         story.append(title)
-        story.append(Spacer(1, 250))  # Много голямо разстояние до края на страницата
-
-        # Блок с информация за конструкцията
-        st.markdown("---")
-        st.subheader("Информация за конструкцията")
+        story.append(Spacer(1, 20))
+        
+        # ИНФОРМАЦИЯ ЗА КОНСТРУКЦИЯТА
+        info_style = ParagraphStyle(
+            'InfoStyle',
+            parent=styles['Normal'],
+            fontSize=12,
+            spaceAfter=12,
+            fontName='Helvetica-Bold'
+        )
+        
+        # Таблица с информацията
+        story.append(Paragraph("Информация за конструкцията:", info_style))
+        story.append(Spacer(1, 10))
         
         # Създаване на таблица с данните
-        info_data = {
-            "Параметър": ["Осов товар (kN)", "Стойност за D (cm)", "Брой пластове"],
-            "Стойност": [st.session_state.axle_load, st.session_state.final_D, st.session_state.num_layers]
-        }
+        table_data = [
+            ["Параметър", "Стойност"],
+            ["Осов товар (kN)", str(st.session_state.axle_load)],
+            ["Стойност за D (cm)", str(st.session_state.final_D)],
+            ["Брой пластове", str(st.session_state.num_layers)]
+        ]
         
-        info_df = pd.DataFrame(info_data)
+        info_table = Table(table_data, colWidths=[80*mm, 40*mm])
+        info_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#006064')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, -1), 12),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#f5f5f5')),
+            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+        ]))
         
-        # Показване на таблицата
-        st.table(info_df)
+        story.append(info_table)
+        story.append(Spacer(1, 20))
         
         # Легенда
-        st.markdown("### Легенда:")
-        st.markdown("""
-        - **Осов товар** – Натоварване от ос на превозно средство
-        - **D** – Диаметър на отпечатък на колелото
-        - **Брой пластове** – Общ брой на пластовете в конструкцията
-        """)
+        legend_style = ParagraphStyle(
+            'LegendStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=6,
+            fontName='Helvetica'
+        )
+        
+        story.append(Paragraph("Легенда:", info_style))
+        story.append(Paragraph("• Осов товар – Натоварване от ос на превозно средство", legend_style))
+        story.append(Paragraph("• D – Диаметър на отпечатък на колелото", legend_style))
+        story.append(Paragraph("• Брой пластове – Общ брой на пластовете в конструкцията", legend_style))
+        
+        story.append(Spacer(1, 50))
+        
+        # Дата на генериране
+        date_style = ParagraphStyle(
+            'DateStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            alignment=2,  # right alignment
+            fontName='Helvetica'
+        )
+        
+        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
         
         # Генериране на PDF
         doc.build(story)
@@ -799,7 +837,7 @@ if st.button("📄 Генерирай PDF отчет (само заглавие)
         st.download_button(
             label="📥 Изтегли PDF отчет",
             data=pdf_data,
-            file_name=f"Заглавие_Пътна_Конструкция_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+            file_name=f"Пътна_Конструкция_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
             mime="application/pdf"
         )
         
