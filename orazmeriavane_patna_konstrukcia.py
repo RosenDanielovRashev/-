@@ -14,9 +14,16 @@ import requests
 from io import BytesIO
 import plotly.express as px
 
-from reportlab.lib.pagesizes import A4
-from reportlab.pdfgen import canvas
-import io
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak, KeepTogether
+)
+from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
 
 
 st.set_page_config(layout="wide")
