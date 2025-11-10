@@ -14,18 +14,9 @@ import requests
 from io import BytesIO
 import plotly.express as px
 
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak, KeepTogether
-)
-from reportlab.lib import colors
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.units import mm
-from reportlab.lib.utils import ImageReader
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
 import io
-import os
 
 
 st.set_page_config(layout="wide")
@@ -721,8 +712,6 @@ def fig_to_image(fig):
         st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
-st.markdown("---")
-st.header("📄 Генериране на PDF отчет")
 
 if st.button("🧾 Генерирай PDF отчет", use_container_width=True):
     buffer = io.BytesIO()
