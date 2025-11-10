@@ -856,9 +856,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             if "Ed" not in layer:
                 continue
 
-            # Нова страница за всеки пласт (след първия)
-            if i > 0:
-                story.append(PageBreak())
+            # Нова страница за всеки пласт
+            story.append(PageBreak())
 
             # Заглавие на пласт
             layer_title_style = ParagraphStyle(
@@ -872,7 +871,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Paragraph(f"ПЛАСТ {i + 1}", layer_title_style))
             story.append(Spacer(1, 10))
 
-            # СТИЛ ЗА ИНФОРМАЦИЯТА ЗА ПЛАСТ (подобен на легендата, но различен)
+            # СТИЛ ЗА ИНФОРМАЦИЯТА ЗА ПЛАСТ
             layer_info_style = ParagraphStyle(
                 'LayerInfo',
                 parent=styles['Normal'],
@@ -880,11 +879,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 spaceAfter=8,
                 fontName=font_name,
                 textColor=colors.HexColor('#2C5530'),
-                leftIndent=10,
-                backColor=colors.HexColor('#F8F9FA'),
-                borderPadding=5,
-                borderColor=colors.HexColor('#4A7C59'),
-                borderWidth=1
+                leftIndent=10
             )
 
             layer_value_style = ParagraphStyle(
@@ -897,32 +892,21 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 leftIndent=20
             )
 
-            # Информация за пласта с формули и стойности
-            story.append(Paragraph("ИЗЧИСЛЕНИ ПАРАМЕТРИ:", layer_info_style))
-            story.append(Spacer(1, 5))
-            
-            # Основни параметри
-            story.append(Paragraph(f"• Модул на еластичност на пласта (Ei): {layer['Ei']:.0f} MPa", layer_value_style))
-            story.append(Paragraph(f"• Модул на еластичност на повърхността (Ee): {layer['Ee']:.0f} MPa", layer_value_style))
-            story.append(Paragraph(f"• Модул на еластичност под пласта (Ed): {layer['Ed']:.0f} MPa", layer_value_style))
-            story.append(Paragraph(f"• Дебелина на пласта (h): {layer['h']:.2f} cm", layer_value_style))
-            
-            story.append(Spacer(1, 10))
-            
-            # Изчислителни параметри
-            story.append(Paragraph("ИЗЧИСЛИТЕЛНИ ОТНОШЕНИЯ:", layer_info_style))
+            # Информация за пласта - кратко и ясно
+            story.append(Paragraph("ПАРАМЕТРИ:", layer_info_style))
             story.append(Spacer(1, 5))
             
             hD_point = layer.get('hD_point', 0)
             EdEi_point = layer.get('EdEi_point', 0)
             EeEi_ratio = layer['Ee'] / layer['Ei']
             
-            story.append(Paragraph(f"• Отношение h/D = {layer['h']:.1f} / {st.session_state.final_D} = {hD_point:.3f}", layer_value_style))
-            story.append(Paragraph(f"• Отношение Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.3f}", layer_value_style))
-            story.append(Paragraph(f"• Отношение Ee/Ei = {layer['Ee']:.0f} / {layer['Ei']:.0f} = {EeEi_ratio:.3f}", layer_value_style))
-            
-            if 'low_iso' in layer and 'high_iso' in layer:
-                story.append(Paragraph(f"• Интерполация между Ee/Ei = {layer['low_iso']:.3f} и Ee/Ei = {layer['high_iso']:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Ei = {layer['Ei']:.0f} MPa", layer_value_style))
+            story.append(Paragraph(f"• Ee = {layer['Ee']:.0f} MPa", layer_value_style))
+            story.append(Paragraph(f"• Ed = {layer['Ed']:.0f} MPa", layer_value_style))
+            story.append(Paragraph(f"• h = {layer['h']:.2f} cm", layer_value_style))
+            story.append(Paragraph(f"• h/D = {hD_point:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Ed/Ei = {EdEi_point:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Ee/Ei = {EeEi_ratio:.3f}", layer_value_style))
             
             story.append(Spacer(1, 15))
 
@@ -949,28 +933,21 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                         y=[layer['y_low'], layer['y_high']],
                         mode='lines',
                         line=dict(color='purple', dash='dash', width=2),
-                        name='Интерполация'
+                        showlegend=False
                     ))
                 
                 fig.add_trace(go.Scatter(
                     x=[hD], y=[EdEi],
                     mode='markers',
                     marker=dict(color='red', size=12),
-                    name='Резултат'
+                    showlegend=False
                 ))
 
             fig.update_layout(
-                title=f"Графика за пласт {i + 1} - Зависимост Ed/Ei от h/D",
+                title=f"Пласт {i + 1} - Ed/Ei = f(h/D)",
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                showlegend=True,
-                legend=dict(
-                    orientation="h",
-                    yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
-                ),
+                showlegend=False,  # Махната легенда
                 template="plotly_white",
                 width=800,
                 height=500
@@ -989,7 +966,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             pil_img.save(img_buffer, format="PNG")
             img_buffer.seek(0)
             
-            story.append(Paragraph("ГРАФИЧНО ПРЕДСТАВЯНЕ:", layer_info_style))
+            story.append(Paragraph("ГРАФИКА:", layer_info_style))
             story.append(Spacer(1, 5))
             story.append(RLImage(img_buffer, width=160 * mm, height=100 * mm))
             story.append(Spacer(1, 15))
@@ -1015,5 +992,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             mime="application/pdf"
         )
 
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {e}")
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
