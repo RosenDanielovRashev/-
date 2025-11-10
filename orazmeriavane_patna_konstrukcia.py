@@ -724,6 +724,7 @@ def fig_to_image(fig):
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
+
 # Генериране на PDF отчет със заглавие, таблици и графики
 st.markdown("---")
 st.subheader("Генериране на отчет")
@@ -850,43 +851,80 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         
         story.append(Spacer(1, 30))
 
-        # Всеки пласт + графика
+        # Всеки пласт на нова страница
         for i, layer in enumerate(st.session_state.layers_data):
             if "Ed" not in layer:
                 continue
 
+            # Нова страница за всеки пласт (след първия)
+            if i > 0:
+                story.append(PageBreak())
+
             # Заглавие на пласт
-            story.append(Paragraph(f"ПЛАСТ {i + 1}", ParagraphStyle(
+            layer_title_style = ParagraphStyle(
                 'LayerTitle',
                 fontName=font_name,
-                fontSize=14,
+                fontSize=16,
                 textColor=colors.HexColor('#2C5530'),
-                spaceAfter=10
-            )))
-
-            # Таблица с данни за пласта
-            table_data = [
-                ["Параметър", "Стойност", "Единица"],
-                ["Ei", f"{layer['Ei']:.0f}", "MPa"],
-                ["Ee", f"{layer['Ee']:.0f}", "MPa"],
-                ["Ed", f"{layer['Ed']:.0f}", "MPa"],
-                ["h", f"{layer['h']:.2f}", "cm"],
-                ["h/D", f"{layer.get('hD_point', 0):.3f}", ""],
-                ["Ed/Ei", f"{layer.get('EdEi_point', 0):.3f}", ""],
-                ["Ee/Ei", f"{layer['Ee']/layer['Ei']:.3f}", ""]
-            ]
-            table = Table(table_data, colWidths=[50 * mm, 40 * mm, 25 * mm])
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                ('FONTNAME', (0, 0), (-1, 0), font_name),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
-                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-                ('FONTNAME', (0, 1), (-1, -1), font_name),
-                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
-            ]))
-            story.append(table)
+                spaceAfter=15,
+                alignment=1
+            )
+            story.append(Paragraph(f"ПЛАСТ {i + 1}", layer_title_style))
             story.append(Spacer(1, 10))
+
+            # СТИЛ ЗА ИНФОРМАЦИЯТА ЗА ПЛАСТ (подобен на легендата, но различен)
+            layer_info_style = ParagraphStyle(
+                'LayerInfo',
+                parent=styles['Normal'],
+                fontSize=11,
+                spaceAfter=8,
+                fontName=font_name,
+                textColor=colors.HexColor('#2C5530'),
+                leftIndent=10,
+                backColor=colors.HexColor('#F8F9FA'),
+                borderPadding=5,
+                borderColor=colors.HexColor('#4A7C59'),
+                borderWidth=1
+            )
+
+            layer_value_style = ParagraphStyle(
+                'LayerValue',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=6,
+                fontName=font_name,
+                textColor=colors.HexColor('#4B5563'),
+                leftIndent=20
+            )
+
+            # Информация за пласта с формули и стойности
+            story.append(Paragraph("ИЗЧИСЛЕНИ ПАРАМЕТРИ:", layer_info_style))
+            story.append(Spacer(1, 5))
+            
+            # Основни параметри
+            story.append(Paragraph(f"• Модул на еластичност на пласта (Ei): {layer['Ei']:.0f} MPa", layer_value_style))
+            story.append(Paragraph(f"• Модул на еластичност на повърхността (Ee): {layer['Ee']:.0f} MPa", layer_value_style))
+            story.append(Paragraph(f"• Модул на еластичност под пласта (Ed): {layer['Ed']:.0f} MPa", layer_value_style))
+            story.append(Paragraph(f"• Дебелина на пласта (h): {layer['h']:.2f} cm", layer_value_style))
+            
+            story.append(Spacer(1, 10))
+            
+            # Изчислителни параметри
+            story.append(Paragraph("ИЗЧИСЛИТЕЛНИ ОТНОШЕНИЯ:", layer_info_style))
+            story.append(Spacer(1, 5))
+            
+            hD_point = layer.get('hD_point', 0)
+            EdEi_point = layer.get('EdEi_point', 0)
+            EeEi_ratio = layer['Ee'] / layer['Ei']
+            
+            story.append(Paragraph(f"• Отношение h/D = {layer['h']:.1f} / {st.session_state.final_D} = {hD_point:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Отношение Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Отношение Ee/Ei = {layer['Ee']:.0f} / {layer['Ei']:.0f} = {EeEi_ratio:.3f}", layer_value_style))
+            
+            if 'low_iso' in layer and 'high_iso' in layer:
+                story.append(Paragraph(f"• Интерполация между Ee/Ei = {layer['low_iso']:.3f} и Ee/Ei = {layer['high_iso']:.3f}", layer_value_style))
+            
+            story.append(Spacer(1, 15))
 
             # ГЕНЕРИРАНЕ НА ГРАФИКАТА
             fig = go.Figure()
@@ -896,43 +934,67 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     x=group_sorted["h_over_D"],
                     y=group_sorted["Ed_over_Ei"],
                     mode='lines',
-                    name=f"Ee/Ei = {val:.2f}"
+                    name=f"Ee/Ei = {val:.2f}",
+                    line=dict(width=1.5)
                 ))
 
             if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
                 hD = layer["hD_point"]
                 EdEi = layer["Ed"] / layer["Ei"]
+                
+                # Добавяне на интерполационна линия
+                if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
+                    fig.add_trace(go.Scatter(
+                        x=[hD, hD],
+                        y=[layer['y_low'], layer['y_high']],
+                        mode='lines',
+                        line=dict(color='purple', dash='dash', width=2),
+                        name='Интерполация'
+                    ))
+                
                 fig.add_trace(go.Scatter(
                     x=[hD], y=[EdEi],
                     mode='markers',
-                    marker=dict(color='red', size=10),
+                    marker=dict(color='red', size=12),
                     name='Резултат'
                 ))
 
             fig.update_layout(
-                title=f"Ed / Ei в зависимост от h / D — Пласт {i + 1}",
+                title=f"Графика за пласт {i + 1} - Зависимост Ed/Ei от h/D",
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                showlegend=False,
-                template="plotly_white"
+                showlegend=True,
+                legend=dict(
+                    orientation="h",
+                    yanchor="bottom",
+                    y=1.02,
+                    xanchor="right",
+                    x=1
+                ),
+                template="plotly_white",
+                width=800,
+                height=500
             )
 
             # Конвертиране на фигурата в изображение с PILImage
             try:
-                img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+                img_bytes = pio.to_image(fig, format="png", width=800, height=500)
                 pil_img = PILImage.open(BytesIO(img_bytes))
             except Exception as e:
-                st.error(f"Грешка при генериране на изображение: {e}")
-                pil_img = PILImage.new("RGB", (800, 600), color=(255, 255, 255))
+                st.error(f"Грешка при генериране на изображение за пласт {i+1}: {e}")
+                pil_img = PILImage.new("RGB", (800, 500), color=(255, 255, 255))
 
             # Добавяне на изображението към PDF
             img_buffer = io.BytesIO()
             pil_img.save(img_buffer, format="PNG")
             img_buffer.seek(0)
-            story.append(RLImage(img_buffer, width=160 * mm, height=110 * mm))
-            story.append(Spacer(1, 20))
+            
+            story.append(Paragraph("ГРАФИЧНО ПРЕДСТАВЯНЕ:", layer_info_style))
+            story.append(Spacer(1, 5))
+            story.append(RLImage(img_buffer, width=160 * mm, height=100 * mm))
+            story.append(Spacer(1, 15))
 
-        # Дата
+        # Дата на последната страница
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         story.append(Spacer(1, 10))
         story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle(
