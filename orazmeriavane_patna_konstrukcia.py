@@ -721,367 +721,185 @@ def fig_to_image(fig):
         st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
-st.markdown("---")
-st.subheader("📄 Генериране на оптимизиран PDF отчет")
 
-if st.button("💾 Генерирай оптимален PDF отчет"):
+# ===============================================================
+# 🧾 ГЕНЕРИРАНЕ НА ПОДРОБЕН PDF ОТЧЕТ (ПОРТРЕТЕН, ПОДРЕДЕН, СТИЛЕН)
+# ===============================================================
+
+st.markdown("---")
+st.subheader("📄 Генериране на стилен PDF отчет (портретен)")
+
+if st.button("💾 Създай стилен PDF отчет"):
     buffer = io.BytesIO()
 
-    # -------------------------
-    # Регистрация на шрифт (DejaVu за кирилица) - опционално
-    # -------------------------
-    font_name = None
+    # Шрифт DejaVuSans (за кирилица)
     try:
-        if os.path.exists("DejaVuSans.ttf"):
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
-            font_name = 'DejaVuSans'
-        else:
-            # опитен fallback (винаги има някакъв в reportlab)
-            font_name = 'Helvetica'
-            st.info("Бележка: 'DejaVuSans.ttf' не е намерен. За кирилица постави шрифта в проекта като 'DejaVuSans.ttf'.")
-    except Exception as e:
-        font_name = 'Helvetica'
-        st.warning(f"Шрифтът не можа да бъде регистриран: {e}. Използва се fallback шрифт.")
+        pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+        font_name = "DejaVuSans"
+    except:
+        font_name = "Helvetica"
+        st.info("💡 Добави файла DejaVuSans.ttf в проекта за по-добър кирилски текст.")
 
-    # -------------------------
-    # Пресмятане/проверка на ключови стойности (R0, z, sum_h)
-    # -------------------------
-    # Съберем данните от session_state
-    layers = st.session_state.get("layers_data", [])
-    lambda_vals = st.session_state.get("lambda_values", [])
-
-    sum_h = sum(layer.get('h', 0) for layer in layers) if layers else 0.0
-
-    R0 = None
-    try:
-        # convert cm->m for thickness
-        terms = []
-        for layer, lam in zip(layers, lambda_vals):
-            h_cm = layer.get('h', 0)
-            h_m = h_cm / 100.0
-            if lam == 0:
-                raise ZeroDivisionError(f"λ стойност в някой пласт е 0.")
-            terms.append(h_m / lam)
-        R0 = sum(terms) if terms else 0.0
-    except Exception as e:
-        R0 = None
-        st.error(f"Грешка при изчисление на R₀: {e}")
-
-    # z calculation: if z_value in session use it, else approximate from earlier z_value var
-    z_value = st.session_state.get("z_value", None)
-    # If z_value not present compute approximate from inputs if possible (we used z1 * m earlier)
-    if z_value is None:
-        z1 = st.session_state.get("z1_input", None)
-        lambda_op = st.session_state.get("lambda_op_input", None)
-        lambda_zp = st.session_state.get("lambda_zp_input", None)
-        if z1 is not None and lambda_op and lambda_op != 0 and lambda_zp is not None:
-            m_val = lambda_zp / lambda_op
-            z_value = z1 * m_val
-    if z_value is None:
-        z_value = 0.0
-
-    # -------------------------
-    # Настройка на PDF документа (A4 landscape за по-добри графики)
-    # -------------------------
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=landscape(A4),
-        leftMargin=18*mm, rightMargin=18*mm, topMargin=16*mm, bottomMargin=16*mm
+    # Настройки на документа
+    pdf = SimpleDocTemplate(
+        buffer, pagesize=A4,
+        leftMargin=25*mm, rightMargin=25*mm,
+        topMargin=20*mm, bottomMargin=20*mm
     )
 
-    # Стилове
-    base_styles = getSampleStyleSheet()
-    normal = ParagraphStyle(
-        "normal",
-        parent=base_styles["Normal"],
-        fontName=font_name,
-        fontSize=10,
-        leading=13
-    )
-    heading = ParagraphStyle("heading", parent=base_styles["Heading1"], fontName=font_name, fontSize=16, leading=20, spaceAfter=6, alignment=1)
-    section_title = ParagraphStyle("section_title", parent=base_styles["Heading2"], fontName=font_name, fontSize=12, leading=14, textColor=colors.darkblue)
-    small = ParagraphStyle("small", parent=base_styles["Normal"], fontName=font_name, fontSize=9, leading=11, textColor=colors.grey)
-    code_style = ParagraphStyle("code", parent=base_styles["Normal"], fontName=font_name, fontSize=9, leading=11, backColor=colors.whitesmoke)
+    styles = getSampleStyleSheet()
+    style_normal = ParagraphStyle("normal", fontName=font_name, fontSize=11, leading=15)
+    style_title = ParagraphStyle("title", fontName=font_name, fontSize=16, alignment=1, spaceAfter=12)
+    style_subtitle = ParagraphStyle("subtitle", fontName=font_name, fontSize=13, textColor=colors.HexColor("#1565c0"))
+    style_small = ParagraphStyle("small", fontName=font_name, fontSize=9, textColor=colors.grey)
 
     story = []
 
-    # -------------------------
+    # ------------------------------------------------------------
     # Заглавна страница
-    # -------------------------
-    story.append(Paragraph("ОТЧЕТ – ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ", heading))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph(f"Дата: {datetime.now().strftime('%d.%m.%Y %H:%M')}", small))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph(f"<b>Проект:</b> Автоматично генериран отчет", normal))
-    story.append(Spacer(1, 6))
-    story.append(Paragraph(f"<b>Брой пластове:</b> {st.session_state.get('num_layers', len(layers))}", normal))
-    story.append(Paragraph(f"<b>Диаметър D (cm):</b> {st.session_state.get('final_D', '-')}", normal))
-    story.append(Paragraph(f"<b>Осов товар (kN):</b> {st.session_state.get('axle_load', '-')}", normal))
-    story.append(Spacer(1, 10))
+    # ------------------------------------------------------------
+    story.append(Paragraph("ОТЧЕТ ЗА ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ", style_title))
+    story.append(Paragraph(f"Дата на генериране: {datetime.now().strftime('%d.%m.%Y %H:%M')}", style_small))
+    story.append(Spacer(1, 12))
+    story.append(Paragraph(f"<b>Брой пластове:</b> {st.session_state.get('num_layers', '-')}", style_normal))
+    story.append(Paragraph(f"<b>D:</b> {st.session_state.get('final_D', '-')} cm", style_normal))
+    story.append(Paragraph(f"<b>Осов товар:</b> {st.session_state.get('axle_load', '-')} kN", style_normal))
+    story.append(Spacer(1, 16))
 
-    # Кратко въведение (четимо за неспециалист)
-    intro_text = (
-        "Този отчет представя стъпково изчисленията и визуализациите, използвани при оразмеряване на "
-        "многопластова пътна конструкция. За всеки пласт има: входни параметри, междинни изчисления, графика "
-        "на изолиниите (Ed/Ei спрямо h/D) и кратко обяснение на резултата."
+    intro = (
+        "Настоящият документ представя подробно изчисленията и зависимостите, използвани при "
+        "оразмеряване на пътна конструкция. Всеки пласт е представен с входни данни, стъпкови "
+        "изчисления, графика на изолиниите и кратко обяснение. В края са включени проверки и общи резултати."
     )
-    story.append(Paragraph(intro_text, normal))
-    story.append(Spacer(1, 10))
-
-    # Легенда (подробно и четливо)
-    story.append(Paragraph("ЛЕГЕНДА", section_title))
-    legend_html = (
-        "<b>Ed</b> – модул на еластичност под пласта<br/>"
-        "<b>Ei</b> – модул на еластичност на пласта<br/>"
-        "<b>Ee</b> – модул на повърхността над пласта<br/>"
-        "<b>h</b> – дебелина на слоя (cm)<br/>"
-        "<b>D</b> – диаметър на контактен отпечатък (cm)<br/>"
-        "<b>λ</b> – топлопроводен коефициент (kcal/m·h·°C)<br/>"
-        "<b>R₀</b> – сумарно термично съпротивление (m²K/W)<br/>"
-        "<b>z</b> – изчислена дълбочина на замръзване (cm)"
-    )
-    story.append(Paragraph(legend_html, normal))
+    story.append(Paragraph(intro, style_normal))
     story.append(PageBreak())
 
-    # -------------------------
-    # Секция: Пласт по пласт (всяка – собствена страница)
-    # -------------------------
-    # Цветова палитра за каретата (измежду няколко приятни цвята)
-    palette = [colors.HexColor("#0277bd"), colors.HexColor("#26a69a"), colors.HexColor("#ef6c00"),
-               colors.HexColor("#6a1b9a"), colors.HexColor("#c2185b"), colors.HexColor("#2e7d32")]
+    # ------------------------------------------------------------
+    # Легенда
+    # ------------------------------------------------------------
+    story.append(Paragraph("📘 ЛЕГЕНДА", style_subtitle))
+    legend_html = """
+    <b>Ed</b> – модул на еластичност под пласта<br/>
+    <b>Ei</b> – модул на еластичност на пласта<br/>
+    <b>Ee</b> – модул на повърхността над пласта<br/>
+    <b>h</b> – дебелина на пласта (cm)<br/>
+    <b>D</b> – диаметър на контактен отпечатък (cm)<br/>
+    <b>λ</b> – топлопроводен коефициент (kcal/m·h·°C)<br/>
+    <b>R₀</b> – сумарно термично съпротивление (m²K/W)<br/>
+    <b>z</b> – изчислена дълбочина на замръзване (cm)
+    """
+    story.append(Paragraph(legend_html, style_normal))
+    story.append(PageBreak())
 
-    for idx, layer in enumerate(layers):
-        # Каре заглавие с цвят
-        color = palette[idx % len(palette)]
-        title_table = Table(
-            [[Paragraph(f"<b>Пласт {idx+1}</b>", ParagraphStyle('t', fontName=font_name, fontSize=14, leading=16, textColor=colors.white))]],
-            colWidths=[doc.width]
-        )
-        title_table.setStyle(TableStyle([
-            ('BACKGROUND', (0,0), (-1,-1), color),
-            ('LEFTPADDING', (0,0), (-1,-1), 6),
-            ('RIGHTPADDING', (0,0), (-1,-1), 6),
-            ('TOPPADDING', (0,0), (-1,-1), 6),
-            ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-        ]))
-        story.append(title_table)
-        story.append(Spacer(1, 6))
+    # ------------------------------------------------------------
+    # Данни и графика за всеки пласт
+    # ------------------------------------------------------------
+    for i, layer in enumerate(st.session_state.layers_data):
+        story.append(Paragraph(f"ПЛАСТ {i+1}", style_subtitle))
+        story.append(Spacer(1, 8))
 
-        # Двете колони: данни | изчисления
-        left_col = []
-        right_col = []
-
-        # Данни (чисто)
-        left_table_data = [
+        # Таблица с данни
+        data_tbl = [
             ["Параметър", "Стойност"],
             ["Ee (MPa)", f"{layer.get('Ee', '-'):.2f}" if 'Ee' in layer else "-"],
             ["Ei (MPa)", f"{layer.get('Ei', '-'):.2f}" if 'Ei' in layer else "-"],
             ["Ed (MPa)", f"{layer.get('Ed', '-'):.2f}" if 'Ed' in layer else "-"],
             ["h (cm)", f"{layer.get('h', '-'):.2f}" if 'h' in layer else "-"],
         ]
-        left_tbl = Table(left_table_data, colWidths=[80*mm, 60*mm])
-        left_tbl.setStyle(TableStyle([
-            ('GRID', (0,0), (-1,-1), 0.3, colors.grey),
-            ('BACKGROUND', (0,0), (-1,0), colors.lightgrey),
+        table = Table(data_tbl, colWidths=[80*mm, 60*mm])
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#e3f2fd")),
+            ('GRID', (0,0), (-1,-1), 0.4, colors.grey),
             ('FONTNAME', (0,0), (-1,-1), font_name),
-            ('FONTSIZE', (0,0), (-1,-1), 9),
-            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
         ]))
-        left_col.append(left_tbl)
-        left_col.append(Spacer(1,6))
+        story.append(table)
+        story.append(Spacer(1, 10))
 
-        # Стъпкови изчисления (човеко-четимо)
-        # Опитваме се да покажем: стъпка 1 -> стъпка 2 -> резултат
-        steps = []
-        # If mode Ed / Ei computed
+        # Стъпкови изчисления
         if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
-            EdEi_point = layer['Ed'] / layer['Ei'] if layer['Ei'] else None
-            steps.append("1) Изчисляваме h/D:")
-            steps.append(f"   h/D = {layer.get('h', 0):.2f} / {st.session_state.get('final_D', '-') } = {layer.get('hD_point', 0):.3f}")
-            if EdEi_point is not None:
-                steps.append("2) Определяме Ed/Ei чрез интерполация по изолиниите:")
-                steps.append(f"   Ed/Ei = {EdEi_point:.3f}")
-                steps.append(f"3) Изчисляваме Ed = Ei × (Ed/Ei) = {layer.get('Ei', 0):.1f} × {EdEi_point:.3f} = {layer.get('Ed', 0):.1f} MPa")
-        elif "Ed" in layer and "Ei" in layer:
-            # mode h/D from Ed
-            EdEi_point = layer['Ed'] / layer['Ei'] if layer['Ei'] else None
-            steps.append("1) Дадено е Ed, търсим h:")
-            steps.append(f"   Ed = {layer.get('Ed', 0):.2f} MPa, Ei = {layer.get('Ei', 0):.2f} MPa")
-            if 'h' in layer:
-                steps.append(f"2) Резултат: h = {layer.get('h', 0):.2f} cm (кalkулирано чрез интерполация)")
+            EdEi = layer["Ed"] / layer["Ei"]
+            story.append(Paragraph("<b>Стъпкови изчисления:</b>", style_normal))
+            story.append(Paragraph(f"1) Изчисляваме h/D = {layer['h']:.2f}/{st.session_state.final_D} = {layer['hD_point']:.3f}", style_normal))
+            story.append(Paragraph(f"2) Определяме Ed/Ei = {EdEi:.3f}", style_normal))
+            story.append(Paragraph(f"3) Изчисляваме Ed = Ei × (Ed/Ei) = {layer['Ei']:.1f} × {EdEi:.3f} = {layer['Ed']:.1f} MPa", style_normal))
         else:
-            steps.append("Липсват достатъчни данни за пълно стъпково извеждане (изчисли Ed/h в интерфейса).")
+            story.append(Paragraph("ℹ️ Липсват данни за изчисления на този пласт.", style_small))
 
-        steps_par = "<br/>".join(steps)
-        right_col.append(Paragraph("<b>Стъпкови изчисления</b>", section_title))
-        right_col.append(Spacer(1,2))
-        right_col.append(Paragraph(steps_par, normal))
-        right_col.append(Spacer(1,6))
+        story.append(Spacer(1, 10))
 
-        # Графика: генерираме Plotly и добавяме като изображение
-        img_buffer = None
-        try:
-            if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
+        # Графика
+        if "hD_point" in layer and "Ed" in layer and "Ei" in layer:
+            try:
                 fig = go.Figure()
-                # подобрена визия: контрастни линии, маркери за точката
-                for value, group in data.groupby("Ee_over_Ei"):
-                    group_sorted = group.sort_values("h_over_D")
+                for val, group in data.groupby("Ee_over_Ei"):
+                    g = group.sort_values("h_over_D")
                     fig.add_trace(go.Scatter(
-                        x=group_sorted["h_over_D"],
-                        y=group_sorted["Ed_over_Ei"],
-                        mode='lines',
-                        name=f"{value:.2f}",
-                        line=dict(width=2)
+                        x=g["h_over_D"], y=g["Ed_over_Ei"],
+                        mode="lines", name=f"Ee/Ei={val:.2f}", line=dict(width=2)
                     ))
-                hD_point = layer['hD_point']
-                EdEi_point = layer['Ed'] / layer['Ei']
-                add_interpolation_line(fig,
-                                       hD_point,
-                                       EdEi_point,
-                                       layer.get('y_low', 0),
-                                       layer.get('y_high', 0),
-                                       layer.get('low_iso', 0),
-                                       layer.get('high_iso', 0))
+                add_interpolation_line(fig, layer["hD_point"], layer["Ed"]/layer["Ei"],
+                                       layer["y_low"], layer["y_high"],
+                                       layer["low_iso"], layer["high_iso"])
                 fig.update_layout(
-                    title=f"Ed/Ei спрямо h/D (Пласт {idx+1})",
-                    xaxis_title="h / D",
-                    yaxis_title="Ed / Ei",
-                    width=900, height=420,
+                    width=500, height=300,
+                    title=f"Ed/Ei - h/D (Пласт {i+1})",
+                    xaxis_title="h / D", yaxis_title="Ed / Ei",
                     template="plotly_white",
-                    legend=dict(orientation="h", y=-0.2)
+                    legend=dict(orientation="h", y=-0.25)
                 )
-                img_bytes = pio.to_image(fig, format="png", width=900, height=420)
-                img_buffer = io.BytesIO(img_bytes)
-                right_col.append(Paragraph("<b>Графика на изолиниите</b>", section_title))
-                right_col.append(Spacer(1,4))
-                right_col.append(Image(img_buffer, width=160*mm, height=70*mm))
-                right_col.append(Spacer(1,6))
-        except Exception as e:
-            right_col.append(Paragraph(f"⚠️ Графиката не можа да бъде изобразена: {e}", small))
-
-        # Създаваме двуколонна таблица за разполагане
-        # лява колона = данни (left_col), дясна = изчисления и графика (right_col)
-        container = []
-        # Build Left & Right flows
-        left_flow = left_col
-        right_flow = right_col
-
-        table_content = [[left_flow, right_flow]]
-        two_col = Table(table_content, colWidths=[95*mm, (doc.width - 95*mm)])
-        two_col.setStyle(TableStyle([
-            ('VALIGN', (0,0), (-1,-1), 'TOP'),
-            ('LEFTPADDING', (0,0), (-1,-1), 6),
-            ('RIGHTPADDING', (0,0), (-1,-1), 6),
-        ]))
-        story.append(two_col)
-        story.append(Spacer(1,8))
-
-        # Кратко заключение за пласт
-        conclusion = ""
-        if "Ed" in layer:
-            conclusion = f"Заключение: За пласт {idx+1} Ed = {layer.get('Ed', 0):.1f} MPa при Ei = {layer.get('Ei', 0):.1f} MPa; h = {layer.get('h', 0):.2f} cm."
-        else:
-            conclusion = "Заключение: Не са налични всички резултати (натиснете бутоните в интерфейса за изчисление)."
-        story.append(Paragraph(conclusion, normal))
+                img_bytes = pio.to_image(fig, format="png", width=500, height=300)
+                story.append(Image(io.BytesIO(img_bytes), width=140*mm, height=80*mm))
+            except Exception as e:
+                story.append(Paragraph(f"⚠️ Неуспешно зареждане на графика: {e}", style_small))
 
         story.append(PageBreak())
 
-    # -------------------------
-    # Обобщение: таблица и проверки
-    # -------------------------
-    story.append(Paragraph("ОБЩО ОБОБЩЕНИЕ И ПРОВЕРКИ", heading))
-    story.append(Spacer(1,6))
+    # ------------------------------------------------------------
+    # Обобщение и проверки
+    # ------------------------------------------------------------
+    story.append(Paragraph("ОБЩИ РЕЗУЛТАТИ И ПРОВЕРКИ", style_subtitle))
+    story.append(Spacer(1, 6))
 
-    # Обобщена таблица за всички пластове (подредена)
-    summary_data = [["№", "Ee (MPa)", "Ei (MPa)", "Ed (MPa)", "h (cm)"]]
-    for i, layer in enumerate(layers):
-        summary_data.append([
-            str(i+1),
-            f"{layer.get('Ee','-'):.2f}" if 'Ee' in layer else "-",
-            f"{layer.get('Ei','-'):.2f}" if 'Ei' in layer else "-",
-            f"{layer.get('Ed','-'):.2f}" if 'Ed' in layer else "-",
-            f"{layer.get('h','-'):.2f}" if 'h' in layer else "-"
-        ])
-    sum_table = Table(summary_data, colWidths=[18*mm, 40*mm, 40*mm, 40*mm, 30*mm])
-    sum_table.setStyle(TableStyle([
-        ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#eeeeee")),
-        ('GRID', (0,0), (-1,-1), 0.3, colors.grey),
-        ('FONTNAME', (0,0), (-1,-1), font_name),
-        ('FONTSIZE', (0,0), (-1,-1), 9),
-    ]))
-    story.append(sum_table)
-    story.append(Spacer(1,8))
-
-    # Формула и числово изчисление на R0
-    story.append(Paragraph("<b>Изчисление на R₀ (термично съпротивление)</b>", section_title))
-    if R0 is not None:
-        # Покажем символно и със стойности
-        symbolic = " + ".join([f"h{j+1}/λ{j+1}" for j in range(len(layers))])
-        numeric_terms = []
-        for j, (layer, lam) in enumerate(zip(layers, lambda_vals)):
-            h_m = layer.get('h', 0) / 100.0
-            numeric_terms.append(f"{h_m:.3f}/{lam:.3f}")
-        numeric_expr = " + ".join(numeric_terms) if numeric_terms else "-"
-        story.append(Paragraph(f"R₀ = {symbolic}", normal))
-        story.append(Paragraph(f"R₀ = {numeric_expr}", normal))
-        story.append(Paragraph(f"R₀ = {R0:.3f} m²K/W", normal))
-    else:
-        story.append(Paragraph("R₀ не можа да бъде изчислен (липсват λ или h стойности).", normal))
-
-    story.append(Spacer(1,8))
-    # z and sum_h checks
-    story.append(Paragraph("<b>Проверка на замръзващата дълбочина</b>", section_title))
-    story.append(Paragraph(f"z = {z_value:.2f} cm", normal))
-    story.append(Paragraph(f"Σh = {sum_h:.2f} cm", normal))
-    if z_value > sum_h:
-        ok_tbl = Table([[Paragraph("✅ Условие изпълнено: z > Σh", ParagraphStyle('ok', fontName=font_name, fontSize=10, textColor=colors.white))]],
-                       colWidths=[doc.width])
-        ok_tbl.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,-1), colors.green),
-                                    ('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-        story.append(ok_tbl)
-    else:
-        nok_tbl = Table([[Paragraph("❌ Условие НЕ е изпълнено: z ≤ Σh", ParagraphStyle('nok', fontName=font_name, fontSize=10, textColor=colors.white))]],
-                        colWidths=[doc.width])
-        nok_tbl.setStyle(TableStyle([('BACKGROUND', (0,0), (-1,-1), colors.red),
-                                     ('ALIGN', (0,0), (-1,-1), 'CENTER')]))
-        story.append(nok_tbl)
-
-    story.append(Spacer(1,10))
-
-    # Вмъкване на проектните фигури (ако съществуват)
-    story.append(Paragraph("Приложени фигури и таблици", section_title))
-    for img_name in ["5.2. Фиг.png", "5.3. Фиг.png", "5.2. Таблица.png", "5.1. Таблица.png"]:
-        if os.path.exists(img_name):
-            try:
-                story.append(Paragraph(img_name, small))
-                story.append(Image(img_name, width=130*mm, height=80*mm))
-                story.append(Spacer(1,6))
-            except Exception as e:
-                story.append(Paragraph(f"⚠️ Неуспешно вмъкване на {img_name}: {e}", small))
-        else:
-            story.append(Paragraph(f"⚠️ Файлът {img_name} не е намерен в проекта.", small))
-
-    # Крайно заключение (четимо)
-    story.append(Spacer(1,8))
-    final_text = (
-        "Заключение: Документът представя детайлни междинни стъпки и визуализации за всеки пласт. "
-        "Препоръчително е да прегледате всеки пласт и да потвърдите входните данни (Ei, Ee, h), "
-        "след което да повторите генерирането на отчета за да отрази окончателните стойности."
-    )
-    story.append(Paragraph(final_text, normal))
-
-    # -------------------------
-    # Генериране на PDF и Download бутон
-    # -------------------------
+    # R₀ и z
     try:
-        doc.build(story)
-        st.success("✅ Оптимизираният PDF отчет е създаден успешно!")
-        st.download_button(
-            label="⬇️ Изтегли оптимален PDF отчет",
-            data=buffer.getvalue(),
-            file_name="optimal_otchet_patna_konstrukcia.pdf",
-            mime="application/pdf"
-        )
-    except Exception as e:
-        st.error(f"Грешка при генериране на PDF: {e}")
-        
+        lambda_vals = st.session_state.get("lambda_values", [])
+        R0 = sum((layer["h"]/100)/lam for layer, lam in zip(st.session_state.layers_data, lambda_vals))
+    except:
+        R0 = 0
+
+    z_value = st.session_state.get("z_value", 0)
+    sum_h = sum(layer.get("h", 0) for layer in st.session_state.layers_data)
+
+    story.append(Paragraph(f"<b>R₀ = {R0:.3f} m²K/W</b>", style_normal))
+    story.append(Paragraph(f"<b>Σh = {sum_h:.2f} cm</b>", style_normal))
+    story.append(Paragraph(f"<b>z = {z_value:.2f} cm</b>", style_normal))
+
+    if z_value > sum_h:
+        story.append(Paragraph("<font color='green'>✅ Условие изпълнено: z > Σh</font>", style_normal))
+    else:
+        story.append(Paragraph("<font color='red'>❌ Условие не е изпълнено: z ≤ Σh</font>", style_normal))
+
+    story.append(Spacer(1, 10))
+
+    # Фигури
+    story.append(Paragraph("📊 Приложени фигури:", style_subtitle))
+    for img_path in ["5.2. Фиг.png", "5.3. Фиг.png", "5.2. Таблица.png", "5.1. Таблица.png"]:
+        if os.path.exists(img_path):
+            story.append(Image(img_path, width=130*mm, height=80*mm))
+            story.append(Spacer(1, 8))
+        else:
+            story.append(Paragraph(f"⚠️ Файлът {img_path} липсва", style_small))
+
+    story.append(Spacer(1, 10))
+    story.append(Paragraph("Документът е генериран автоматично от системата за оразмеряване на пътна конструкция.", style_small))
+
+    # Създаване и изтегляне
+    pdf.build(story)
+    st.success("✅ PDF отчетът е успешно създаден!")
+    st.download_button(
+        label="⬇️ Изтегли PDF отчет",
+        data=buffer.getvalue(),
+        file_name="otchet_patna_konstrukcia_portret.pdf",
+        mime="application/pdf"
+    )
+
