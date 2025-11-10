@@ -25,6 +25,10 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
 import io
+from PIL import Image as PILImage  # ✅ Преименуваме, за да не се бърка с reportlab Image
+from reportlab.platypus import Image as RLImage  # ✅ Ясно разграничение
+
+
 
 st.set_page_config(layout="wide")
 
@@ -720,7 +724,9 @@ def fig_to_image(fig):
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
-# Генериране на PDF отчет със заглавие, таблици и графики
+# === Генериране на PDF отчет със заглавие, таблици и графики ===
+
+
 st.markdown("---")
 st.subheader("Генериране на отчет")
 
@@ -840,11 +846,19 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 template="plotly_white"
             )
 
-            img = fig_to_image(fig)
+            # Конвертиране на фигурата в изображение с PILImage
+            try:
+                img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+                pil_img = PILImage.open(BytesIO(img_bytes))
+            except Exception as e:
+                st.error(f"Грешка при генериране на изображение: {e}")
+                pil_img = PILImage.new("RGB", (800, 600), color=(255, 255, 255))
+
+            # Добавяне на изображението към PDF
             img_buffer = io.BytesIO()
-            img.save(img_buffer, format="PNG")
+            pil_img.save(img_buffer, format="PNG")
             img_buffer.seek(0)
-            story.append(ImageReader(img_buffer))
+            story.append(RLImage(img_buffer, width=160 * mm, height=110 * mm))
             story.append(Spacer(1, 20))
 
         # Дата
@@ -870,3 +884,4 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
+
