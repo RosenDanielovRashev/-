@@ -735,10 +735,10 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            leftMargin=15 * mm,
-            rightMargin=15 * mm,
-            topMargin=15 * mm,
-            bottomMargin=15 * mm
+            leftMargin=10 * mm,  # Много тесни margins
+            rightMargin=10 * mm,
+            topMargin=10 * mm,
+            bottomMargin=10 * mm
         )
         story = []
         styles = getSampleStyleSheet()
@@ -752,7 +752,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         title_style = ParagraphStyle(
             'CustomTitle',
             fontSize=24,
-            spaceAfter=40,
+            spaceAfter=20,  # По-малко разстояние
             alignment=1,
             textColor=colors.HexColor('#006064'),
             fontName=font_name,
@@ -760,7 +760,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         )
         
         story.append(Paragraph("ОРАЗМЕРЯВАНЕ НА ПЪТНА КОНСТРУКЦИЯ", title_style))
-        story.append(Spacer(1, 30))
+        story.append(Spacer(1, 15))  # По-малко разстояние
 
         # МОДЕРНА ТАБЛИЦА С ИНФОРМАЦИЯ (20% по-малка, ляво подравняване)
         info_style = ParagraphStyle(
@@ -811,14 +811,14 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         ]))
 
         story.append(info_table)
-        story.append(Spacer(1, 25))
+        story.append(Spacer(1, 20))  # По-малко разстояние
         
         # ЛЕГЕНДА С ПРОСТ СТИЛ
         legend_title_style = ParagraphStyle(
             'LegendTitleStyle',
             parent=styles['Normal'],
             fontSize=12,
-            spaceAfter=12,
+            spaceAfter=10,  # По-малко разстояние
             fontName=font_name,
             textColor=colors.HexColor('#2C5530')
         )
@@ -827,14 +827,14 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             'LegendStyle',
             parent=styles['Normal'],
             fontSize=10,
-            spaceAfter=6,
+            spaceAfter=5,  # По-малко разстояние
             fontName=font_name,
             textColor=colors.HexColor('#4B5563'),
             leftIndent=0
         )
         
         story.append(Paragraph("ЛЕГЕНДА", legend_title_style))
-        story.append(Spacer(1, 8))
+        story.append(Spacer(1, 5))  # По-малко разстояние
         
         # Елементи на легендата с bullet points
         legend_items = [
@@ -849,7 +849,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             p = Paragraph(f"• {item}", legend_style)
             story.append(p)
         
-        story.append(Spacer(1, 30))
+        story.append(Spacer(1, 20))  # По-малко разстояние
 
         # Всеки пласт на нова страница
         for i, layer in enumerate(st.session_state.layers_data):
@@ -865,18 +865,18 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 fontName=font_name,
                 fontSize=16,
                 textColor=colors.HexColor('#2C5530'),
-                spaceAfter=15,
+                spaceAfter=10,  # По-малко разстояние
                 alignment=1
             )
             story.append(Paragraph(f"ПЛАСТ {i + 1}", layer_title_style))
-            story.append(Spacer(1, 10))
+            story.append(Spacer(1, 8))  # По-малко разстояние
 
             # СТИЛ ЗА ИНФОРМАЦИЯТА ЗА ПЛАСТ
             layer_info_style = ParagraphStyle(
                 'LayerInfo',
                 parent=styles['Normal'],
                 fontSize=11,
-                spaceAfter=8,
+                spaceAfter=6,  # По-малко разстояние
                 fontName=font_name,
                 textColor=colors.HexColor('#2C5530'),
                 leftIndent=10
@@ -886,7 +886,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 'LayerValue',
                 parent=styles['Normal'],
                 fontSize=10,
-                spaceAfter=6,
+                spaceAfter=4,  # По-малко разстояние
                 fontName=font_name,
                 textColor=colors.HexColor('#4B5563'),
                 leftIndent=20
@@ -894,7 +894,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
 
             # Информация за пласта - кратко и ясно
             story.append(Paragraph("ПАРАМЕТРИ:", layer_info_style))
-            story.append(Spacer(1, 5))
+            story.append(Spacer(1, 3))  # По-малко разстояние
             
             hD_point = layer.get('hD_point', 0)
             EdEi_point = layer.get('EdEi_point', 0)
@@ -908,7 +908,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Paragraph(f"• Ed/Ei = {EdEi_point:.3f}", layer_value_style))
             story.append(Paragraph(f"• Ee/Ei = {EeEi_ratio:.3f}", layer_value_style))
             
-            story.append(Spacer(1, 15))
+            story.append(Spacer(1, 8))  # По-малко разстояние
 
             # ГЕНЕРИРАНЕ НА ГРАФИКАТА
             fig = go.Figure()
@@ -947,33 +947,34 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 title=f"Пласт {i + 1} - Ed/Ei = f(h/D)",
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                showlegend=False,  # Махната легенда
+                showlegend=False,
                 template="plotly_white",
-                width=800,
-                height=500
+                width=1200,  # По-голяма ширина
+                height=800   # По-голяма височина
             )
 
             # Конвертиране на фигурата в изображение с PILImage
             try:
-                img_bytes = pio.to_image(fig, format="png", width=800, height=500)
+                img_bytes = pio.to_image(fig, format="png", width=1200, height=800)
                 pil_img = PILImage.open(BytesIO(img_bytes))
             except Exception as e:
                 st.error(f"Грешка при генериране на изображение за пласт {i+1}: {e}")
-                pil_img = PILImage.new("RGB", (800, 500), color=(255, 255, 255))
+                pil_img = PILImage.new("RGB", (1200, 800), color=(255, 255, 255))
 
-            # Добавяне на изображението към PDF
+            # Добавяне на изображението към PDF с МАКСИМАЛЕН РАЗМЕР
             img_buffer = io.BytesIO()
             pil_img.save(img_buffer, format="PNG")
             img_buffer.seek(0)
             
+            # Размери за A4 с narrow margins (190mm ширина, 277mm височина)
             story.append(Paragraph("ГРАФИКА:", layer_info_style))
-            story.append(Spacer(1, 5))
-            story.append(RLImage(img_buffer, width=160 * mm, height=100 * mm))
-            story.append(Spacer(1, 15))
+            story.append(Spacer(1, 3))  # Минимално разстояние
+            story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))  # Максимален размер
+            story.append(Spacer(1, 8))  # Минимално разстояние
 
         # Дата на последната страница
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 5))  # Минимално разстояние
         story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle(
             'Date',
             fontSize=9,
@@ -992,7 +993,5 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             mime="application/pdf"
         )
 
-    except Exception as e:
-        st.error(f"Грешка при генериране на PDF: {e}")
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
