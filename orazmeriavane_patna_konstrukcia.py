@@ -978,7 +978,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # НОВА СТРАНИЦА ЗА ГРАФИЧНО ОБОБЩЕНИЕ
         story.append(PageBreak())
         
-        # Заглавие за обобщението
+        # Заглавие
         summary_title_style = ParagraphStyle(
             'SummaryTitle',
             fontName=font_name,
@@ -987,7 +987,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             spaceAfter=15,
             alignment=1
         )
-        story.append(Paragraph("ГРАФИЧНО ОБОБЩЕНИЕ НА ПЪТНАТА КОНСТРУКЦИЯ", summary_title_style))
+        story.append(Paragraph("ГРАФИЧНО ОБОБЩЕНИЕ", summary_title_style))
         story.append(Spacer(1, 10))
         
         # ✅ МОДЕРНА ВИЗУАЛИЗАЦИЯ НА ПЛАСТОВЕТЕ – в стил "карти"
@@ -1009,7 +1009,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontName=font_name,
             fontSize=11,
             textColor=colors.HexColor('#004D40'),
-            alignment=1  # центриран
+            alignment=1  # центрирано
         )
         ed_style = ParagraphStyle(
             'EdValue',
@@ -1068,21 +1068,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(layer_card)
             story.append(Spacer(1, 10))
 
-        # ✅ Финален надпис
-        story.append(Spacer(1, 10))
-        summary_note = ParagraphStyle(
-            'SummaryNote',
-            fontName=font_name,
-            fontSize=10,
-            textColor=colors.HexColor('#555555'),
-            alignment=1
-        )
-        story.append(Paragraph(
-            "Всеки пласт е показан с дебелината си (h), модулите на еластичност (Ee, Ei, Ed) и позицията си в конструкцията.",
-            summary_note
-        ))
-        story.append(Spacer(1, 20))
-
         # ✅ Дата и подпис
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         story.append(Spacer(1, 10))
@@ -1104,6 +1089,9 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             file_name=f"Пътна_Конструкция_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
             mime="application/pdf"
         )
+
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {e}")
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
