@@ -977,7 +977,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
 
         # НОВА СТРАНИЦА ЗА ГРАФИЧНО ОБОБЩЕНИЕ
         story.append(PageBreak())
-
+        
         # Заглавие за обобщението
         summary_title_style = ParagraphStyle(
             'SummaryTitle',
@@ -989,36 +989,153 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         )
         story.append(Paragraph("ГРАФИЧНО ОБОБЩЕНИЕ НА ПЪТНАТА КОНСТРУКЦИЯ", summary_title_style))
         story.append(Spacer(1, 10))
-
-        # Създаване на таблица с обобщена информация за всички пластове
-        summary_data = [["Пласт", "Ei (MPa)", "Ee (MPa)", "Ed (MPa)", "h (cm)", "h/D", "λ"]]
-
+        
+        # Създаване на визуализация с "балончета" за всеки пласт
+        fig_summary = go.Figure()
+        
+        # Цветова схема за пластовете
+        colors_plot = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
+        
+        cumulative_height = 0
+        annotations = []
+        
+        for i, layer in enumerate(st.session_state.layers_data):
+            if "Ed" not in layer:
+                continue
+                
+            # Данни за текущия пласт
+            h = layer['h']
+            Ei = layer['Ei']
+            Ee = layer.get('Ee', 0)
+            Ed = layer['Ed']
+            
+            # Координати за правоъгълника (балонче)
+            x0, x1 = 0, 1
+            y0 = cumulative_height
+            y1 = cumulative_height + h
+            
+            # Добавяне на правоъгълник за пласта
+            fig_summary.add_trace(go.Scatter(
+                x=[x0, x1, x1, x0, x0],
+                y=[y0, y0, y1, y1, y0],
+                fill="toself",
+                fillcolor=colors_plot[i % len(colors_plot)],
+                line=dict(color='black', width=2),
+                name=f'Пласт {i+1}',
+                showlegend=False
+            ))
+            
+            # Добавяне на текстови анотации
+            # Централен текст: Ei на пласта
+            annotations.append(dict(
+                x=0.5, y=(y0 + y1)/2,
+                text=f"E<sub>i</sub> = {Ei:.0f} MPa",
+                showarrow=False,
+                font=dict(size=14, color='black', family="Arial Black"),
+                xanchor='center',
+                yanchor='middle'
+            ))
+            
+            # Дебелина на пласта (отляво)
+            annotations.append(dict(
+                x=0.1, y=(y0 + y1)/2,
+                text=f"h = {h:.2f} cm",
+                showarrow=False,
+                font=dict(size=12, color='#2C5530'),
+                xanchor='center',
+                yanchor='middle'
+            ))
+            
+            # Ee (отгоре) - само ако не е първи пласт
+            if i > 0:
+                annotations.append(dict(
+                    x=0.9, y=y0 + 0.1 * h,
+                    text=f"E<sub>e</sub> = {Ee:.0f} MPa",
+                    showarrow=False,
+                    font=dict(size=11, color='#1F4E79'),
+                    xanchor='center',
+                    yanchor='bottom'
+                ))
+            
+            # Ed (отдолу) - само ако не е последен пласт
+            if i < len(st.session_state.layers_data) - 1:
+                annotations.append(dict(
+                    x=0.9, y=y1 - 0.1 * h,
+                    text=f"E<sub>d</sub> = {Ed:.0f} MPa",
+                    showarrow=False,
+                    font=dict(size=11, color='#783F04'),
+                    xanchor='center',
+                    yanchor='top'
+                ))
+            
+            cumulative_height += h
+        
+        # Конфигурация на графиката
+        fig_summary.update_layout(
+            title="Схема на пътната конструкция",
+            xaxis=dict(
+                range=[0, 1],
+                showticklabels=False,
+                showgrid=False,
+                zeroline=False
+            ),
+            yaxis=dict(
+                title="Дебелина (cm)",
+                range=[0, cumulative_height + 10],
+                showgrid=True,
+                gridcolor='lightgray'
+            ),
+            annotations=annotations,
+            showlegend=False,
+            plot_bgcolor='white',
+            width=800,
+            height=max(600, cumulative_height * 3),  # Адаптивна височина според общата дебелина
+            margin=dict(l=50, r=50, t=80, b=50)
+        )
+        
+        # Конвертиране на обобщената графика
+        try:
+            img_bytes_summary = pio.to_image(fig_summary, format="png", width=800, height=600)
+            pil_img_summary = PILImage.open(BytesIO(img_bytes_summary))
+            img_buffer_summary = io.BytesIO()
+            pil_img_summary.save(img_buffer_summary, format="PNG")
+            img_buffer_summary.seek(0)
+            
+            story.append(Paragraph("ВИЗУАЛНА ПРЕДСТАВКА НА ПЪТНАТА КОНСТРУКЦИЯ:", layer_info_style))
+            story.append(Spacer(1, 5))
+            story.append(RLImage(img_buffer_summary, width=160 * mm, height=120 * mm))
+            story.append(Spacer(1, 15))
+            
+        except Exception as e:
+            st.error(f"Грешка при генериране на обобщена графика: {e}")
+        
+        # Таблица с числени стойности (опционално)
+        summary_data = [["Пласт", "h (cm)", "Eᵢ (MPa)", "Eₑ (MPa)", "E<sub>d</sub> (MPa)", "h/D"]]
+        
         total_thickness = 0
         for i, layer in enumerate(st.session_state.layers_data):
             if "Ed" not in layer:
                 continue
                 
             hD_ratio = layer.get('hD_point', layer.get('h', 0) / st.session_state.final_D)
-            lambda_val = st.session_state.lambda_values[i] if i < len(st.session_state.lambda_values) else 0.5
             total_thickness += layer['h']
             
             summary_data.append([
                 f"{i+1}",
+                f"{layer['h']:.2f}",
                 f"{layer['Ei']:.0f}",
                 f"{layer.get('Ee', 0):.0f}",
                 f"{layer['Ed']:.0f}",
-                f"{layer['h']:.2f}",
-                f"{hD_ratio:.3f}",
-                f"{lambda_val:.2f}"
+                f"{hD_ratio:.3f}"
             ])
-
+        
         # Добавяне на обща сума
         summary_data.append([
-            "ОБЩО", "", "", "", f"{total_thickness:.2f}", "", ""
+            "ОБЩО", f"{total_thickness:.2f}", "", "", "", ""
         ])
-
+        
         # Таблица с обобщени данни
-        summary_table = Table(summary_data, colWidths=[20*mm, 25*mm, 25*mm, 25*mm, 25*mm, 20*mm, 15*mm])
+        summary_table = Table(summary_data, colWidths=[20*mm, 25*mm, 25*mm, 25*mm, 25*mm, 20*mm])
         summary_table.setStyle(TableStyle([
             # Header стил
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C5530')),
@@ -1047,109 +1164,11 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#2C5530')),
         ]))
-
-        story.append(summary_table)
-        story.append(Spacer(1, 15))
-
-        # Създаване на графики за обобщение
-        # 1. Графика на модулите на еластичност по дълбочина
-        if all("Ed" in layer for layer in st.session_state.layers_data):
-            # Подготвяне на данни за графиките
-            depths = [0]  # Начална дълбочина
-            E_values = [st.session_state.layers_data[0]['Ee']]  # Първоначален Ee
-            
-            cumulative_depth = 0
-            for i, layer in enumerate(st.session_state.layers_data):
-                if "Ed" not in layer:
-                    continue
-                cumulative_depth += layer['h']
-                depths.append(cumulative_depth)
-                E_values.append(layer['Ed'])
-            
-            # Графика 1: Модули на еластичност по дълбочина
-            fig1 = go.Figure()
-            
-            # Стъпаловидна графика
-            for i in range(len(depths)-1):
-                fig1.add_trace(go.Scatter(
-                    x=[E_values[i], E_values[i], E_values[i+1], E_values[i+1]],
-                    y=[depths[i], depths[i+1], depths[i+1], depths[i]],
-                    fill='toself',
-                    fillcolor=f'rgba(70, 130, 180, {0.3 + i*0.1})',
-                    line=dict(color='royalblue', width=2),
-                    name=f'Пласт {i+1}',
-                    showlegend=False
-                ))
-            
-            fig1.update_layout(
-                title="Модули на еластичност по дълбочина",
-                xaxis_title="Модул на еластичност (MPa)",
-                yaxis_title="Дълбочина (cm)",
-                yaxis=dict(autorange='reversed'),  # По-дълбоките слоеве надолу
-                template="plotly_white",
-                height=400
-            )
-            
-            # Конвертиране на графиките
-            try:
-                img_bytes1 = pio.to_image(fig1, format="png", width=800, height=400)
-                pil_img1 = PILImage.open(BytesIO(img_bytes1))
-                img_buffer1 = io.BytesIO()
-                pil_img1.save(img_buffer1, format="PNG")
-                img_buffer1.seek(0)
-                
-                story.append(Paragraph("РАЗПРЕДЕЛЕНИЕ НА МОДУЛИТЕ НА ЕЛАСТИЧНОСТ:", layer_info_style))
-                story.append(Spacer(1, 5))
-                story.append(RLImage(img_buffer1, width=160 * mm, height=80 * mm))
-                story.append(Spacer(1, 10))
-                
-            except Exception as e:
-                st.error(f"Грешка при генериране на обобщена графика: {e}")
-
-        # Топлинни параметри и проверки
-        story.append(Spacer(1, 10))
-        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКИ", layer_info_style))
-        story.append(Spacer(1, 5))
         
-        # Изчисление на R₀
-        if all("h" in layer for layer in st.session_state.layers_data):
-            R0_terms = []
-            for i, (layer, lam) in enumerate(zip(st.session_state.layers_data, st.session_state.lambda_values)):
-                if i < len(st.session_state.lambda_values):
-                    h_m = layer["h"] / 100
-                    R0_terms.append(h_m / lam)
-            
-            R0 = sum(R0_terms) if R0_terms else 0
-            
-            # Проверка на условието z > Σh
-            sum_h = sum(layer['h'] for layer in st.session_state.layers_data if 'h' in layer)
-            z_value = st.session_state.get('z1_input', 50) * st.session_state.get('m_value', 1.0)
-            
-            check_style = ParagraphStyle(
-                'CheckStyle',
-                parent=styles['Normal'],
-                fontSize=10,
-                spaceAfter=3,
-                fontName=font_name,
-            )
-            
-            story.append(Paragraph(f"• Топлинно съпротивление R₀ = {R0:.3f} m²K/W", check_style))
-            story.append(Paragraph(f"• Обща дебелина на конструкцията Σh = {sum_h:.2f} cm", check_style))
-            story.append(Paragraph(f"• Дълбочина на замръзване z = {z_value:.2f} cm", check_style))
-            
-            if z_value > sum_h:
-                story.append(Paragraph("• ✓ Условието z > Σh е изпълнено", ParagraphStyle(
-                    'SuccessStyle',
-                    parent=check_style,
-                    textColor=colors.HexColor('#2E7D32')
-                )))
-            else:
-                story.append(Paragraph("• ✗ Условието z > Σh НЕ е изпълнено", ParagraphStyle(
-                    'ErrorStyle',
-                    parent=check_style,
-                    textColor=colors.HexColor('#C62828')
-                )))
-
+        story.append(Paragraph("ЧИСЛЕНИ СТОЙНОСТИ:", layer_info_style))
+        story.append(Spacer(1, 5))
+        story.append(summary_table)
+        
         # Дата на последната страница
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         story.append(Spacer(1, 10))
