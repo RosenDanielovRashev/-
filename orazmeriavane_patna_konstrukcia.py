@@ -990,164 +990,94 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         story.append(Paragraph("ГРАФИЧНО ОБОБЩЕНИЕ НА ПЪТНАТА КОНСТРУКЦИЯ", summary_title_style))
         story.append(Spacer(1, 10))
         
-        # Създаване на визуализация с "балончета" за всеки пласт
-        fig_summary = go.Figure()
-        
-        # СВЕТЛА ЦВЕТОВА СХЕМА за пластовете
-        colors_plot = ['#FFB6C1', '#87CEEB', '#98FB98', '#FFFACD', '#DDA0DD', '#F0E68C', '#B0E0E6', '#FFDAB9']
-        
-        cumulative_height = 0
-        annotations = []
-        
-        # ОБЪРНИ ПЛАСТОВЕТЕ - започваме от най-горния (последен в списъка)
-        layers_reversed = list(reversed(st.session_state.layers_data))
-        
-        # Първо създаваме всички пластове и събираме височините
-        layer_heights = []
-        for i, layer in enumerate(layers_reversed):
+        # ✅ МОДЕРНА ВИЗУАЛИЗАЦИЯ НА ПЛАСТОВЕТЕ – в стил "карти"
+        layer_title_style = ParagraphStyle(
+            'LayerTitle',
+            fontName=font_name,
+            fontSize=12,
+            textColor=colors.HexColor('#5D4037')
+        )
+        ee_style = ParagraphStyle(
+            'EeValue',
+            fontName=font_name,
+            fontSize=11,
+            textColor=colors.HexColor('#0277BD')
+        )
+        ei_style = ParagraphStyle(
+            'EiValue',
+            fontName=font_name,
+            fontSize=11,
+            textColor=colors.HexColor('#004D40')
+        )
+        ed_style = ParagraphStyle(
+            'EdValue',
+            fontName=font_name,
+            fontSize=11,
+            textColor=colors.HexColor('#2E7D32')
+        )
+        h_style = ParagraphStyle(
+            'HValue',
+            fontName=font_name,
+            fontSize=11,
+            textColor=colors.HexColor('#D84315')
+        )
+
+        card_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E0F7FA')),
+            ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#26C6DA')),
+            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.white),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('LEFTPADDING', (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5)
+        ])
+
+        # Заглавие на секцията
+        story.append(Paragraph("СХЕМА НА ПЛАСТОВЕТЕ", layer_title_style))
+        story.append(Spacer(1, 8))
+
+        # Обхождаме всички пластове (отгоре надолу)
+        for i, layer in enumerate(st.session_state.layers_data):
             if "Ed" not in layer:
                 continue
-                
-            h = layer['h']
-            Ei = layer['Ei']
-            
-            # Координати за правоъгълника (балонче)
-            x0, x1 = 0, 1
-            y0 = cumulative_height
-            y1 = cumulative_height + h
-            
-            # Добавяне на правоъгълник за пласта
-            fig_summary.add_trace(go.Scatter(
-                x=[x0, x1, x1, x0, x0],
-                y=[y0, y0, y1, y1, y0],
-                fill="toself",
-                fillcolor=colors_plot[i % len(colors_plot)],
-                line=dict(color='black', width=2),
-                name=f'Пласт {len(layers_reversed)-i}',
-                showlegend=False
-            ))
-            
-            # Добавяне на текстови анотации
-            # ЛЯВО: Дебелина на пласта
-            annotations.append(dict(
-                x=0.1, y=(y0 + y1)/2,
-                text=f"h = {h:.2f} cm",
-                showarrow=False,
-                font=dict(size=12, color='#2C5530'),
-                xanchor='center',
-                yanchor='middle'
-            ))
-            
-            # ЦЕНТЪР: Ei на пласта
-            annotations.append(dict(
-                x=0.5, y=(y0 + y1)/2,
-                text=f"E<sub>i</sub> = {Ei:.0f}",
-                showarrow=False,
-                font=dict(size=14, color='black', family="Arial Black"),
-                xanchor='center',
-                yanchor='middle'
-            ))
-            
-            layer_heights.append((y0, y1))
-            cumulative_height += h
-        
-        # Сега добавяме Ee и Ed на правилните позиции - на границите между пластовете
-        right_x = 0.85
-        
-        # Ee за първия пласт (най-отгоре)
-        if layers_reversed:
-            first_layer = layers_reversed[0]
-            if "Ee" in first_layer:
-                annotations.append(dict(
-                    x=right_x, y=layer_heights[0][0] - 2,
-                    text=f"E<sub>e</sub> = {first_layer['Ee']:.0f}",
-                    showarrow=False,
-                    font=dict(size=12, color='#1F4E79'),
-                    xanchor='center',
-                    yanchor='bottom'
-                ))
-        
-        # Ee и Ed за междинните пластове
-        for i in range(len(layers_reversed)):
-            if i < len(layer_heights):
-                current_layer = layers_reversed[i]
-                
-                # Ed на текущия пласт (на долната граница)
-                annotations.append(dict(
-                    x=right_x, y=layer_heights[i][1] + 2,
-                    text=f"E<sub>d</sub> = {current_layer['Ed']:.0f}",
-                    showarrow=False,
-                    font=dict(size=12, color='#783F04'),
-                    xanchor='center',
-                    yanchor='top'
-                ))
-                
-                # Ee на следващия пласт (ако има такъв)
-                if i < len(layers_reversed) - 1:
-                    next_layer = layers_reversed[i + 1]
-                    if "Ee" in next_layer:
-                        annotations.append(dict(
-                            x=right_x, y=layer_heights[i][1] + 2,
-                            text=f"E<sub>e</sub> = {next_layer['Ee']:.0f}",
-                            showarrow=False,
-                            font=dict(size=12, color='#1F4E79'),
-                            xanchor='center',
-                            yanchor='bottom'
-                        ))
-        
-        # Ed за земната основа (последен)
-        if layers_reversed:
-            last_layer = layers_reversed[-1]
-            annotations.append(dict(
-                x=right_x, y=layer_heights[-1][1] + 10,
-                text=f"E<sub>d</sub> = {last_layer['Ed']:.0f}",
-                showarrow=False,
-                font=dict(size=12, color='#783F04'),
-                xanchor='center',
-                yanchor='bottom'
-            ))
-        
-        # Конфигурация на графиката
-        fig_summary.update_layout(
-            title="Схема на пътната конструкция",
-            xaxis=dict(
-                range=[0, 1],
-                showticklabels=False,
-                showgrid=False,
-                zeroline=False
-            ),
-            yaxis=dict(
-                title="",
-                range=[-10, cumulative_height + 30],
-                showgrid=False,
-                zeroline=False,
-                showticklabels=False
-            ),
-            annotations=annotations,
-            showlegend=False,
-            plot_bgcolor='white',
-            width=800,
-            height=max(600, cumulative_height * 3),
-            margin=dict(l=50, r=50, t=80, b=80)
+
+            layer_data = [
+                [
+                    Paragraph(f"Пласт {i + 1}", layer_title_style),
+                    Paragraph(f"Ee = {layer['Ee']:.0f} MPa", ee_style)
+                ],
+                [
+                    Paragraph(f"h = {layer['h']:.2f} cm", h_style),
+                    Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_style)
+                ],
+                [
+                    "",
+                    Paragraph(f"Ed = {layer['Ed']:.0f} MPa", ed_style)
+                ]
+            ]
+
+            layer_card = Table(layer_data, colWidths=[55*mm, 75*mm])
+            layer_card.setStyle(card_style)
+            story.append(layer_card)
+            story.append(Spacer(1, 10))
+
+        # ✅ Финален надпис
+        story.append(Spacer(1, 10))
+        summary_note = ParagraphStyle(
+            'SummaryNote',
+            fontName=font_name,
+            fontSize=10,
+            textColor=colors.HexColor('#555555'),
+            alignment=1
         )
-        
-        # Конвертиране на обобщената графика
-        try:
-            img_bytes_summary = pio.to_image(fig_summary, format="png", width=800, height=600)
-            pil_img_summary = PILImage.open(BytesIO(img_bytes_summary))
-            img_buffer_summary = io.BytesIO()
-            pil_img_summary.save(img_buffer_summary, format="PNG")
-            img_buffer_summary.seek(0)
-            
-            story.append(Paragraph("ВИЗУАЛНА ПРЕДСТАВКА НА ПЪТНАТА КОНСТРУКЦИЯ:", layer_info_style))
-            story.append(Spacer(1, 5))
-            story.append(RLImage(img_buffer_summary, width=160 * mm, height=120 * mm))
-            story.append(Spacer(1, 15))
-            
-        except Exception as e:
-            st.error(f"Грешка при генериране на обобщена графика: {e}")
-        
-        # Дата на последната страница
+        story.append(Paragraph(
+            "Всеки пласт е показан с дебелината си (h), модулите на еластичност (Ee, Ei, Ed) и своята позиция в конструкцията.",
+            summary_note
+        ))
+        story.append(Spacer(1, 20))
+
+        # ✅ Дата и подпис
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         story.append(Spacer(1, 10))
         story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle(
@@ -1158,10 +1088,10 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontName=font_name
         )))
 
-        
+        # ✅ Финализиране на документа
         doc.build(story)
         buffer.seek(0)
-        st.success("✅ PDF отчетът с графики и обобщение е готов!")
+        st.success("✅ PDF отчетът с модерно графично оформление е готов!")
         st.download_button(
             "📥 Изтегли PDF отчет",
             buffer,
