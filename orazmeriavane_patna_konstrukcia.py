@@ -1032,41 +1032,31 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             # Централен текст: Ei на пласта
             annotations.append(dict(
                 x=0.5, y=(y0 + y1)/2,
-                text=f"E<sub>i</sub> = {Ei:.0f} MPa",
+                text=f"E<sub>i</sub> = {Ei:.0f}",
                 showarrow=False,
                 font=dict(size=14, color='black', family="Arial Black"),
                 xanchor='center',
                 yanchor='middle'
             ))
             
-            # Дебелина на пласта (отляво)
+            # Ee (ляво) - със същия размер като Ei
             annotations.append(dict(
-                x=0.1, y=(y0 + y1)/2,
-                text=f"h = {h:.2f} cm",
+                x=0.25, y=(y0 + y1)/2,
+                text=f"E<sub>e</sub> = {Ee:.0f}",
                 showarrow=False,
-                font=dict(size=12, color='#2C5530'),
+                font=dict(size=14, color='#1F4E79', family="Arial Black"),
                 xanchor='center',
                 yanchor='middle'
             ))
             
-            # Ee (отгоре) - за ВСИЧКИ пластове
+            # Ed (дясно) - със същия размер като Ei
             annotations.append(dict(
-                x=0.9, y=y0 + 0.1 * h,
-                text=f"E<sub>e</sub> = {Ee:.0f} MPa",
+                x=0.75, y=(y0 + y1)/2,
+                text=f"E<sub>d</sub> = {Ed:.0f}",
                 showarrow=False,
-                font=dict(size=11, color='#1F4E79'),
+                font=dict(size=14, color='#783F04', family="Arial Black"),
                 xanchor='center',
-                yanchor='bottom'
-            ))
-            
-            # Ed (отдолу) - за ВСИЧКИ пластове
-            annotations.append(dict(
-                x=0.9, y=y1 - 0.1 * h,
-                text=f"E<sub>d</sub> = {Ed:.0f} MPa",
-                showarrow=False,
-                font=dict(size=11, color='#783F04'),
-                xanchor='center',
-                yanchor='top'
+                yanchor='middle'
             ))
             
             cumulative_height += h
@@ -1079,10 +1069,10 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 
                 # Надпис за земната основа - долу в дясно
                 annotations.append(dict(
-                    x=0.9, y=cumulative_height + 5,
-                    text=f"E<sub>d</sub> = {ground_Ed:.0f} MPa<br>(земна основа)",
+                    x=0.75, y=cumulative_height + 5,
+                    text=f"E<sub>d</sub> = {ground_Ed:.0f}",
                     showarrow=False,
-                    font=dict(size=11, color='#783F04'),
+                    font=dict(size=14, color='#783F04', family="Arial Black"),
                     xanchor='center',
                     yanchor='bottom'
                 ))
@@ -1097,17 +1087,18 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 zeroline=False
             ),
             yaxis=dict(
-                title="Дебелина (cm)",
+                title="",
                 range=[0, cumulative_height + 20],
-                showgrid=True,
-                gridcolor='lightgray'
+                showgrid=False,
+                zeroline=False,
+                showticklabels=False
             ),
             annotations=annotations,
             showlegend=False,
             plot_bgcolor='white',
             width=800,
             height=max(600, cumulative_height * 3),
-            margin=dict(l=50, r=50, t=80, b=80)  # Увеличих долния марджин за надписа
+            margin=dict(l=50, r=50, t=80, b=80)
         )
         
         # Конвертиране на обобщената графика
