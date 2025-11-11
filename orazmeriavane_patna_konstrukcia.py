@@ -901,18 +901,16 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Paragraph("ИЗЧИСЛЕНИЯ:", layer_info_style))
             story.append(Spacer(1, 3))  # По-малко разстояние
             
-            # Добавяне на изчислителните формули
-            if mode == "Ed / Ei":
-                story.append(Paragraph(f"• Ed = Ei × (Ed/Ei) = {layer['Ei']:.0f} × {EdEi_point:.3f} = {layer['Ed']:.0f} MPa", layer_value_style))
-            else:
-                story.append(Paragraph(f"• h = D × (h/D) = {st.session_state.final_D} × {hD_point:.3f} = {layer['h']:.2f} cm", layer_value_style))
-            
+            # Основни параметри
             story.append(Paragraph(f"• Ee/Ei = {layer['Ee']:.0f} / {layer['Ei']:.0f} = {EeEi_ratio:.3f}", layer_value_style))
             story.append(Paragraph(f"• h/D = {layer['h']:.1f} / {st.session_state.final_D} = {hD_point:.3f}", layer_value_style))
             story.append(Paragraph(f"• Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.3f}", layer_value_style))
             
-            if 'low_iso' in layer and 'high_iso' in layer:
-                story.append(Paragraph(f"• Интерполация между Ee/Ei = {layer['low_iso']:.3f} и {layer['high_iso']:.3f}", layer_value_style))
+            # Основното изчисление - ПОСЛЕДНО
+            if layer.get("mode") == "Ed / Ei":
+                story.append(Paragraph(f"• Ed = Ei × (Ed/Ei) = {layer['Ei']:.0f} × {EdEi_point:.3f} = {layer['Ed']:.0f} MPa", layer_value_style))
+            else:
+                story.append(Paragraph(f"• h = D × (h/D) = {st.session_state.final_D} × {hD_point:.3f} = {layer['h']:.2f} cm", layer_value_style))
             
             story.append(Spacer(1, 8))  # По-малко разстояние
 
