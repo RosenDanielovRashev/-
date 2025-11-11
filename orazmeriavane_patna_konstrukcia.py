@@ -975,7 +975,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))  # Максимален размер
             story.append(Spacer(1, 8))  # Минимално разстояние
             
-
         # НОВА СТРАНИЦА ЗА ГРАФИЧНО ОБОБЩЕНИЕ
         story.append(PageBreak())
         
@@ -1003,14 +1002,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontName=font_name,
             fontSize=11,
             textColor=colors.HexColor('#0277BD'),
-            alignment=2  # вдясно (параграфно), TableStyle ще гарантира клетъчно подравняване
-        )
-        ei_style = ParagraphStyle(
-            'EiValue',
-            fontName=font_name,
-            fontSize=11,
-            textColor=colors.HexColor('#004D40'),
-            alignment=1  # центрирано (параграфно), TableStyle ще гарантира клетъчно центриране
+            alignment=2  # вдясно
         )
         ed_style = ParagraphStyle(
             'EdValue',
@@ -1023,10 +1015,18 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             'HValue',
             fontName=font_name,
             fontSize=11,
-            textColor=colors.HexColor('#D84315')
+            textColor=colors.HexColor('#D84315'),
+            alignment=0  # вляво
+        )
+        ei_inner_style = ParagraphStyle(
+            'EiInner',
+            fontName=font_name,
+            fontSize=11,
+            textColor=colors.HexColor('#004D40'),
+            alignment=0  # вляво
         )
 
-        # Стил за картите на пластовете — добавени специфични ALIGN правила за клетки
+        # Стил за картите
         card_style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E0F7FA')),
             ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#26C6DA')),
@@ -1036,15 +1036,10 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
             ('TOPPADDING', (0, 0), (-1, -1), 5),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            # cell alignment rules:
-            # Колона 0 (лява колона) — всички редове: left
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            # Ee (дясно подравнено) — втора колона, първи ред (0-based): (1,0)
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-            # Ei (центрирано) — втора колона, втори ред: (1,1)
-            ('ALIGN', (1, 1), (1, 1), 'CENTER'),
-            # Ed (дясно подравнено) — втора колона, трети ред: (1,2)
-            ('ALIGN', (1, 2), (1, 2), 'RIGHT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),  # Ee вдясно
+            ('ALIGN', (1, 1), (1, 1), 'LEFT'),   # Ei вляво
+            ('ALIGN', (1, 2), (1, 2), 'RIGHT'),  # Ed вдясно
         ])
 
         # Заглавие на секцията
@@ -1064,7 +1059,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 ],
                 [
                     Paragraph(f"h = {layer['h']:.2f} cm", h_style),
-                    Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_style)
+                    Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_inner_style)
                 ],
                 [
                     "",
@@ -1073,7 +1068,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ]
 
             # Таблица (карта на пласта)
-            layer_card = Table(layer_data, colWidths=[55*mm, 75*mm])
+            layer_card = Table(layer_data, colWidths=[55 * mm, 75 * mm])
             layer_card.setStyle(card_style)
             story.append(layer_card)
             story.append(Spacer(1, 10))
@@ -1102,3 +1097,4 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
+
