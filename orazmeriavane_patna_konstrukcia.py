@@ -974,7 +974,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Spacer(1, 3))  # Минимално разстояние
             story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))  # Максимален размер
             story.append(Spacer(1, 8))  # Минимално разстояние
-
+            
         # НОВА СТРАНИЦА ЗА ГРАФИЧНО ОБОБЩЕНИЕ
         story.append(PageBreak())
         
@@ -1001,19 +1001,22 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             'EeValue',
             fontName=font_name,
             fontSize=11,
-            textColor=colors.HexColor('#0277BD')
+            textColor=colors.HexColor('#0277BD'),
+            alignment=2  # вдясно
         )
         ei_style = ParagraphStyle(
             'EiValue',
             fontName=font_name,
             fontSize=11,
-            textColor=colors.HexColor('#004D40')
+            textColor=colors.HexColor('#004D40'),
+            alignment=1  # центриран
         )
         ed_style = ParagraphStyle(
             'EdValue',
             fontName=font_name,
             fontSize=11,
-            textColor=colors.HexColor('#2E7D32')
+            textColor=colors.HexColor('#2E7D32'),
+            alignment=2  # вдясно
         )
         h_style = ParagraphStyle(
             'HValue',
@@ -1022,6 +1025,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             textColor=colors.HexColor('#D84315')
         )
 
+        # Стил за картите на пластовете
         card_style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E0F7FA')),
             ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#26C6DA')),
@@ -1030,7 +1034,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ('LEFTPADDING', (0, 0), (-1, -1), 8),
             ('RIGHTPADDING', (0, 0), (-1, -1), 8),
             ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5)
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
         ])
 
         # Заглавие на секцията
@@ -1042,6 +1046,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             if "Ed" not in layer:
                 continue
 
+            # Данни за визуализацията
             layer_data = [
                 [
                     Paragraph(f"Пласт {i + 1}", layer_title_style),
@@ -1057,6 +1062,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 ]
             ]
 
+            # Таблица (карта на пласта)
             layer_card = Table(layer_data, colWidths=[55*mm, 75*mm])
             layer_card.setStyle(card_style)
             story.append(layer_card)
@@ -1072,7 +1078,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             alignment=1
         )
         story.append(Paragraph(
-            "Всеки пласт е показан с дебелината си (h), модулите на еластичност (Ee, Ei, Ed) и своята позиция в конструкцията.",
+            "Всеки пласт е показан с дебелината си (h), модулите на еластичност (Ee, Ei, Ed) и позицията си в конструкцията.",
             summary_note
         ))
         story.append(Spacer(1, 20))
