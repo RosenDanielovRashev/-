@@ -999,7 +999,10 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         cumulative_height = 0
         annotations = []
         
-        for i, layer in enumerate(st.session_state.layers_data):
+        # ОБЪРНИ ПЛАСТОВЕТЕ - започваме от най-горния (последен в списъка)
+        layers_reversed = list(reversed(st.session_state.layers_data))
+        
+        for i, layer in enumerate(layers_reversed):
             if "Ed" not in layer:
                 continue
                 
@@ -1021,7 +1024,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 fill="toself",
                 fillcolor=colors_plot[i % len(colors_plot)],
                 line=dict(color='black', width=2),
-                name=f'Пласт {i+1}',
+                name=f'Пласт {len(layers_reversed)-i}',
                 showlegend=False
             ))
             
@@ -1046,7 +1049,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 yanchor='middle'
             ))
             
-            # Ee (отгоре) - за ВСИЧКИ пластове, включително първия
+            # Ee (отгоре) - за ВСИЧКИ пластове
             annotations.append(dict(
                 x=0.9, y=y0 + 0.1 * h,
                 text=f"E<sub>e</sub> = {Ee:.0f} MPa",
@@ -1068,37 +1071,21 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             cumulative_height += h
         
-        # Добавяне на земната основа под последния пласт
-        if st.session_state.layers_data:
-            last_layer = st.session_state.layers_data[-1]
+        # Добавяне на Ed за земната основа (само надпис, без отделен пласт)
+        if layers_reversed:
+            last_layer = layers_reversed[-1]
             if "Ed" in last_layer:
-                # Земната основа - последно изчислен Ed
                 ground_Ed = last_layer['Ed']
-                y_ground_start = cumulative_height
-                y_ground_end = cumulative_height + 50  # Фиксирана височина за земната основа
                 
-                # Правоъгълник за земната основа
-                fig_summary.add_trace(go.Scatter(
-                    x=[x0, x1, x1, x0, x0],
-                    y=[y_ground_start, y_ground_start, y_ground_end, y_ground_end, y_ground_start],
-                    fill="toself",
-                    fillcolor='#D2B48C',  # Кафяв цвят за земя
-                    line=dict(color='black', width=2),
-                    name='Земна основа',
-                    showlegend=False
-                ))
-                
-                # Текст за земната основа
+                # Надпис за земната основа - долу в дясно
                 annotations.append(dict(
-                    x=0.5, y=(y_ground_start + y_ground_end)/2,
-                    text=f"ЗЕМНА ОСНОВА<br>E<sub>d</sub> = {ground_Ed:.0f} MPa",
+                    x=0.9, y=cumulative_height + 5,
+                    text=f"E<sub>d</sub> = {ground_Ed:.0f} MPa<br>(земна основа)",
                     showarrow=False,
-                    font=dict(size=12, color='black'),
+                    font=dict(size=11, color='#783F04'),
                     xanchor='center',
-                    yanchor='middle'
+                    yanchor='bottom'
                 ))
-                
-                cumulative_height = y_ground_end
         
         # Конфигурация на графиката
         fig_summary.update_layout(
@@ -1111,7 +1098,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ),
             yaxis=dict(
                 title="Дебелина (cm)",
-                range=[0, cumulative_height + 10],
+                range=[0, cumulative_height + 20],
                 showgrid=True,
                 gridcolor='lightgray'
             ),
@@ -1119,8 +1106,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             showlegend=False,
             plot_bgcolor='white',
             width=800,
-            height=max(600, cumulative_height * 3),  # Адаптивна височина според общата дебелина
-            margin=dict(l=50, r=50, t=80, b=50)
+            height=max(600, cumulative_height * 3),
+            margin=dict(l=50, r=50, t=80, b=80)  # Увеличих долния марджин за надписа
         )
         
         # Конвертиране на обобщената графика
@@ -1149,6 +1136,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             textColor=colors.grey,
             fontName=font_name
         )))
+
         doc.build(story)
         buffer.seek(0)
         st.success("✅ PDF отчетът с графики и обобщение е готов!")
