@@ -993,8 +993,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # Създаване на визуализация с "балончета" за всеки пласт
         fig_summary = go.Figure()
         
-        # Цветова схема за пластовете
-        colors_plot = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F']
+        # СВЕТЛА ЦВЕТОВА СХЕМА за пластовете
+        colors_plot = ['#FFB6C1', '#87CEEB', '#98FB98', '#FFFACD', '#DDA0DD', '#F0E68C', '#B0E0E6', '#FFDAB9']
         
         cumulative_height = 0
         annotations = []
@@ -1046,29 +1046,59 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 yanchor='middle'
             ))
             
-            # Ee (отгоре) - само ако не е първи пласт
-            if i > 0:
-                annotations.append(dict(
-                    x=0.9, y=y0 + 0.1 * h,
-                    text=f"E<sub>e</sub> = {Ee:.0f} MPa",
-                    showarrow=False,
-                    font=dict(size=11, color='#1F4E79'),
-                    xanchor='center',
-                    yanchor='bottom'
-                ))
+            # Ee (отгоре) - за ВСИЧКИ пластове, включително първия
+            annotations.append(dict(
+                x=0.9, y=y0 + 0.1 * h,
+                text=f"E<sub>e</sub> = {Ee:.0f} MPa",
+                showarrow=False,
+                font=dict(size=11, color='#1F4E79'),
+                xanchor='center',
+                yanchor='bottom'
+            ))
             
-            # Ed (отдолу) - само ако не е последен пласт
-            if i < len(st.session_state.layers_data) - 1:
-                annotations.append(dict(
-                    x=0.9, y=y1 - 0.1 * h,
-                    text=f"E<sub>d</sub> = {Ed:.0f} MPa",
-                    showarrow=False,
-                    font=dict(size=11, color='#783F04'),
-                    xanchor='center',
-                    yanchor='top'
-                ))
+            # Ed (отдолу) - за ВСИЧКИ пластове
+            annotations.append(dict(
+                x=0.9, y=y1 - 0.1 * h,
+                text=f"E<sub>d</sub> = {Ed:.0f} MPa",
+                showarrow=False,
+                font=dict(size=11, color='#783F04'),
+                xanchor='center',
+                yanchor='top'
+            ))
             
             cumulative_height += h
+        
+        # Добавяне на земната основа под последния пласт
+        if st.session_state.layers_data:
+            last_layer = st.session_state.layers_data[-1]
+            if "Ed" in last_layer:
+                # Земната основа - последно изчислен Ed
+                ground_Ed = last_layer['Ed']
+                y_ground_start = cumulative_height
+                y_ground_end = cumulative_height + 50  # Фиксирана височина за земната основа
+                
+                # Правоъгълник за земната основа
+                fig_summary.add_trace(go.Scatter(
+                    x=[x0, x1, x1, x0, x0],
+                    y=[y_ground_start, y_ground_start, y_ground_end, y_ground_end, y_ground_start],
+                    fill="toself",
+                    fillcolor='#D2B48C',  # Кафяв цвят за земя
+                    line=dict(color='black', width=2),
+                    name='Земна основа',
+                    showlegend=False
+                ))
+                
+                # Текст за земната основа
+                annotations.append(dict(
+                    x=0.5, y=(y_ground_start + y_ground_end)/2,
+                    text=f"ЗЕМНА ОСНОВА<br>E<sub>d</sub> = {ground_Ed:.0f} MPa",
+                    showarrow=False,
+                    font=dict(size=12, color='black'),
+                    xanchor='center',
+                    yanchor='middle'
+                ))
+                
+                cumulative_height = y_ground_end
         
         # Конфигурация на графиката
         fig_summary.update_layout(
@@ -1109,66 +1139,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         except Exception as e:
             st.error(f"Грешка при генериране на обобщена графика: {e}")
         
-        # Таблица с числени стойности (опционално)
-        summary_data = [["Пласт", "h (cm)", "Eᵢ (MPa)", "Eₑ (MPa)", "E<sub>d</sub> (MPa)", "h/D"]]
-        
-        total_thickness = 0
-        for i, layer in enumerate(st.session_state.layers_data):
-            if "Ed" not in layer:
-                continue
-                
-            hD_ratio = layer.get('hD_point', layer.get('h', 0) / st.session_state.final_D)
-            total_thickness += layer['h']
-            
-            summary_data.append([
-                f"{i+1}",
-                f"{layer['h']:.2f}",
-                f"{layer['Ei']:.0f}",
-                f"{layer.get('Ee', 0):.0f}",
-                f"{layer['Ed']:.0f}",
-                f"{hD_ratio:.3f}"
-            ])
-        
-        # Добавяне на обща сума
-        summary_data.append([
-            "ОБЩО", f"{total_thickness:.2f}", "", "", "", ""
-        ])
-        
-        # Таблица с обобщени данни
-        summary_table = Table(summary_data, colWidths=[20*mm, 25*mm, 25*mm, 25*mm, 25*mm, 20*mm])
-        summary_table.setStyle(TableStyle([
-            # Header стил
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C5530')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-            
-            # Данни стил
-            ('BACKGROUND', (0, 1), (-1, -2), colors.HexColor('#F8F9FA')),
-            ('TEXTCOLOR', (0, 1), (-1, -2), colors.HexColor('#333333')),
-            ('FONTNAME', (0, 1), (-1, -2), font_name),
-            ('FONTSIZE', (0, 1), (-1, -2), 8),
-            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
-            
-            # Общ ред стил
-            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E8F5E8')),
-            ('TEXTCOLOR', (0, -1), (-1, -1), colors.HexColor('#2C5530')),
-            ('FONTNAME', (0, -1), (-1, -1), font_name),
-            ('FONTSIZE', (0, -1), (-1, -1), 9),
-            ('FONTNAME', (0, -1), (-1, -1), 'DejaVuSans-Bold'),
-            
-            # Grid и border
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#2C5530')),
-        ]))
-        
-        story.append(Paragraph("ЧИСЛЕНИ СТОЙНОСТИ:", layer_info_style))
-        story.append(Spacer(1, 5))
-        story.append(summary_table)
-        
         # Дата на последната страница
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         story.append(Spacer(1, 10))
@@ -1179,7 +1149,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             textColor=colors.grey,
             fontName=font_name
         )))
-
         doc.build(story)
         buffer.seek(0)
         st.success("✅ PDF отчетът с графики и обобщение е готов!")
