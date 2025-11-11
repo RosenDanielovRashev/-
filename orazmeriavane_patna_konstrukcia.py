@@ -1029,7 +1029,17 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ))
             
             # Добавяне на текстови анотации
-            # Централен текст: Ei на пласта
+            # ЛЯВО: Дебелина на пласта
+            annotations.append(dict(
+                x=0.1, y=(y0 + y1)/2,
+                text=f"h = {h:.2f} cm",
+                showarrow=False,
+                font=dict(size=12, color='#2C5530'),
+                xanchor='center',
+                yanchor='middle'
+            ))
+            
+            # ЦЕНТЪР: Ei на пласта
             annotations.append(dict(
                 x=0.5, y=(y0 + y1)/2,
                 text=f"E<sub>i</sub> = {Ei:.0f}",
@@ -1039,40 +1049,54 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 yanchor='middle'
             ))
             
-            # Ee (ляво) - със същия размер като Ei
-            annotations.append(dict(
-                x=0.25, y=(y0 + y1)/2,
-                text=f"E<sub>e</sub> = {Ee:.0f}",
-                showarrow=False,
-                font=dict(size=14, color='#1F4E79', family="Arial Black"),
-                xanchor='center',
-                yanchor='middle'
-            ))
-            
-            # Ed (дясно) - със същия размер като Ei
-            annotations.append(dict(
-                x=0.75, y=(y0 + y1)/2,
-                text=f"E<sub>d</sub> = {Ed:.0f}",
-                showarrow=False,
-                font=dict(size=14, color='#783F04', family="Arial Black"),
-                xanchor='center',
-                yanchor='middle'
-            ))
-            
             cumulative_height += h
         
-        # Добавяне на Ed за земната основа (само надпис, без отделен пласт)
+        # ДЯСНО: Добавяне на модулите Ee и Ed според разпределението от снимката
+        right_x = 0.85
+        current_y = 0
+        
+        for i, layer in enumerate(layers_reversed):
+            if "Ed" not in layer:
+                continue
+                
+            h = layer['h']
+            Ee = layer.get('Ee', 0)
+            Ed = layer['Ed']
+            
+            # Ee над пласта (за всички пластове освен най-горния)
+            if i > 0:
+                annotations.append(dict(
+                    x=right_x, y=current_y - 2,
+                    text=f"E<sub>e</sub> = {Ee:.0f}",
+                    showarrow=False,
+                    font=dict(size=12, color='#1F4E79'),
+                    xanchor='center',
+                    yanchor='bottom'
+                ))
+            
+            # Ed под пласта (за всички пластове)
+            annotations.append(dict(
+                x=right_x, y=current_y + h + 2,
+                text=f"E<sub>d</sub> = {Ed:.0f}",
+                showarrow=False,
+                font=dict(size=12, color='#783F04'),
+                xanchor='center',
+                yanchor='top'
+            ))
+            
+            current_y += h
+        
+        # Добавяне на Ed за земната основа (последен ред отдясно)
         if layers_reversed:
             last_layer = layers_reversed[-1]
             if "Ed" in last_layer:
                 ground_Ed = last_layer['Ed']
                 
-                # Надпис за земната основа - долу в дясно
                 annotations.append(dict(
-                    x=0.75, y=cumulative_height + 5,
+                    x=right_x, y=current_y + 10,
                     text=f"E<sub>d</sub> = {ground_Ed:.0f}",
                     showarrow=False,
-                    font=dict(size=14, color='#783F04', family="Arial Black"),
+                    font=dict(size=12, color='#783F04'),
                     xanchor='center',
                     yanchor='bottom'
                 ))
@@ -1088,7 +1112,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ),
             yaxis=dict(
                 title="",
-                range=[0, cumulative_height + 20],
+                range=[0, cumulative_height + 30],
                 showgrid=False,
                 zeroline=False,
                 showticklabels=False
@@ -1127,7 +1151,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             textColor=colors.grey,
             fontName=font_name
         )))
-
         doc.build(story)
         buffer.seek(0)
         st.success("✅ PDF отчетът с графики и обобщение е готов!")
