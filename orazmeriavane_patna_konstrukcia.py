@@ -1002,15 +1002,14 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # ОБЪРНИ ПЛАСТОВЕТЕ - започваме от най-горния (последен в списъка)
         layers_reversed = list(reversed(st.session_state.layers_data))
         
+        # Първо създаваме всички пластове и събираме височините
+        layer_heights = []
         for i, layer in enumerate(layers_reversed):
             if "Ed" not in layer:
                 continue
                 
-            # Данни за текущия пласт
             h = layer['h']
             Ei = layer['Ei']
-            Ee = layer.get('Ee', 0)
-            Ed = layer['Ed']
             
             # Координати за правоъгълника (балонче)
             x0, x1 = 0, 1
@@ -1049,57 +1048,64 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 yanchor='middle'
             ))
             
+            layer_heights.append((y0, y1))
             cumulative_height += h
         
-        # ДЯСНО: Добавяне на модулите Ee и Ed според разпределението от снимката
+        # Сега добавяме Ee и Ed на правилните позиции - на границите между пластовете
         right_x = 0.85
-        current_y = 0
         
-        for i, layer in enumerate(layers_reversed):
-            if "Ed" not in layer:
-                continue
-                
-            h = layer['h']
-            Ee = layer.get('Ee', 0)
-            Ed = layer['Ed']
-            
-            # Ee над пласта (за всички пластове освен най-горния)
-            if i > 0:
+        # Ee за първия пласт (най-отгоре)
+        if layers_reversed:
+            first_layer = layers_reversed[0]
+            if "Ee" in first_layer:
                 annotations.append(dict(
-                    x=right_x, y=current_y - 2,
-                    text=f"E<sub>e</sub> = {Ee:.0f}",
+                    x=right_x, y=layer_heights[0][0] - 2,
+                    text=f"E<sub>e</sub> = {first_layer['Ee']:.0f}",
                     showarrow=False,
                     font=dict(size=12, color='#1F4E79'),
                     xanchor='center',
                     yanchor='bottom'
                 ))
-            
-            # Ed под пласта (за всички пластове)
-            annotations.append(dict(
-                x=right_x, y=current_y + h + 2,
-                text=f"E<sub>d</sub> = {Ed:.0f}",
-                showarrow=False,
-                font=dict(size=12, color='#783F04'),
-                xanchor='center',
-                yanchor='top'
-            ))
-            
-            current_y += h
         
-        # Добавяне на Ed за земната основа (последен ред отдясно)
-        if layers_reversed:
-            last_layer = layers_reversed[-1]
-            if "Ed" in last_layer:
-                ground_Ed = last_layer['Ed']
+        # Ee и Ed за междинните пластове
+        for i in range(len(layers_reversed)):
+            if i < len(layer_heights):
+                current_layer = layers_reversed[i]
                 
+                # Ed на текущия пласт (на долната граница)
                 annotations.append(dict(
-                    x=right_x, y=current_y + 10,
-                    text=f"E<sub>d</sub> = {ground_Ed:.0f}",
+                    x=right_x, y=layer_heights[i][1] + 2,
+                    text=f"E<sub>d</sub> = {current_layer['Ed']:.0f}",
                     showarrow=False,
                     font=dict(size=12, color='#783F04'),
                     xanchor='center',
-                    yanchor='bottom'
+                    yanchor='top'
                 ))
+                
+                # Ee на следващия пласт (ако има такъв)
+                if i < len(layers_reversed) - 1:
+                    next_layer = layers_reversed[i + 1]
+                    if "Ee" in next_layer:
+                        annotations.append(dict(
+                            x=right_x, y=layer_heights[i][1] + 2,
+                            text=f"E<sub>e</sub> = {next_layer['Ee']:.0f}",
+                            showarrow=False,
+                            font=dict(size=12, color='#1F4E79'),
+                            xanchor='center',
+                            yanchor='bottom'
+                        ))
+        
+        # Ed за земната основа (последен)
+        if layers_reversed:
+            last_layer = layers_reversed[-1]
+            annotations.append(dict(
+                x=right_x, y=layer_heights[-1][1] + 10,
+                text=f"E<sub>d</sub> = {last_layer['Ed']:.0f}",
+                showarrow=False,
+                font=dict(size=12, color='#783F04'),
+                xanchor='center',
+                yanchor='bottom'
+            ))
         
         # Конфигурация на графиката
         fig_summary.update_layout(
@@ -1112,7 +1118,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ),
             yaxis=dict(
                 title="",
-                range=[0, cumulative_height + 30],
+                range=[-10, cumulative_height + 30],
                 showgrid=False,
                 zeroline=False,
                 showticklabels=False
@@ -1151,6 +1157,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             textColor=colors.grey,
             fontName=font_name
         )))
+
+        
         doc.build(story)
         buffer.seek(0)
         st.success("✅ PDF отчетът с графики и обобщение е готов!")
