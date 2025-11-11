@@ -855,127 +855,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             if "Ed" not in layer:
                 continue
 
-            # Нова страница за всеки пласт
-            story.append(PageBreak())
-
-            # Заглавие на пласт
-            layer_title_style = ParagraphStyle(
-                'LayerTitle',
-                fontName=font_name,
-                fontSize=16,
-                textColor=colors.HexColor('#2C5530'),
-                spaceAfter=10,  # По-малко разстояние
-                alignment=1
-            )
-            story.append(Paragraph(f"ПЛАСТ {i + 1}", layer_title_style))
-            story.append(Spacer(1, 8))  # По-малко разстояние
-
-            # СТИЛ ЗА ИНФОРМАЦИЯТА ЗА ПЛАСТ
-            layer_info_style = ParagraphStyle(
-                'LayerInfo',
-                parent=styles['Normal'],
-                fontSize=11,
-                spaceAfter=6,  # По-малко разстояние
-                fontName=font_name,
-                textColor=colors.HexColor('#2C5530'),
-                leftIndent=10
-            )
-
-            layer_value_style = ParagraphStyle(
-                'LayerValue',
-                parent=styles['Normal'],
-                fontSize=10,
-                spaceAfter=4,  # По-малко разстояние
-                fontName=font_name,
-                textColor=colors.HexColor('#4B5563'),
-                leftIndent=20
-            )
-
-            # Изчислителни параметри за конкретния пласт
-            hD_point = layer.get('hD_point', 0)
-            EdEi_point = layer.get('EdEi_point', 0)
-            EeEi_ratio = layer['Ee'] / layer['Ei']
-            
-            # Информация за пласта - кратко и ясно
-            story.append(Paragraph("ИЗЧИСЛЕНИЯ:", layer_info_style))
-            story.append(Spacer(1, 3))  # По-малко разстояние
-            
-            # Основни параметри
-            story.append(Paragraph(f"• Ee/Ei = {layer['Ee']:.0f} / {layer['Ei']:.0f} = {EeEi_ratio:.3f}", layer_value_style))
-            story.append(Paragraph(f"• h/D = {layer['h']:.1f} / {st.session_state.final_D} = {hD_point:.3f}", layer_value_style))
-            story.append(Paragraph(f"• Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.3f}", layer_value_style))
-            
-            # Основното изчисление - ПОСЛЕДНО
-            if layer.get("mode") == "Ed / Ei":
-                story.append(Paragraph(f"• Ed = Ei × (Ed/Ei) = {layer['Ei']:.0f} × {EdEi_point:.3f} = {layer['Ed']:.0f} MPa", layer_value_style))
-            else:
-                story.append(Paragraph(f"• h = D × (h/D) = {st.session_state.final_D} × {hD_point:.3f} = {layer['h']:.2f} cm", layer_value_style))
-            
-            story.append(Spacer(1, 8))  # По-малко разстояние
-
-            # ГЕНЕРИРАНЕ НА ГРАФИКАТА
-            fig = go.Figure()
-            for val, group in data.groupby("Ee_over_Ei"):
-                group_sorted = group.sort_values("h_over_D")
-                fig.add_trace(go.Scatter(
-                    x=group_sorted["h_over_D"],
-                    y=group_sorted["Ed_over_Ei"],
-                    mode='lines',
-                    name=f"Ee/Ei = {val:.2f}",
-                    line=dict(width=1.5)
-                ))
-
-            if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
-                hD = layer["hD_point"]
-                EdEi = layer["Ed"] / layer["Ei"]
-                
-                # Добавяне на интерполационна линия
-                if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
-                    fig.add_trace(go.Scatter(
-                        x=[hD, hD],
-                        y=[layer['y_low'], layer['y_high']],
-                        mode='lines',
-                        line=dict(color='purple', dash='dash', width=2),
-                        showlegend=False
-                    ))
-                
-                fig.add_trace(go.Scatter(
-                    x=[hD], y=[EdEi],
-                    mode='markers',
-                    marker=dict(color='red', size=12),
-                    showlegend=False
-                ))
-
-            fig.update_layout(
-                title=f"Пласт {i + 1} - Ed/Ei = f(h/D)",
-                xaxis_title="h / D",
-                yaxis_title="Ed / Ei",
-                showlegend=False,
-                template="plotly_white",
-                width=1200,  # По-голяма ширина
-                height=800   # По-голяма височина
-            )
-
-            # Конвертиране на фигурата в изображение с PILImage
-            try:
-                img_bytes = pio.to_image(fig, format="png", width=1200, height=800)
-                pil_img = PILImage.open(BytesIO(img_bytes))
-            except Exception as e:
-                st.error(f"Грешка при генериране на изображение за пласт {i+1}: {e}")
-                pil_img = PILImage.new("RGB", (1200, 800), color=(255, 255, 255))
-
-            # Добавяне на изображението към PDF с МАКСИМАЛЕН РАЗМЕР
-            img_buffer = io.BytesIO()
-            pil_img.save(img_buffer, format="PNG")
-            img_buffer.seek(0)
-            
-            # Размери за A4 с narrow margins (190mm ширина, 277mm височина)
-            story.append(Paragraph("ГРАФИКА:", layer_info_style))
-            story.append(Spacer(1, 3))  # Минимално разстояние
-            story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))  # Максимален размер
-            story.append(Spacer(1, 8))  # Минимално разстояние
-            
-
         # НОВА СТРАНИЦА ЗА ГРАФИЧНО ОБОБЩЕНИЕ
         story.append(PageBreak())
         
@@ -1003,27 +882,28 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontName=font_name,
             fontSize=11,
             textColor=colors.HexColor('#0277BD'),
-            alignment=2
+            alignment=2  # вдясно
         )
         ed_style = ParagraphStyle(
             'EdValue',
             fontName=font_name,
             fontSize=11,
             textColor=colors.HexColor('#2E7D32'),
-            alignment=2
+            alignment=2  # вдясно
         )
         h_style = ParagraphStyle(
             'HValue',
             fontName=font_name,
             fontSize=11,
-            textColor=colors.HexColor('#D84315')
+            textColor=colors.HexColor('#D84315'),
+            alignment=0  # вляво
         )
         ei_inner_style = ParagraphStyle(
             'EiInner',
             fontName=font_name,
             fontSize=11,
             textColor=colors.HexColor('#004D40'),
-            alignment=1
+            alignment=0  # вляво
         )
 
         # Стил за картите
@@ -1037,8 +917,9 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ('TOPPADDING', (0, 0), (-1, -1), 5),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-            ('ALIGN', (1, 2), (1, 2), 'RIGHT'),
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),  # Ee вдясно
+            ('ALIGN', (1, 1), (1, 1), 'LEFT'),   # Ei вляво
+            ('ALIGN', (1, 2), (1, 2), 'RIGHT'),  # Ed вдясно
         ])
 
         # Заглавие на секцията
@@ -1050,21 +931,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             if "Ed" not in layer:
                 continue
 
-            # 🟢 Създаваме вътрешна таблица само за Ei, която е центрирана
-            ei_cell = Table(
-                [[Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_inner_style)]],
-                colWidths=[65 * mm],
-                hAlign="CENTER"
-            )
-            ei_cell.setStyle(TableStyle([
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('LEFTPADDING', (0, 0), (-1, -1), 0),
-                ('RIGHTPADDING', (0, 0), (-1, -1), 0),
-                ('TOPPADDING', (0, 0), (-1, -1), 0),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 0),
-            ]))
-
             # Данни за визуализацията
             layer_data = [
                 [
@@ -1073,7 +939,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 ],
                 [
                     Paragraph(f"h = {layer['h']:.2f} cm", h_style),
-                    ei_cell  # вътрешната таблица за центрирано Ei
+                    Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_inner_style)
                 ],
                 [
                     "",
@@ -1111,5 +977,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
+
 
 
