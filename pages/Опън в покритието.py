@@ -451,6 +451,7 @@ class EnhancedPDF(FPDF):
 
         self.ln(4)
 
+
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
@@ -469,9 +470,13 @@ def generate_pdf_report():
         styles = getSampleStyleSheet()
 
         # Зареждане на шрифт
-        pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
-        pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
-        font_name = 'DejaVuSans-Bold'
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            font_name = 'DejaVuSans-Bold'
+        except:
+            # Fallback to default fonts if DejaVu is not available
+            font_name = 'Helvetica-Bold'
 
         # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
@@ -556,7 +561,7 @@ def generate_pdf_report():
         )
         story.append(Paragraph("ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ", formulas_title_style))
 
-        # Основни формули
+        # Основни формули като текст (както в оригинала)
         formula_style = ParagraphStyle(
             'FormulaStyle',
             parent=styles['Normal'],
@@ -568,15 +573,9 @@ def generate_pdf_report():
             leftIndent=0
         )
 
-        formulas = [
-            r"E_{sr} = \frac{\sum_{i=1}^{n} (E_i \cdot h_i)}{\sum_{i=1}^{n} h_i}",
-            r"H = \sum_{i=1}^{n} h_i",
-            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
-        ]
-
-        for formula in formulas:
-            p = Paragraph(formula, formula_style)
-            story.append(p)
+        story.append(Paragraph("Esr = Σ(Ei × hi) / Σhi", formula_style))
+        story.append(Paragraph("H = Σhi", formula_style))
+        story.append(Paragraph("σR = 1.15 × p × σR(номограма)", formula_style))
         
         story.append(Spacer(1, 15))
 
@@ -610,20 +609,20 @@ def generate_pdf_report():
             leftIndent=10
         )
 
-        story.append(Paragraph(f"• E<sub>sr</sub> = ({num_str}) / ({den_str}) = {Esr_val:.2f} MPa", calculation_style))
+        story.append(Paragraph(f"• Esr = ({num_str}) / ({den_str}) = {Esr_val:.2f} MPa", calculation_style))
         story.append(Paragraph(f"• H = {den_str} = {H_val:.2f} cm", calculation_style))
 
         if 'final_sigma' in st.session_state:
-            story.append(Paragraph(f"• E<sub>sr</sub>/E<sub>d</sub> = {Esr_val:.2f} / {st.session_state.final_Ed:.2f} = {Esr_val/st.session_state.final_Ed:.3f}", calculation_style))
+            story.append(Paragraph(f"• Esr/Ed = {Esr_val:.2f} / {st.session_state.final_Ed:.2f} = {Esr_val/st.session_state.final_Ed:.3f}", calculation_style))
             story.append(Paragraph(f"• H/D = {H_val:.2f} / {st.session_state.final_D:.2f} = {H_val/st.session_state.final_D:.3f}", calculation_style))
-            story.append(Paragraph(f"• σ<sub>R</sub><sup>номограма</sup> = {st.session_state.final_sigma:.3f} MPa", calculation_style))
+            story.append(Paragraph(f"• σR(номограма) = {st.session_state.final_sigma:.3f} MPa", calculation_style))
 
         axle_load = st.session_state.get("axle_load", 100)
         p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
         if p_loc and 'final_sigma' in st.session_state:
             sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
             story.append(Paragraph(f"• p = {p_loc:.3f} (за осов товар {axle_load} kN)", calculation_style))
-            story.append(Paragraph(f"• σ<sub>R</sub> = 1.15 × {p_loc:.3f} × {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} MPa", calculation_style))
+            story.append(Paragraph(f"• σR = 1.15 × {p_loc:.3f} × {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} MPa", calculation_style))
 
         story.append(Spacer(1, 20))
 
@@ -661,7 +660,6 @@ def generate_pdf_report():
                 spaceAfter=10,
                 alignment=1
             )
-            story.append(PageBreak())
             story.append(Paragraph("ДОПУСТИМИ ОПЪННИ НАПРЕЖЕНИЯ", allowable_title_style))
             
             try:
@@ -674,7 +672,6 @@ def generate_pdf_report():
                 story.append(Paragraph(f"Грешка при зареждане на изображение: {e}", calculation_style))
 
         # РЕЗУЛТАТИ И ПРОВЕРКА
-        story.append(PageBreak())
         results_title_style = ParagraphStyle(
             'ResultsTitle',
             fontName=font_name,
@@ -766,26 +763,3 @@ def generate_pdf_report():
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
         return None
-
-# -----------------------------
-# Бутон за генериране на PDF
-# -----------------------------
-st.markdown("---")
-st.subheader("Генериране на PDF отчет")
-if st.button("📄 Генерирай PDF отчет", type="primary"):
-    with st.spinner('Генериране на PDF отчет...'):
-        try:
-            pdf_buffer = generate_pdf_report()
-            if pdf_buffer:
-                st.success("✅ PDF отчетът с модерно графично оформление е готов!")
-                st.download_button(
-                    "📥 Изтегли PDF отчет",
-                    pdf_buffer,
-                    file_name=f"Опън_в_покритието_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                    mime="application/pdf"
-                )
-            else:
-                st.error("❌ Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
-        except Exception as e:
-            st.error(f"Грешка при генериране на PDF: {str(e)}")
-
