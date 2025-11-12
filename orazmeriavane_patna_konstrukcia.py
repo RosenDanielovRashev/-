@@ -1369,17 +1369,20 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             alignment=1
         )
         story.append(Paragraph("ДОПЪЛНИТЕЛНИ МАТЕРИАЛИ", images_title_style))
-        story.append(Spacer(1, 10))
+        story.append(Spacer(1, 15))
         
         # Списък с имената на снимките
         image_files = [
             "5.2. Фиг.png",
-            "5.3. Фиг.png"
+            "5.3. Фиг.png", 
+            "5.2. Таблица.png",
+            "5.1. Таблица.png"
         ]
         
-        # Добавяне на 5.2 и 5.3 на един ред
-        images_row = []
-        for img_file in image_files:
+        # Добавяне на 5.2 и 5.3 едно под друго
+        special_images = ["5.2. Фиг.png", "5.3. Фиг.png"]
+        
+        for img_file in special_images:
             try:
                 if os.path.exists(img_file):
                     pil_img = PILImage.open(img_file)
@@ -1388,32 +1391,47 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     pil_img.save(img_buffer, format="PNG")
                     img_buffer.seek(0)
                     
-                    # По-малки размери за две снимки на един ред
+                    # Размери за снимките едно под друго
                     img_width, img_height = pil_img.size
                     aspect_ratio = img_height / img_width
                     
-                    # Ширина за две снимки на ред (по 85mm всяка)
-                    image_width = 85 * mm
+                    # Ширина за цяла страница
+                    image_width = 180 * mm
                     image_height = image_width * aspect_ratio
                     
-                    images_row.append(RLImage(img_buffer, width=image_width, height=image_height))
-                else:
-                    # Ако снимката липсва, добавяме празно място
-                    images_row.append(Spacer(image_width, image_height))
+                    story.append(RLImage(img_buffer, width=image_width, height=image_height))
+                    story.append(Spacer(1, 10))
                     
             except Exception as e:
-                # При грешка добавяме празно място
-                images_row.append(Spacer(85*mm, 85*mm))
+                # При грешка пропускаме снимката
+                continue
         
-        # Създаване на таблица с две колони за снимките
-        images_table = Table([images_row], colWidths=[85*mm, 85*mm])
-        images_table.setStyle(TableStyle([
-            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ]))
+        # Добавяне на таблиците (ако има място на същата страница, иначе нова страница)
+        table_images = ["5.2. Таблица.png", "5.1. Таблица.png"]
         
-        story.append(images_table)
-        story.append(Spacer(1, 15))
+        for img_file in table_images:
+            try:
+                if os.path.exists(img_file):
+                    pil_img = PILImage.open(img_file)
+                    
+                    img_buffer = io.BytesIO()
+                    pil_img.save(img_buffer, format="PNG")
+                    img_buffer.seek(0)
+                    
+                    # Размери за таблиците
+                    img_width, img_height = pil_img.size
+                    aspect_ratio = img_height / img_width
+                    
+                    # Ширина за цяла страница
+                    image_width = 180 * mm
+                    image_height = image_width * aspect_ratio
+                    
+                    story.append(RLImage(img_buffer, width=image_width, height=image_height))
+                    story.append(Spacer(1, 10))
+                    
+            except Exception as e:
+                # При грешка пропускаме снимката
+                continue
         
         # Дата и подпис
         story.append(Spacer(1, 20))
