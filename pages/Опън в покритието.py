@@ -13,6 +13,20 @@ import matplotlib.pyplot as plt
 from matplotlib import mathtext
 from datetime import datetime
 
+# ReportLab импорти за новия стил
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Image as RLImage, Table, TableStyle, PageBreak
+)
+from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
+import io
+from PIL import Image as PILImage
+
 # Опит за импорт на cairosvg (за векторни формули)
 try:
     import cairosvg  # pip install cairosvg
