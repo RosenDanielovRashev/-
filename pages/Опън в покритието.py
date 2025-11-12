@@ -454,23 +454,26 @@ class EnhancedPDF(FPDF):
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
-def render_formula_to_image(formula_text, fontsize=16, dpi=200):
-    """Рендва формула като изображение чрез matplotlib с по-добро качество"""
-    # Използваме LaTeX за по-добро качество
-    plt.rcParams['text.usetex'] = True
+def render_formula_to_image(formula_text, fontsize=18, dpi=150):
+    """Рендва формула като изображение чрез matplotlib mathtext"""
+    # Изключваме LaTeX и използваме вградения mathtext
+    plt.rcParams['text.usetex'] = False
+    plt.rcParams['mathtext.fontset'] = 'cm'  # Computer Modern для красиви формули
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.size'] = fontsize
     
-    fig = plt.figure(figsize=(10, 1.5))
+    # Създаваме фигура с подходящ размер
+    fig = plt.figure(figsize=(12, 1.8))
     # Центрираме формулата
     plt.text(0.5, 0.5, f'${formula_text}$', 
              horizontalalignment='center', 
              verticalalignment='center',
-             transform=plt.gca().transAxes)
+             transform=plt.gca().transAxes,
+             fontsize=fontsize)
     plt.axis('off')
     
     buf = BytesIO()
-    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.2,
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.3,
                 facecolor='white', edgecolor='none')
     plt.close(fig)
     buf.seek(0)
@@ -573,30 +576,35 @@ def generate_pdf_report():
         )
         story.append(Paragraph("Основни формули за изчисление:", subtitle_style))
 
-        # Основни формули
+        # Основни формули (опростени за mathtext)
         formulas = [
-            r"E_{sr} = \frac{\sum\limits_{i=1}^{n}(E_i \cdot h_i)}{\sum\limits_{i=1}^{n}h_i}",
-            r"H = \sum\limits_{i=1}^{n}h_i", 
-            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограмма}}"
+            r"E_{sr} = \frac{\sum (E_i \cdot h_i)}{\sum h_i}",
+            r"H = \sum h_i", 
+            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{nom}"
         ]
 
         for formula in formulas:
             try:
-                img_buf = render_formula_to_image(formula, fontsize=14, dpi=200)
-                story.append(RLImage(img_buf, width=160*mm, height=20*mm))
-                story.append(Spacer(1, 10))
+                img_buf = render_formula_to_image(formula, fontsize=16, dpi=150)
+                story.append(RLImage(img_buf, width=160*mm, height=25*mm))
+                story.append(Spacer(1, 8))
             except Exception as e:
-                # Fallback - показваме формулата като текст
+                # Fallback - прости текстови формули
                 fallback_style = ParagraphStyle(
                     'FallbackStyle',
                     parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=8,
+                    fontSize=11,
+                    spaceAfter=10,
                     fontName=font_name,
-                    textColor=colors.HexColor('#d32f2f'),
+                    textColor=colors.HexColor('#4B5563'),
                     alignment=0
                 )
-                story.append(Paragraph(f"Формула: {formula}", fallback_style))
+                simple_formulas = {
+                    r"E_{sr} = \frac{\sum (E_i \cdot h_i)}{\sum h_i}": "Esr = Σ(Ei × hi) / Σhi",
+                    r"H = \sum h_i": "H = Σhi",
+                    r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{nom}": "σR = 1.15 × p × σR_nom"
+                }
+                story.append(Paragraph(simple_formulas[formula], fallback_style))
         
         story.append(Spacer(1, 25))
 
@@ -618,20 +626,17 @@ def generate_pdf_report():
         Esr_val = num / den if den else 0
         H_val = den
         
-        num_str = " + ".join([f"{Ei:.2f} \\times {hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
-        den_str = " + ".join([f"{hi:.2f}" for hi in st.session_state.hi_list])
-
-        # Формули за изчисления
+        # Опростяваме формулите за mathtext
         calculation_formulas = [
-            fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr_val:.2f} \, \text{{MPa}}",
-            fr"H = {den_str} = {H_val:.2f} \, \text{{cm}}"
+            fr"E_{{sr}} = \frac{{{st.session_state.Ei_list[0]:.1f} \times {st.session_state.hi_list[0]:.1f} + {st.session_state.Ei_list[1]:.1f} \times {st.session_state.hi_list[1]:.1f}}}{{{st.session_state.hi_list[0]:.1f} + {st.session_state.hi_list[1]:.1f}}} = {Esr_val:.1f} \ \mathrm{{MPa}}",
+            fr"H = {st.session_state.hi_list[0]:.1f} + {st.session_state.hi_list[1]:.1f} = {H_val:.1f} \ \mathrm{{cm}}"
         ]
 
         if 'final_sigma' in st.session_state:
             calculation_formulas.extend([
-                fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr_val/st.session_state.final_Ed:.3f}",
-                fr"\frac{{H}}{{D}} = \frac{{{H_val:.2f}}}{{{st.session_state.final_D:.2f}}} = {H_val/st.session_state.final_D:.3f}",
-                fr"\sigma_R^{{\mathrm{{номограмма}}}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}"
+                fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.1f}}}{{{st.session_state.final_Ed:.1f}}} = {Esr_val/st.session_state.final_Ed:.3f}",
+                fr"\frac{{H}}{{D}} = \frac{{{H_val:.1f}}}{{{st.session_state.final_D:.1f}}} = {H_val/st.session_state.final_D:.3f}",
+                fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \ \mathrm{{MPa}}"
             ])
 
         axle_load = st.session_state.get("axle_load", 100)
@@ -639,30 +644,33 @@ def generate_pdf_report():
         if p_loc and 'final_sigma' in st.session_state:
             sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
             calculation_formulas.extend([
-                fr"p = {p_loc:.3f} \, \text{{(за осов товар {axle_load} \, \text{{kN}})}}",
-                fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \, \text{{MPa}}"
+                fr"p = {p_loc:.3f} \ \mathrm{{(за \ осов \ товар \ {axle_load} \ kN)}}",
+                fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \ \mathrm{{MPa}}"
             ])
 
         for formula in calculation_formulas:
             try:
-                img_buf = render_formula_to_image(formula, fontsize=12, dpi=200)
-                story.append(RLImage(img_buf, width=160*mm, height=18*mm))
-                story.append(Spacer(1, 8))
+                img_buf = render_formula_to_image(formula, fontsize=14, dpi=150)
+                story.append(RLImage(img_buf, width=160*mm, height=22*mm))
+                story.append(Spacer(1, 6))
             except Exception as e:
-                # Fallback
+                # Fallback - текстови изчисления
                 fallback_style = ParagraphStyle(
                     'FallbackStyle',
                     parent=styles['Normal'],
-                    fontSize=9,
-                    spaceAfter=6,
+                    fontSize=10,
+                    spaceAfter=8,
                     fontName=font_name,
-                    textColor=colors.HexColor('#d32f2f'),
+                    textColor=colors.HexColor('#4B5563'),
                     alignment=0
                 )
-                story.append(Paragraph(f"Изчисление: {formula}", fallback_style))
+                # Преобразуваме формулата в четим текст
+                text_formula = formula.replace('{', '').replace('}', '').replace('\\', '')
+                story.append(Paragraph(text_formula, fallback_style))
 
         story.append(Spacer(1, 25))
 
+        # ОСТАНАЛАТА ЧАСТ ОСТАВА СЪЩАТА...
         # ГРАФИКА
         if "fig" in st.session_state:
             graph_title_style = ParagraphStyle(
@@ -693,7 +701,7 @@ def generate_pdf_report():
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
                 )
-                story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
+                story.append(Paragraph(f"Грешка при генериране на графика", error_style))
 
         # ДОПУСТИМИ НАПРЕЖЕНИЯ
         img_path = "Допустими опънни напрежения.png"
@@ -725,7 +733,7 @@ def generate_pdf_report():
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
                 )
-                story.append(Paragraph(f"Грешка при зареждане на изображение: {e}", error_style))
+                story.append(Paragraph(f"Грешка при зареждане на изображение", error_style))
 
         # РЕЗУЛТАТИ И ПРОВЕРКА
         results_title_style = ParagraphStyle(
