@@ -1362,14 +1362,14 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # Заглавие за страницата със снимки
         images_title_style = ParagraphStyle(
             'ImagesTitle',
-            fontName=font_name,
+            fontName=fontName,
             fontSize=18,
             textColor=colors.HexColor('#006064'),
-            spaceAfter=20,
+            spaceAfter=15,
             alignment=1
         )
         story.append(Paragraph("ДОПЪЛНИТЕЛНИ МАТЕРИАЛИ", images_title_style))
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 10))
         
         # Списък с имената на снимките
         image_files = [
@@ -1379,50 +1379,70 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             "5.1. Таблица.png"
         ]
         
-        # Добавяне на 5.2 и 5.3 едно под друго
-        special_images = ["5.2. Фиг.png", "5.3. Фиг.png"]
+        # ФИГУРИ 5.2 и 5.3 НА ЕДИН ЛИСТ (една страница)
+        story.append(Paragraph("Фигура 5.2 и Фигура 5.3", ParagraphStyle(
+            'SubTitle', fontName=fontName, fontSize=14, textColor=colors.HexColor('#2C5530'), 
+            spaceAfter=10, alignment=1
+        )))
         
-        for img_file in special_images:
-            try:
-                if os.path.exists(img_file):
-                    pil_img = PILImage.open(img_file)
-                    
-                    img_buffer = io.BytesIO()
-                    pil_img.save(img_buffer, format="PNG")
-                    img_buffer.seek(0)
-                    
-                    # Размери за снимките едно под друго
-                    img_width, img_height = pil_img.size
-                    aspect_ratio = img_height / img_width
-                    
-                    # Ширина за цяла страница
-                    image_width = 180 * mm
-                    image_height = image_width * aspect_ratio
-                    
-                    story.append(RLImage(img_buffer, width=image_width, height=image_height))
-                    story.append(Spacer(1, 10))
-                    
-            except Exception as e:
-                # При грешка пропускаме снимката
-                continue
+        # Добавяне на 5.2
+        try:
+            if os.path.exists("5.2. Фиг.png"):
+                pil_img_52 = PILImage.open("5.2. Фиг.png")
+                img_buffer_52 = io.BytesIO()
+                pil_img_52.save(img_buffer_52, format="PNG")
+                img_buffer_52.seek(0)
+                
+                # Размери за 5.2 - по-малки за да се съберат две на страница
+                img_width_52, img_height_52 = pil_img_52.size
+                aspect_ratio_52 = img_height_52 / img_width_52
+                image_width_52 = 160 * mm
+                image_height_52 = image_width_52 * aspect_ratio_52
+                
+                story.append(RLImage(img_buffer_52, width=image_width_52, height=image_height_52))
+                story.append(Spacer(1, 5))
+        except Exception as e:
+            story.append(Paragraph("Липсва Фигура 5.2", ParagraphStyle('Error', fontName=fontName, fontSize=10, textColor=colors.red)))
         
-        # Добавяне на таблиците (ако има място на същата страница, иначе нова страница)
+        # Добавяне на 5.3
+        try:
+            if os.path.exists("5.3. Фиг.png"):
+                pil_img_53 = PILImage.open("5.3. Фиг.png")
+                img_buffer_53 = io.BytesIO()
+                pil_img_53.save(img_buffer_53, format="PNG")
+                img_buffer_53.seek(0)
+                
+                # Размери за 5.3 - по-малки за да се съберат две на страница
+                img_width_53, img_height_53 = pil_img_53.size
+                aspect_ratio_53 = img_height_53 / img_width_53
+                image_width_53 = 160 * mm
+                image_height_53 = image_width_53 * aspect_ratio_53
+                
+                story.append(RLImage(img_buffer_53, width=image_width_53, height=image_height_53))
+        except Exception as e:
+            story.append(Paragraph("Липсва Фигура 5.3", ParagraphStyle('Error', fontName=fontName, fontSize=10, textColor=colors.red)))
+        
+        # НОВА СТРАНИЦА ЗА ТАБЛИЦИТЕ
+        story.append(PageBreak())
+        story.append(Paragraph("Таблици", ParagraphStyle(
+            'SubTitle', fontName=fontName, fontSize=14, textColor=colors.HexColor('#2C5530'), 
+            spaceAfter=15, alignment=1
+        )))
+        
+        # Добавяне на таблиците
         table_images = ["5.2. Таблица.png", "5.1. Таблица.png"]
         
         for img_file in table_images:
             try:
                 if os.path.exists(img_file):
                     pil_img = PILImage.open(img_file)
-                    
                     img_buffer = io.BytesIO()
                     pil_img.save(img_buffer, format="PNG")
                     img_buffer.seek(0)
                     
-                    # Размери за таблиците
+                    # Размери за таблиците - пълна ширина
                     img_width, img_height = pil_img.size
                     aspect_ratio = img_height / img_width
-                    
-                    # Ширина за цяла страница
                     image_width = 180 * mm
                     image_height = image_width * aspect_ratio
                     
@@ -1430,7 +1450,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     story.append(Spacer(1, 10))
                     
             except Exception as e:
-                # При грешка пропускаме снимката
                 continue
         
         # Дата и подпис
