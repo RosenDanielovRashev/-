@@ -1029,65 +1029,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(layer_card)
             story.append(Spacer(1, 10))
 
-        # 🟩 ТОПЛИННИ ПАРАМЕТРИ
-        story.append(Spacer(1, 20))
-        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ", ParagraphStyle('ThermalTitle',
-            fontName=font_name, fontSize=14, textColor=colors.HexColor('#1B5E20'), alignment=1, spaceAfter=10)))
-
-        # Таблица с дебелина и λ
-        table_header = [
-            Paragraph("Пласт", layer_title_style),
-            Paragraph("Дебелина (cm)", layer_title_style),
-            Paragraph("λ коефициент (W/mK)", layer_title_style),
-        ]
-        table_data = [table_header]
-        for i, layer in enumerate(st.session_state.layers_data):
-            table_data.append([
-                f"Пласт {i + 1}",
-                f"{layer.get('h', 0):.2f}",
-                f"{layer.get('lambda', 0):.3f}" if 'lambda' in layer else "—"
-            ])
-        table = Table(table_data, colWidths=[35*mm, 40*mm, 45*mm])
-        table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C8E6C9')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1B5E20')),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('FONTNAME', (0, 0), (-1, -1), font_name),
-            ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ]))
-        story.append(table)
-        story.append(Spacer(1, 20))
-
-        # Формули и изчисления
-        formula_style = ParagraphStyle('Formula', fontName=font_name, fontSize=11, textColor=colors.black, leftIndent=20)
-        bold_style = ParagraphStyle('Bold', fontName=font_name, fontSize=11, textColor=colors.black, leading=14)
-
-        # Формула за m
-        story.append(Paragraph("<b>1. Определяне на коефициента m:</b>", bold_style))
-        story.append(Paragraph("m = (z / z₁)", formula_style))
-        z = st.session_state.get("z", None)
-        z1 = st.session_state.get("z1", None)
-        if z and z1:
-            m = z / z1
-            story.append(Paragraph(f"m = {z:.2f} / {z1:.2f} = <b>{m:.3f}</b>", formula_style))
-        story.append(Spacer(1, 12))
-
-        # Формула за R₀
-        story.append(Paragraph("<b>2. Топлинно съпротивление R₀:</b>", bold_style))
-        story.append(Paragraph("R₀ = Σ (hᵢ / λᵢ)", formula_style))
-        R0 = st.session_state.get("R0", None)
-        if R0:
-            story.append(Paragraph(f"R₀ = <b>{R0:.3f}</b> m²K/W", formula_style))
-        story.append(Spacer(1, 12))
-
-        # Проверка
-        story.append(Paragraph("<b>3. Проверка на изискванията:</b>", bold_style))
-        Rmin = st.session_state.get("Rmin", None)
-        if R0 and Rmin:
-            check = "✅ Изпълнено" if R0 >= Rmin else "❌ Неизпълнено"
-            story.append(Paragraph(f"R₀ = {R0:.3f} ≥ Rmin = {Rmin:.3f} → <b>{check}</b>", formula_style))
 
         # Дата и подпис
         story.append(Spacer(1, 20))
