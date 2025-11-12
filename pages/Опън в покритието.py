@@ -703,38 +703,60 @@ def generate_pdf_report():
         if "fig" in st.session_state:
             try:
                 # СЪЗДАВАНЕ НА ГРАФИКА С ПРАВИЛНИТЕ ЦВЕТОВЕ ЗА PDF
-                fig_pdf = st.session_state["fig"].copy()
+                # Вместо copy(), създаваме нова графика с подобрени настройки
+                original_fig = st.session_state["fig"]
                 
-                # Явно задаване на цветова схема за PDF експорт
+                # Създаваме нова фигура с подобрени настройки за PDF
+                fig_pdf = go.Figure()
+                
+                # Копираме данните от оригиналната графика
+                for trace in original_fig.data:
+                    fig_pdf.add_trace(trace)
+                
+                # Прилагаме подобрени настройки за PDF
                 fig_pdf.update_layout(
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    font=dict(color='black'),
+                    font=dict(color='black', size=12),
+                    title=dict(
+                        text=original_fig.layout.title.text if original_fig.layout.title else "Номограма: σR срещу H/D",
+                        font=dict(color='black', size=16)
+                    ),
                     xaxis=dict(
                         linecolor='black',
                         gridcolor='lightgray',
-                        title_font=dict(color='black')
+                        title_font=dict(color='black', size=14),
+                        tickfont=dict(color='black', size=12)
                     ),
                     yaxis=dict(
                         linecolor='black',
                         gridcolor='lightgray',
-                        title_font=dict(color='black')
-                    )
+                        title_font=dict(color='black', size=14),
+                        tickfont=dict(color='black', size=12)
+                    ),
+                    legend=dict(
+                        bgcolor='rgba(255,255,255,0.8)',
+                        bordercolor='black',
+                        borderwidth=1,
+                        font=dict(color='black')
+                    ),
+                    width=1200,
+                    height=900
                 )
                 
-                # Експорт на графиката с висока резолюция и правилни настройки
+                # Експорт на графиката с висока резолюция
                 img_bytes = pio.to_image(
                     fig_pdf, 
                     format="png", 
                     width=1200, 
                     height=900,
-                    scale=2,  # Повишаване на качеството
+                    scale=3,  # Повишаване на качеството
                     engine="kaleido"
                 )
                 
                 pil_img = PILImage.open(BytesIO(img_bytes))
                 img_buffer = io.BytesIO()
-                pil_img.save(img_buffer, format="PNG", dpi=(300, 300))  # Висока резолюция
+                pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
                 img_buffer.seek(0)
                 
                 story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
