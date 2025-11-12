@@ -1213,7 +1213,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 ["Изчислена дълбочина на замръзване (z)", f"{z_value:.2f} cm"]
             ]
             
-            check_table = Table(check_data, colWidths=[70*mm, 50*mm])
+            check_table = Table(check_data, colWidths=[90*mm, 50*mm])
             check_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
