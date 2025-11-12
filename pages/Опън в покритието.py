@@ -687,45 +687,70 @@ def generate_pdf_report():
         # НОВ ЛИСТ ЗА ГРАФИКАТА
         story.append(PageBreak())
 
-        # ГРАФИКА НА НОМОГРАМАТА
-        graph_title_style = ParagraphStyle(
-            'GraphTitle',
+# В секцията за генериране на PDF, заменете частта за графиката със следния код:
+
+# ГРАФИКА НА НОМОГРАМАТА
+graph_title_style = ParagraphStyle(
+    'GraphTitle',
+    fontName=font_name,
+    fontSize=16,
+    textColor=colors.HexColor('#2C5530'),
+    spaceAfter=15,
+    alignment=1
+)
+story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
+
+if "fig" in st.session_state:
+    try:
+        # СЪЗДАВАНЕ НА ГРАФИКА С ПРАВИЛНИТЕ ЦВЕТОВЕ ЗА PDF
+        fig_pdf = st.session_state["fig"].copy()
+        
+        # Явно задаване на цветова схема за PDF експорт
+        fig_pdf.update_layout(
+            plot_bgcolor='white',
+            paper_bgcolor='white',
+            font=dict(color='black'),
+            xaxis=dict(
+                linecolor='black',
+                gridcolor='lightgray',
+                title_font=dict(color='black')
+            ),
+            yaxis=dict(
+                linecolor='black',
+                gridcolor='lightgray',
+                title_font=dict(color='black')
+            )
+        )
+        
+        # Експорт на графиката с висока резолюция и правилни настройки
+        img_bytes = pio.to_image(
+            fig_pdf, 
+            format="png", 
+            width=1200, 
+            height=900,
+            scale=2,  # Повишаване на качеството
+            engine="kaleido"
+        )
+        
+        pil_img = PILImage.open(BytesIO(img_bytes))
+        img_buffer = io.BytesIO()
+        pil_img.save(img_buffer, format="PNG", dpi=(300, 300))  # Висока резолюция
+        img_buffer.seek(0)
+        
+        story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+        story.append(Spacer(1, 15))
+        
+    except Exception as e:
+        error_style = ParagraphStyle(
+            'ErrorStyle',
+            parent=styles['Normal'],
+            fontSize=10,
+            spaceAfter=5,
             fontName=font_name,
-            fontSize=16,
-            textColor=colors.HexColor('#2C5530'),
-            spaceAfter=15,
+            textColor=colors.HexColor('#d32f2f'),
             alignment=1
         )
-        story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
-        
-        if "fig" in st.session_state:
-            try:
-                # ПРОСТ ПОДХОД както в orazmeriavane_patna_konstrukcia.py
-                img_bytes = pio.to_image(
-                    st.session_state["fig"], 
-                    format="png", 
-                    width=1200, 
-                    height=900
-                )
-                
-                pil_img = PILImage.open(BytesIO(img_bytes))
-                img_buffer = io.BytesIO()
-                pil_img.save(img_buffer, format="PNG")
-                img_buffer.seek(0)
-                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-                story.append(Spacer(1, 15))
-                
-            except Exception as e:
-                error_style = ParagraphStyle(
-                    'ErrorStyle',
-                    parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=5,
-                    fontName=font_name,
-                    textColor=colors.HexColor('#d32f2f'),
-                    alignment=1
-                )
-                story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
+        story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
 
         # ДОПУСТИМИ НАПРЕЖЕНИЯ
         img_path = "Допустими опънни напрежения.png"
