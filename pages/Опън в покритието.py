@@ -454,14 +454,14 @@ class EnhancedPDF(FPDF):
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
-def render_formula_to_image(formula_text, fontsize=24, dpi=150):  # Увеличено от 20 на 24 (20%)
+def render_formula_to_image(formula_text, fontsize=24, dpi=150):
     """Рендва формула като изображение чрез matplotlib mathtext"""
     plt.rcParams['text.usetex'] = False
     plt.rcParams['mathtext.fontset'] = 'cm'
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.size'] = fontsize
     
-    fig = plt.figure(figsize=(9.6, 1.44))  # Увеличено с 20% от 8, 1.2
+    fig = plt.figure(figsize=(9.6, 1.44))
     plt.text(0.5, 0.5, f'${formula_text}$', 
              horizontalalignment='center', 
              verticalalignment='center',
@@ -551,29 +551,18 @@ def generate_pdf_report():
         story.append(info_table)
         story.append(Spacer(1, 25))
 
-        # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
+        # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ (намалена големина с 20%)
         formulas_title_style = ParagraphStyle(
             'FormulasTitle',
             fontName=font_name,
-            fontSize=16,
+            fontSize=12.8,  # Намалено от 16 на 12.8 (20%)
             textColor=colors.HexColor('#2C5530'),
             spaceAfter=10,
             alignment=0
         )
         story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
-        
-        subtitle_style = ParagraphStyle(
-            'SubtitleStyle',
-            parent=styles['Normal'],
-            fontSize=12,
-            spaceAfter=15,
-            fontName=font_name,
-            textColor=colors.HexColor('#5D4037'),
-            alignment=0
-        )
-        story.append(Paragraph("Основни формули за изчисление:", subtitle_style))
 
-        # Основни формули в две колони
+        # Основни формули в две колони (БЕЗ подзаглавие "Основни формули за изчисление:")
         formulas = [
             r"E_{sr} = \frac{\sum (E_i h_i)}{\sum h_i}",
             r"H = \sum h_i", 
@@ -587,26 +576,26 @@ def generate_pdf_report():
             # Първа колона
             if i < len(formulas):
                 try:
-                    img_buf1 = render_formula_to_image(formulas[i], fontsize=21.6, dpi=150)  # Увеличено от 18 на 21.6 (20%)
-                    row.append(RLImage(img_buf1, width=90*mm, height=18*mm))  # Увеличено от 75*15 на 90*18 (20%)
+                    img_buf1 = render_formula_to_image(formulas[i], fontsize=21.6, dpi=150)
+                    row.append(RLImage(img_buf1, width=90*mm, height=18*mm))
                 except:
-                    row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), subtitle_style))
+                    row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), formulas_title_style))
             else:
                 row.append('')
             
             # Втора колона
             if i + 1 < len(formulas):
                 try:
-                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=21.6, dpi=150)  # Увеличено от 18 на 21.6 (20%)
-                    row.append(RLImage(img_buf2, width=90*mm, height=18*mm))  # Увеличено от 75*15 на 90*18 (20%)
+                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=21.6, dpi=150)
+                    row.append(RLImage(img_buf2, width=90*mm, height=18*mm))
                 except:
-                    row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), subtitle_style))
+                    row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), formulas_title_style))
             else:
                 row.append('')
             
             formula_table_data.append(row)
 
-        formula_table = Table(formula_table_data, colWidths=[96*mm, 96*mm])  # Увеличено от 80*2 на 96*2 (20%)
+        formula_table = Table(formula_table_data, colWidths=[96*mm, 96*mm])
         formula_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -617,17 +606,16 @@ def generate_pdf_report():
         story.append(formula_table)
         story.append(Spacer(1, 20))
 
-        # 3. ИЗЧИСЛЕНИЯ
+        # 3. ИЗЧИСЛЕНИЯ (намалена големина с 20%)
         calculations_title_style = ParagraphStyle(
             'CalculationsTitle',
             fontName=font_name,
-            fontSize=16,
+            fontSize=12.8,  # Намалено от 16 на 12.8 (20%)
             textColor=colors.HexColor('#2C5530'),
             spaceAfter=10,
             alignment=0
         )
         story.append(Paragraph("3. Изчисления", calculations_title_style))
-        story.append(Paragraph("Изчислителни формули:", subtitle_style))
 
         # Изчисление на Esr и H с числени стойности
         num = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
@@ -664,28 +652,28 @@ def generate_pdf_report():
             # Първа колона
             if i < len(calculation_formulas):
                 try:
-                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=19.2, dpi=150)  # Увеличено от 16 на 19.2 (20%)
-                    row.append(RLImage(img_buf1, width=90*mm, height=16.8*mm))  # Увеличено от 75*14 на 90*16.8 (20%)
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=19.2, dpi=150)
+                    row.append(RLImage(img_buf1, width=90*mm, height=16.8*mm))
                 except:
                     simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
-                    row.append(Paragraph(simple_text, subtitle_style))
+                    row.append(Paragraph(simple_text, calculations_title_style))
             else:
                 row.append('')
             
             # Втора колона
             if i + 1 < len(calculation_formulas):
                 try:
-                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=19.2, dpi=150)  # Увеличено от 16 на 19.2 (20%)
-                    row.append(RLImage(img_buf2, width=90*mm, height=16.8*mm))  # Увеличено от 75*14 на 90*16.8 (20%)
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=19.2, dpi=150)
+                    row.append(RLImage(img_buf2, width=90*mm, height=16.8*mm))
                 except:
                     simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
-                    row.append(Paragraph(simple_text, subtitle_style))
+                    row.append(Paragraph(simple_text, calculations_title_style))
             else:
                 row.append('')
             
             calc_table_data.append(row)
 
-        calc_table = Table(calc_table_data, colWidths=[96*mm, 96*mm])  # Увеличено от 80*2 на 96*2 (20%)
+        calc_table = Table(calc_table_data, colWidths=[96*mm, 96*mm])
         calc_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -696,20 +684,23 @@ def generate_pdf_report():
         story.append(calc_table)
         story.append(Spacer(1, 20))
 
-        # ОСТАНАЛАТА ЧАСТ ОСТАВА СЪЩАТА...
-        # ГРАФИКА
+        # НОВ ЛИСТ ЗА ГРАФИКАТА
+        story.append(PageBreak())
+
+        # ГРАФИКА НА НОМОГРАМАТА (цветна)
+        graph_title_style = ParagraphStyle(
+            'GraphTitle',
+            fontName=font_name,
+            fontSize=16,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=15,
+            alignment=1
+        )
+        story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
+        
         if "fig" in st.session_state:
-            graph_title_style = ParagraphStyle(
-                'GraphTitle',
-                fontName=font_name,
-                fontSize=14,
-                textColor=colors.HexColor('#2C5530'),
-                spaceAfter=10,
-                alignment=1
-            )
-            story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
-            
             try:
+                # Генериране на цветна графика
                 img_bytes = pio.to_image(st.session_state["fig"], format="png", width=1000, height=750)
                 pil_img = PILImage.open(BytesIO(img_bytes))
                 img_buffer = io.BytesIO()
@@ -818,6 +809,15 @@ def generate_pdf_report():
                     backColor=colors.HexColor('#e8f5e9')
                 )
                 story.append(Paragraph("✅ ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
+                subtitle_style = ParagraphStyle(
+                    'SubtitleStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#5D4037'),
+                    alignment=1
+                )
                 story.append(Paragraph("Изчисленото σR е по-малко или равно на допустимото σR", subtitle_style))
             else:
                 status_style = ParagraphStyle(
@@ -830,6 +830,15 @@ def generate_pdf_report():
                     backColor=colors.HexColor('#ffebee')
                 )
                 story.append(Paragraph("❌ ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
+                subtitle_style = ParagraphStyle(
+                    'SubtitleStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#5D4037'),
+                    alignment=1
+                )
                 story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", subtitle_style))
 
         # ДАТА И ПОДПИС
