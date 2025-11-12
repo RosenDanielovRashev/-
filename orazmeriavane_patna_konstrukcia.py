@@ -974,11 +974,11 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             # Намиране на стойността Ee/Ei за текущия пласт
             current_e_ei = layer['Ee'] / layer['Ei']
             
-            # Изчисляваме Ed/Ei точката, ако липсва
-            if 'EdEi_point' not in layer and 'Ed' in layer and 'Ei' in layer:
+            # Изчисляваме Ed/Ei точката правилно
+            if 'Ed' in layer and 'Ei' in layer and layer['Ei'] > 0:
                 EdEi_point = layer['Ed'] / layer['Ei']
             else:
-                EdEi_point = layer.get('EdEi_point', current_e_ei)
+                EdEi_point = current_e_ei  # fallback стойност
             
             # Филтрираме само изолиниите, които са кратни на 0.05
             multiples_of_005 = [val for val in all_e_ei_values if abs(val * 100) % 5 == 0]
@@ -994,7 +994,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 distances = [(abs(val - current_e_ei), val) for val in all_e_ei_values]
                 distances.sort()
                 isos_to_label = [distances[0][1], distances[1][1]] if len(distances) >= 2 else [distances[0][1]]
-            
+                        
             # Добавяме всички изолинии
             for val in all_e_ei_values:
                 group_sorted = data[data["Ee_over_Ei"] == val].sort_values("h_over_D")
@@ -1034,7 +1034,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
                 hD = layer["hD_point"]
-                # Използваме изчислената EdEi_point вместо да я преизчисляваме
+                # Използваме изчислената EdEi_point
                 EdEi = EdEi_point
                 
                 # Добавяне на интерполационна линия
@@ -1053,7 +1053,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     marker=dict(color='red', size=12),
                     showlegend=False
                 ))
-            
             fig.update_layout(
                 title=f"Пласт {i + 1} - Ed/Ei = f(h/D)",
                 xaxis_title="h / D",
