@@ -1355,6 +1355,123 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     alignment=1
                 )
                 story.append(Paragraph(conclusion_text, conclusion_style))
+
+        # НОВА СТРАНИЦА С ВСИЧКИ СНИМКИ
+        story.append(PageBreak())
+        
+        # Заглавие за страницата със снимки
+        images_title_style = ParagraphStyle(
+            'ImagesTitle',
+            fontName=font_name,
+            fontSize=18,
+            textColor=colors.HexColor('#006064'),
+            spaceAfter=20,
+            alignment=1
+        )
+        story.append(Paragraph("ДОПЪЛНИТЕЛНИ МАТЕРИАЛИ И СХЕМИ", images_title_style))
+        story.append(Spacer(1, 15))
+        
+        # Списък с имената на снимките, които искаме да включим
+        image_files = [
+            "5.2. Фиг.png",
+            "5.3. Фиг.png", 
+            "5.2. Таблица.png",
+            "5.1. Таблица.png"
+        ]
+        
+        image_descriptions = [
+            "Фигура 5.2 - Карта с изохети за определяне на z₁",
+            "Фигура 5.3 - Коефициент на топлопроводност λоп по климатични зони",
+            "Таблица 5.2 - Топлинна съпротивляемост на материалите",
+            "Таблица 5.1 - Характеристики на пътните материали"
+        ]
+        
+        # Добавяне на всяка снимка
+        for i, (img_file, description) in enumerate(zip(image_files, image_descriptions)):
+            try:
+                # Проверка дали файлът съществува
+                if os.path.exists(img_file):
+                    # Зареждане на изображението
+                    pil_img = PILImage.open(img_file)
+                    
+                    # Заглавие на снимката
+                    img_title_style = ParagraphStyle(
+                        'ImageTitle',
+                        fontName=font_name,
+                        fontSize=12,
+                        textColor=colors.HexColor('#2C5530'),
+                        spaceAfter=8,
+                        alignment=1
+                    )
+                    story.append(Paragraph(description, img_title_style))
+                    
+                    # Конвертиране на изображението за PDF
+                    img_buffer = io.BytesIO()
+                    pil_img.save(img_buffer, format="PNG")
+                    img_buffer.seek(0)
+                    
+                    # Изчисляване на размери, за да се събере в страницата
+                    img_width, img_height = pil_img.size
+                    aspect_ratio = img_height / img_width
+                    
+                    # Максимална ширина за A4 (180mm)
+                    max_width = 180 * mm
+                    calculated_height = max_width * aspect_ratio
+                    
+                    # Максимална височина за A4 (250mm)
+                    max_height = 250 * mm
+                    if calculated_height > max_height:
+                        calculated_height = max_height
+                        max_width = max_height / aspect_ratio
+                    
+                    # Добавяне на изображението
+                    story.append(RLImage(img_buffer, width=max_width, height=calculated_height))
+                    story.append(Spacer(1, 15))
+                    
+                    # Добавяне на page break след всяка втора снимка (ако има много снимки)
+                    if (i + 1) % 2 == 0 and i < len(image_files) - 1:
+                        story.append(PageBreak())
+                        story.append(Spacer(1, 15))
+                
+                else:
+                    # Ако снимката липсва, добавяме съобщение
+                    missing_style = ParagraphStyle(
+                        'MissingImage',
+                        fontName=font_name,
+                        fontSize=10,
+                        textColor=colors.HexColor('#999999'),
+                        spaceAfter=15,
+                        alignment=1
+                    )
+                    story.append(Paragraph(f"Липсваща снимка: {img_file}", missing_style))
+                    story.append(Paragraph(description, missing_style))
+                    story.append(Spacer(1, 15))
+                    
+            except Exception as e:
+                # Грешка при зареждане на снимка
+                error_style = ParagraphStyle(
+                    'ImageError',
+                    fontName=font_name,
+                    fontSize=10,
+                    textColor=colors.HexColor('#ff0000'),
+                    spaceAfter=15,
+                    alignment=1
+                )
+                story.append(Paragraph(f"Грешка при зареждане на {img_file}: {str(e)}", error_style))
+                story.append(Spacer(1, 15))
+        
+        # Информация за снимките
+        info_style = ParagraphStyle(
+            'ImagesInfo',
+            fontName=font_name,
+            fontSize=9,
+            textColor=colors.HexColor('#666666'),
+            spaceAfter=5,
+            alignment=1
+        )
+        story.append(Spacer(1, 10))
+        story.append(Paragraph("Източник на схемите и таблиците: Нормативи за оразмеряване на пътни конструкции", info_style))
+        story.append(Paragraph("Снимките са част от техническата документация на приложението", info_style))
         
         # Дата и подпис
         story.append(Spacer(1, 20))
