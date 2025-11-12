@@ -476,6 +476,60 @@ def render_formula_to_image(formula_text, fontsize=24, dpi=150):
     buf.seek(0)
     return buf
 
+def create_colorful_plotly_figure():
+    """Създава цветна Plotly фигура с явно зададени цветове"""
+    # Вземаме оригиналната фигура
+    original_fig = st.session_state["fig"]
+    
+    # Създаваме нова фигура със същите данни
+    fig = go.Figure()
+    
+    # Ярка цветова палитра
+    colors = [
+        '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+        '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+    ]
+    
+    # Добавяме всички трасове с явно зададени цветове
+    for i, trace in enumerate(original_fig.data):
+        trace_copy = trace.__class__()
+        
+        # Копираме всички атрибути
+        for attr in trace.__dict__:
+            if not attr.startswith('_'):
+                setattr(trace_copy, attr, getattr(trace, attr))
+        
+        # Задаваме явни цветове
+        if hasattr(trace_copy, 'line'):
+            trace_copy.line.color = colors[i % len(colors)]
+        if hasattr(trace_copy, 'marker'):
+            trace_copy.marker.color = colors[i % len(colors)]
+        
+        fig.add_trace(trace_copy)
+    
+    # Обновяваме оформлението за по-добър вид
+    fig.update_layout(
+        title=original_fig.layout.title,
+        xaxis_title=original_fig.layout.xaxis.title,
+        yaxis_title=original_fig.layout.yaxis.title,
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(color='black', size=12),
+        xaxis=dict(
+            linecolor='black',
+            gridcolor='lightgray',
+            showgrid=True
+        ),
+        yaxis=dict(
+            linecolor='black',
+            gridcolor='lightgray',
+            showgrid=True
+        ),
+        showlegend=True
+    )
+    
+    return fig
+
 def generate_pdf_report():
     try:
         buffer = io.BytesIO()
@@ -555,14 +609,14 @@ def generate_pdf_report():
         formulas_title_style = ParagraphStyle(
             'FormulasTitle',
             fontName=font_name,
-            fontSize=12.8,  # Намалено от 16 на 12.8 (20%)
+            fontSize=12.8,
             textColor=colors.HexColor('#2C5530'),
             spaceAfter=10,
             alignment=0
         )
         story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
 
-        # Основни формули в две колони (БЕЗ подзаглавие "Основни формули за изчисление:")
+        # Основни формули в две колони
         formulas = [
             r"E_{sr} = \frac{\sum (E_i h_i)}{\sum h_i}",
             r"H = \sum h_i", 
@@ -610,7 +664,7 @@ def generate_pdf_report():
         calculations_title_style = ParagraphStyle(
             'CalculationsTitle',
             fontName=font_name,
-            fontSize=12.8,  # Намалено от 16 на 12.8 (20%)
+            fontSize=12.8,
             textColor=colors.HexColor('#2C5530'),
             spaceAfter=10,
             alignment=0
@@ -700,35 +754,15 @@ def generate_pdf_report():
         
         if "fig" in st.session_state:
             try:
-                # Създаваме копие на фигурата и задаваме цветова схема
-                fig_copy = go.Figure(st.session_state["fig"])
+                # Създаваме цветна фигура
+                color_fig = create_colorful_plotly_figure()
                 
-                # Задаваме цветова схема за линиите
-                colorscale = px.colors.qualitative.Set1  # Ярка цветова палитра
-                
-                # Обновяваме цветовете на всички трасове
-                for i, trace in enumerate(fig_copy.data):
-                    if hasattr(trace, 'line'):
-                        trace.line.color = colorscale[i % len(colorscale)]
-                    if hasattr(trace, 'marker'):
-                        trace.marker.color = colorscale[i % len(colorscale)]
-                
-                # Обновяваме оформлението за по-добри цветове
-                fig_copy.update_layout(
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='black'),
-                    xaxis=dict(linecolor='black', gridcolor='lightgray'),
-                    yaxis=dict(linecolor='black', gridcolor='lightgray')
-                )
-                
-                # Генериране на цветна графика с по-високо качество
-                img_bytes = pio.to_image(
-                    fig_copy, 
+                # Експортираме с kaleido
+                img_bytes = color_fig.to_image(
                     format="png", 
                     width=1200, 
                     height=900,
-                    scale=2,  # Повишаване на качеството
+                    scale=2,
                     engine="kaleido"
                 )
                 
@@ -740,16 +774,13 @@ def generate_pdf_report():
                 story.append(Spacer(1, 15))
                 
             except Exception as e:
-                # Алтернативен подход ако горният не работи
+                # Алтернативен подход - директно експортиране
                 try:
-                    # Опитваме се да експортираме оригиналната фигура с kaleido
-                    img_bytes = pio.to_image(
-                        st.session_state["fig"], 
+                    img_bytes = st.session_state["fig"].to_image(
                         format="png", 
                         width=1200, 
                         height=900,
-                        scale=2,
-                        engine="kaleido"
+                        scale=2
                     )
                     
                     pil_img = PILImage.open(BytesIO(img_bytes))
@@ -760,39 +791,18 @@ def generate_pdf_report():
                     story.append(Spacer(1, 15))
                     
                 except Exception as e2:
-                    # Fallback - опитваме се да запазим цветовете чрез друг метод
-                    try:
-                        # Задаваме цветова схема директно в оформлението
-                        st.session_state["fig"].update_layout(
-                            colorway=px.colors.qualitative.Bold  # Ярка цветова палитра
-                        )
-                        
-                        img_bytes = pio.to_image(
-                            st.session_state["fig"], 
-                            format="png", 
-                            width=1200, 
-                            height=900
-                        )
-                        
-                        pil_img = PILImage.open(BytesIO(img_bytes))
-                        img_buffer = io.BytesIO()
-                        pil_img.save(img_buffer, format="PNG")
-                        img_buffer.seek(0)
-                        story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-                        story.append(Spacer(1, 15))
-                        
-                    except Exception as e3:
-                        error_style = ParagraphStyle(
-                            'ErrorStyle',
-                            parent=styles['Normal'],
-                            fontSize=10,
-                            spaceAfter=5,
-                            fontName=font_name,
-                            textColor=colors.HexColor('#d32f2f'),
-                            alignment=1
-                        )
-                        story.append(Paragraph(f"Грешка при генериране на графика: {e3}", error_style))
+                    error_style = ParagraphStyle(
+                        'ErrorStyle',
+                        parent=styles['Normal'],
+                        fontSize=10,
+                        spaceAfter=5,
+                        fontName=font_name,
+                        textColor=colors.HexColor('#d32f2f'),
+                        alignment=1
+                    )
+                    story.append(Paragraph("Графиката не може да се експортира в цветен вариант", error_style))
 
+        # ОСТАНАЛАТА ЧАСТ ОСТАВА СЪЩАТА...
         # ДОПУСТИМИ НАПРЕЖЕНИЯ
         img_path = "Допустими опънни напрежения.png"
         if os.path.exists(img_path):
@@ -957,3 +967,4 @@ if st.button("📄 Генерирай PDF отчет", type="primary"):
                 st.error("❌ Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
         except Exception as e:
             st.error(f"Грешка при генериране на PDF: {str(e)}")
+            
