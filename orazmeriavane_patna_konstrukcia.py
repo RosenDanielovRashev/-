@@ -990,7 +990,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         story.append(Paragraph("ГРАФИЧНО ОБОБЩЕНИЕ", summary_title_style))
         story.append(Spacer(1, 10))
         
-        # ✅ МОДЕРНА ВИЗУАЛИЗАЦИЯ НА ПЛАСТОВЕТЕ – в стил "карти"
+        # ✅ МОДЕРНА ВИЗУАЛИЗАЦИЯ НА ПЛАСТОВЕТЕ
         layer_title_style = ParagraphStyle(
             'LayerTitle',
             fontName=font_name,
@@ -1046,12 +1046,11 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         story.append(Paragraph("СХЕМА НА ПЛАСТОВЕТЕ", layer_title_style))
         story.append(Spacer(1, 8))
 
-        # Обхождаме всички пластове (отгоре надолу)
+        # Обхождаме всички пластове
         for i, layer in enumerate(st.session_state.layers_data):
             if "Ed" not in layer:
                 continue
 
-            # Данни за визуализацията
             layer_data = [
                 [
                     Paragraph(f"Пласт {i + 1}", layer_title_style),
@@ -1067,11 +1066,63 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 ]
             ]
 
-            # Таблица (карта на пласта)
             layer_card = Table(layer_data, colWidths=[55 * mm, 75 * mm])
             layer_card.setStyle(card_style)
             story.append(layer_card)
             story.append(Spacer(1, 10))
+
+        # 🟩 ДОБАВЯМЕ НОВА ТАБЛИЦА С ТОПЛИННИ ПАРАМЕТРИ
+        story.append(Spacer(1, 20))
+        thermal_title = ParagraphStyle(
+            'ThermalTitle',
+            fontName=font_name,
+            fontSize=14,
+            textColor=colors.HexColor('#1B5E20'),
+            spaceAfter=10,
+            alignment=1
+        )
+        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКА НА ИЗИСКВАНИЯТА", thermal_title))
+        story.append(Spacer(1, 8))
+
+        # Заглавен ред
+        table_header = [
+            Paragraph("Пласт", layer_title_style),
+            Paragraph("Дебелина (cm)", layer_title_style),
+            Paragraph("λ коефициент под тя", layer_title_style),
+            Paragraph("Топлинни параметри", layer_title_style),
+            Paragraph("Изчисление на R₀", layer_title_style),
+            Paragraph("Проверка на изискванията", layer_title_style),
+        ]
+
+        # Създаваме редове за всеки пласт
+        table_data = [table_header]
+        for i, layer in enumerate(st.session_state.layers_data):
+            table_data.append([
+                f"Пласт {i + 1}",
+                f"{layer.get('h', 0):.2f}",
+                "—",  # λ – потребителски данни могат да се добавят по-късно
+                "—",
+                "—",
+                "—"
+            ])
+
+        # Стил на таблицата
+        thermal_table_style = TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C8E6C9')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1B5E20')),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1B5E20')),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('FONTNAME', (0, 0), (-1, -1), font_name),
+            ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ])
+
+        # Добавяне на таблицата
+        thermal_table = Table(table_data, colWidths=[25*mm, 30*mm, 35*mm, 40*mm, 35*mm, 40*mm])
+        thermal_table.setStyle(thermal_table_style)
+        story.append(thermal_table)
+        story.append(Spacer(1, 20))
 
         # ✅ Дата и подпис
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
@@ -1097,4 +1148,3 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
-
