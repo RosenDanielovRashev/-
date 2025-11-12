@@ -1362,7 +1362,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # Заглавие за страницата със снимки
         images_title_style = ParagraphStyle(
             'ImagesTitle',
-            fontName=fontName,
+            fontName=font_name,
             fontSize=18,
             textColor=colors.HexColor('#006064'),
             spaceAfter=15,
@@ -1381,7 +1381,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         
         # ФИГУРИ 5.2 и 5.3 НА ЕДИН ЛИСТ (една страница)
         story.append(Paragraph("Фигура 5.2 и Фигура 5.3", ParagraphStyle(
-            'SubTitle', fontName=fontName, fontSize=14, textColor=colors.HexColor('#2C5530'), 
+            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#2C5530'), 
             spaceAfter=10, alignment=1
         )))
         
@@ -1402,7 +1402,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 story.append(RLImage(img_buffer_52, width=image_width_52, height=image_height_52))
                 story.append(Spacer(1, 5))
         except Exception as e:
-            story.append(Paragraph("Липсва Фигура 5.2", ParagraphStyle('Error', fontName=fontName, fontSize=10, textColor=colors.red)))
+            story.append(Paragraph("Липсва Фигура 5.2", ParagraphStyle('Error', fontName=font_name, fontSize=10, textColor=colors.red)))
         
         # Добавяне на 5.3
         try:
@@ -1420,12 +1420,12 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 
                 story.append(RLImage(img_buffer_53, width=image_width_53, height=image_height_53))
         except Exception as e:
-            story.append(Paragraph("Липсва Фигура 5.3", ParagraphStyle('Error', fontName=fontName, fontSize=10, textColor=colors.red)))
+            story.append(Paragraph("Липсва Фигура 5.3", ParagraphStyle('Error', fontName=font_name, fontSize=10, textColor=colors.red)))
         
         # НОВА СТРАНИЦА ЗА ТАБЛИЦИТЕ
         story.append(PageBreak())
         story.append(Paragraph("Таблици", ParagraphStyle(
-            'SubTitle', fontName=fontName, fontSize=14, textColor=colors.HexColor('#2C5530'), 
+            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#2C5530'), 
             spaceAfter=15, alignment=1
         )))
         
@@ -1451,6 +1451,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     
             except Exception as e:
                 continue
+                
         # Дата и подпис
         story.append(Spacer(1, 20))
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
