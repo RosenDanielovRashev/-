@@ -570,11 +570,6 @@ class NumberedDocTemplate(SimpleDocTemplate):
         """Override to add page numbers with offset"""
         self._pageNumber = self.start_page + self.page - 1
         super().afterPage()
-        
-    def handle_pageBegin(self):
-        """Override to handle custom page numbering"""
-        self.canv.setPageNumber(self.start_page + self.page - 1)
-        super().handle_pageBegin()
 
 def generate_pdf_report():
     try:
@@ -1035,9 +1030,17 @@ def generate_pdf_report():
             textColor=colors.HexColor('#666666')
         )
         story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
-
+        
+        # Добавяне на номера на страниците
+        def add_page_number(canvas, doc):
+            canvas.saveState()
+            canvas.setFont('DejaVuSans', 8)
+            page_num = doc.start_page + canvas.getPageNumber() - 1
+            canvas.drawString(190*mm, 15*mm, f"Страница {page_num}")
+            canvas.restoreState()
+        
         # Финализиране на PDF
-        doc.build(story)
+        doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
         buffer.seek(0)
         
         return buffer
