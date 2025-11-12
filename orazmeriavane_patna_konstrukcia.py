@@ -974,7 +974,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Spacer(1, 3))  # Минимално разстояние
             story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))  # Максимален размер
             story.append(Spacer(1, 8))  # Минимално разстояние
-            
+
+
         # НОВА СТРАНИЦА ЗА ГРАФИЧНО ОБОБЩЕНИЕ
         story.append(PageBreak())
         
@@ -990,43 +991,13 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         story.append(Paragraph("ГРАФИЧНО ОБОБЩЕНИЕ", summary_title_style))
         story.append(Spacer(1, 10))
         
-        # ✅ МОДЕРНА ВИЗУАЛИЗАЦИЯ НА ПЛАСТОВЕТЕ
-        layer_title_style = ParagraphStyle(
-            'LayerTitle',
-            fontName=font_name,
-            fontSize=12,
-            textColor=colors.HexColor('#5D4037')
-        )
-        ee_style = ParagraphStyle(
-            'EeValue',
-            fontName=font_name,
-            fontSize=11,
-            textColor=colors.HexColor('#0277BD'),
-            alignment=2  # вдясно
-        )
-        ed_style = ParagraphStyle(
-            'EdValue',
-            fontName=font_name,
-            fontSize=11,
-            textColor=colors.HexColor('#2E7D32'),
-            alignment=2  # вдясно
-        )
-        h_style = ParagraphStyle(
-            'HValue',
-            fontName=font_name,
-            fontSize=11,
-            textColor=colors.HexColor('#D84315'),
-            alignment=0  # вляво
-        )
-        ei_inner_style = ParagraphStyle(
-            'EiInner',
-            fontName=font_name,
-            fontSize=11,
-            textColor=colors.HexColor('#004D40'),
-            alignment=0  # вляво
-        )
+        # Модерна визуализация на пластовете
+        layer_title_style = ParagraphStyle('LayerTitle', fontName=font_name, fontSize=12, textColor=colors.HexColor('#5D4037'))
+        ee_style = ParagraphStyle('EeValue', fontName=font_name, fontSize=11, textColor=colors.HexColor('#0277BD'), alignment=2)
+        ed_style = ParagraphStyle('EdValue', fontName=font_name, fontSize=11, textColor=colors.HexColor('#2E7D32'), alignment=2)
+        h_style  = ParagraphStyle('HValue', fontName=font_name, fontSize=11, textColor=colors.HexColor('#D84315'), alignment=0)
+        ei_inner_style = ParagraphStyle('EiInner', fontName=font_name, fontSize=11, textColor=colors.HexColor('#004D40'), alignment=0)
 
-        # Стил за картите
         card_style = TableStyle([
             ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E0F7FA')),
             ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#26C6DA')),
@@ -1037,114 +1008,100 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ('TOPPADDING', (0, 0), (-1, -1), 5),
             ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
             ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),  # Ee вдясно
-            ('ALIGN', (1, 1), (1, 1), 'LEFT'),   # Ei вляво
-            ('ALIGN', (1, 2), (1, 2), 'RIGHT'),  # Ed вдясно
+            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
+            ('ALIGN', (1, 1), (1, 1), 'LEFT'),
+            ('ALIGN', (1, 2), (1, 2), 'RIGHT'),
         ])
 
-        # Заглавие на секцията
         story.append(Paragraph("СХЕМА НА ПЛАСТОВЕТЕ", layer_title_style))
         story.append(Spacer(1, 8))
 
-        # Обхождаме всички пластове
         for i, layer in enumerate(st.session_state.layers_data):
             if "Ed" not in layer:
                 continue
-
             layer_data = [
-                [
-                    Paragraph(f"Пласт {i + 1}", layer_title_style),
-                    Paragraph(f"Ee = {layer['Ee']:.0f} MPa", ee_style)
-                ],
-                [
-                    Paragraph(f"h = {layer['h']:.2f} cm", h_style),
-                    Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_inner_style)
-                ],
-                [
-                    "",
-                    Paragraph(f"Ed = {layer['Ed']:.0f} MPa", ed_style)
-                ]
+                [Paragraph(f"Пласт {i+1}", layer_title_style), Paragraph(f"Ee = {layer['Ee']:.0f} MPa", ee_style)],
+                [Paragraph(f"h = {layer['h']:.2f} cm", h_style), Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_inner_style)],
+                ["", Paragraph(f"Ed = {layer['Ed']:.0f} MPa", ed_style)]
             ]
-
-            layer_card = Table(layer_data, colWidths=[55 * mm, 75 * mm])
+            layer_card = Table(layer_data, colWidths=[55*mm, 75*mm])
             layer_card.setStyle(card_style)
             story.append(layer_card)
             story.append(Spacer(1, 10))
 
-        # 🟩 ДОБАВЯМЕ НОВА ТАБЛИЦА С ТОПЛИННИ ПАРАМЕТРИ
+        # 🟩 ТОПЛИННИ ПАРАМЕТРИ
         story.append(Spacer(1, 20))
-        thermal_title = ParagraphStyle(
-            'ThermalTitle',
-            fontName=font_name,
-            fontSize=14,
-            textColor=colors.HexColor('#1B5E20'),
-            spaceAfter=10,
-            alignment=1
-        )
-        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКА НА ИЗИСКВАНИЯТА", thermal_title))
-        story.append(Spacer(1, 8))
+        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ", ParagraphStyle('ThermalTitle',
+            fontName=font_name, fontSize=14, textColor=colors.HexColor('#1B5E20'), alignment=1, spaceAfter=10)))
 
-        # Заглавен ред
+        # Таблица с дебелина и λ
         table_header = [
             Paragraph("Пласт", layer_title_style),
             Paragraph("Дебелина (cm)", layer_title_style),
-            Paragraph("λ коефициент под тя", layer_title_style),
-            Paragraph("Топлинни параметри", layer_title_style),
-            Paragraph("Изчисление на R₀", layer_title_style),
-            Paragraph("Проверка на изискванията", layer_title_style),
+            Paragraph("λ коефициент (W/mK)", layer_title_style),
         ]
-
-        # Създаваме редове за всеки пласт
         table_data = [table_header]
         for i, layer in enumerate(st.session_state.layers_data):
             table_data.append([
                 f"Пласт {i + 1}",
                 f"{layer.get('h', 0):.2f}",
-                "—",  # λ – потребителски данни могат да се добавят по-късно
-                "—",
-                "—",
-                "—"
+                f"{layer.get('lambda', 0):.3f}" if 'lambda' in layer else "—"
             ])
-
-        # Стил на таблицата
-        thermal_table_style = TableStyle([
+        table = Table(table_data, colWidths=[35*mm, 40*mm, 45*mm])
+        table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C8E6C9')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1B5E20')),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#1B5E20')),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('FONTNAME', (0, 0), (-1, -1), font_name),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
-        ])
-
-        # Добавяне на таблицата
-        thermal_table = Table(table_data, colWidths=[25*mm, 30*mm, 35*mm, 40*mm, 35*mm, 40*mm])
-        thermal_table.setStyle(thermal_table_style)
-        story.append(thermal_table)
+        ]))
+        story.append(table)
         story.append(Spacer(1, 20))
 
-        # ✅ Дата и подпис
-        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        story.append(Spacer(1, 10))
-        story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle(
-            'Date',
-            fontSize=9,
-            alignment=2,
-            textColor=colors.grey,
-            fontName=font_name
-        )))
+        # Формули и изчисления
+        formula_style = ParagraphStyle('Formula', fontName=font_name, fontSize=11, textColor=colors.black, leftIndent=20)
+        bold_style = ParagraphStyle('Bold', fontName=font_name, fontSize=11, textColor=colors.black, leading=14)
 
-        # ✅ Финализиране на документа
+        # Формула за m
+        story.append(Paragraph("<b>1. Определяне на коефициента m:</b>", bold_style))
+        story.append(Paragraph("m = (z / z₁)", formula_style))
+        z = st.session_state.get("z", None)
+        z1 = st.session_state.get("z1", None)
+        if z and z1:
+            m = z / z1
+            story.append(Paragraph(f"m = {z:.2f} / {z1:.2f} = <b>{m:.3f}</b>", formula_style))
+        story.append(Spacer(1, 12))
+
+        # Формула за R₀
+        story.append(Paragraph("<b>2. Топлинно съпротивление R₀:</b>", bold_style))
+        story.append(Paragraph("R₀ = Σ (hᵢ / λᵢ)", formula_style))
+        R0 = st.session_state.get("R0", None)
+        if R0:
+            story.append(Paragraph(f"R₀ = <b>{R0:.3f}</b> m²K/W", formula_style))
+        story.append(Spacer(1, 12))
+
+        # Проверка
+        story.append(Paragraph("<b>3. Проверка на изискванията:</b>", bold_style))
+        Rmin = st.session_state.get("Rmin", None)
+        if R0 and Rmin:
+            check = "✅ Изпълнено" if R0 >= Rmin else "❌ Неизпълнено"
+            story.append(Paragraph(f"R₀ = {R0:.3f} ≥ Rmin = {Rmin:.3f} → <b>{check}</b>", formula_style))
+
+        # Дата и подпис
+        story.append(Spacer(1, 20))
+        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+        story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle('Date',
+            fontSize=9, alignment=2, textColor=colors.grey, fontName=font_name)))
+
+        # Финализиране
         doc.build(story)
         buffer.seek(0)
-        st.success("✅ PDF отчетът с модерно графично оформление е готов!")
-        st.download_button(
-            "📥 Изтегли PDF отчет",
-            buffer,
+        st.success("✅ PDF отчетът с модерно графично оформление и топлинни изчисления е готов!")
+        st.download_button("📥 Изтегли PDF отчет", buffer,
             file_name=f"Пътна_Конструкция_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-            mime="application/pdf"
-        )
+            mime="application/pdf")
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
