@@ -1029,7 +1029,293 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(layer_card)
             story.append(Spacer(1, 10))
 
+        # НОВА СТРАНИЦА ЗА ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКА
+        story.append(PageBreak())
+        
+        # Заглавие за топлинни параметри
+        thermal_title_style = ParagraphStyle(
+            'ThermalTitle',
+            fontName=font_name,
+            fontSize=16,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=12,
+            alignment=1
+        )
+        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКА", thermal_title_style))
+        story.append(Spacer(1, 10))
+        
+        # Стилове за топлинни параметри
+        thermal_header_style = ParagraphStyle(
+            'ThermalHeader',
+            fontName=font_name,
+            fontSize=12,
+            textColor=colors.HexColor('#5D4037'),
+            spaceAfter=6,
+            leftIndent=10
+        )
+        
+        thermal_value_style = ParagraphStyle(
+            'ThermalValue', 
+            fontName=font_name,
+            fontSize=10,
+            textColor=colors.HexColor('#4B5563'),
+            spaceAfter=4,
+            leftIndent=20
+        )
+        
+        thermal_note_style = ParagraphStyle(
+            'ThermalNote',
+            fontName=font_name,
+            fontSize=8,
+            textColor=colors.HexColor('#666666'),
+            spaceAfter=8,
+            leftIndent=25
+        )
+        
+        # Топлинни параметри
+        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ:", thermal_header_style))
+        story.append(Spacer(1, 5))
+        
+        # λоп и λзп стойности
+        lambda_op = st.session_state.get("lambda_op_input", 2.5)
+        lambda_zp = st.session_state.get("lambda_zp_input", 2.5)
+        z1 = st.session_state.get("z1_input", 50)
+        
+        story.append(Paragraph(f"• λоп = {lambda_op:.2f} kcal/mhg", thermal_value_style))
+        story.append(Paragraph("Коефициент на топлопроводност в открито поле", thermal_note_style))
+        story.append(Paragraph("2.50 kcal/mhg за І климат. зона", thermal_note_style))
+        story.append(Paragraph("2.20 kcal/mhg за ІІ климат. зона", thermal_note_style))
+        story.append(Paragraph("(фиг.5.3)", thermal_note_style))
+        
+        story.append(Spacer(1, 5))
+        
+        story.append(Paragraph(f"• λзп = {lambda_zp:.2f} kcal/mhg", thermal_value_style))
+        story.append(Paragraph("Коефициент на топлопроводност под настилката", thermal_note_style))
+        story.append(Paragraph("Зависи от топлинната съпротивляемост", thermal_note_style))
+        story.append(Paragraph("(таблица 5.2)", thermal_note_style))
+        
+        story.append(Spacer(1, 10))
+        
+        # Изчисление на m
+        m_value = lambda_zp / lambda_op if lambda_op > 0 else 1.0
+        story.append(Paragraph("ИЗЧИСЛЕНИЕ НА m:", thermal_header_style))
+        story.append(Spacer(1, 5))
+        
+        # Формула за m
+        formula_text_m = f'm = λзп / λоп = {lambda_zp:.2f} / {lambda_op:.2f} = {m_value:.2f}'
+        story.append(Paragraph(formula_text_m, thermal_value_style))
+        
+        story.append(Spacer(1, 10))
+        
+        # z₁ и изчисление на z
+        story.append(Paragraph(f"• z₁ = {z1} cm", thermal_value_style))
+        story.append(Paragraph("Замръзваща дълбочина на почвата в открито поле", thermal_note_style))
+        story.append(Paragraph("Определя се от карта с изохети (фиг.5.2)", thermal_note_style))
+        
+        story.append(Spacer(1, 5))
+        
+        # Формула за z
+        z_value = z1 * m_value
+        formula_text_z = f'z = z₁ × m = {z1} × {m_value:.2f} = {z_value:.2f} cm'
+        story.append(Paragraph(formula_text_z, thermal_value_style))
+        
+        story.append(Spacer(1, 15))
+        
+        # ТАБЛИЦА С ДЕБЕЛИНИ И λ КОЕФИЦИЕНТИ
+        story.append(Paragraph("ДЕБЕЛИНИ И λ КОЕФИЦИЕНТИ НА ПЛАСТОВЕТЕ:", thermal_header_style))
+        story.append(Spacer(1, 8))
+        
+        # Подготвяне на данните за таблицата
+        table_data = [["Пласт", "Дебелина (cm)", "λ коефициент"]]
+        
+        for i, (layer, lam_val) in enumerate(zip(st.session_state.layers_data, st.session_state.lambda_values)):
+            h_val = layer.get('h', '-')
+            if h_val != '-':
+                h_display = f"{h_val:.2f}"
+            else:
+                h_display = "-"
+            
+            table_data.append([
+                f"{i+1}",
+                h_display,
+                f"{lam_val:.2f}"
+            ])
+        
+        # Създаване на таблицата
+        layers_table = Table(table_data, colWidths=[30*mm, 45*mm, 45*mm])
+        layers_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+            ('TOPPADDING', (0, 0), (-1, 0), 8),
+            
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+            ('FONTNAME', (0, 1), (-1, -1), font_name),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 5),
+            ('TOPPADDING', (0, 1), (-1, -1), 5),
+            
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+        ]))
+        
+        story.append(layers_table)
+        story.append(Spacer(1, 15))
+        
+        # ИЗЧИСЛЕНИЕ НА R₀
+        story.append(Paragraph("ИЗЧИСЛЕНИЕ НА R₀:", thermal_header_style))
+        story.append(Spacer(1, 8))
+        
+        # Проверка дали имаме нужните данни
+        layers = st.session_state.get("layers_data", [])
+        lambda_values = st.session_state.get("lambda_values", [])
+        
+        if layers and lambda_values and len(layers) == len(lambda_values):
+            if all("h" in layer and layer["h"] is not None for layer in layers):
+                terms = []
+                symbolic_terms = []
+                numeric_terms = []
+                
+                for i, (layer, lam) in enumerate(zip(layers, lambda_values)):
+                    h_cm = layer["h"]
+                    h_m = h_cm / 100  # преобразуваме cm → m
+                    if lam != 0:
+                        terms.append(h_m / lam)
+                        symbolic_terms.append(f"\\frac{{h_{i+1}}}{{\\lambda_{i+1}}}")
+                        numeric_terms.append(f"\\frac{{{h_m:.3f}}}{{{lam:.3f}}}")
+                
+                R0 = sum(terms)
+                
+                # Символна формула
+                symbolic_formula = " + ".join(symbolic_terms)
+                story.append(Paragraph(f"Символна формула:", thermal_value_style))
+                formula_text_symbolic = f'R₀ = {symbolic_formula}'
+                story.append(Paragraph(formula_text_symbolic, thermal_value_style))
+                
+                story.append(Spacer(1, 5))
+                
+                # Числена формула  
+                numeric_formula = " + ".join(numeric_terms)
+                story.append(Paragraph("Формула със заместени стойности:", thermal_value_style))
+                formula_text_numeric = f'R₀ = {numeric_formula}'
+                story.append(Paragraph(formula_text_numeric, thermal_value_style))
+                
+                story.append(Spacer(1, 5))
+                
+                # Краен резултат
+                result_text = f'R₀ = {R0:.3f} m²K/W'
+                story.append(Paragraph("Краен резултат:", thermal_value_style))
+                story.append(Paragraph(result_text, thermal_value_style))
+        
+        story.append(Spacer(1, 20))
+        
+        # ПРОВЕРКА НА ИЗИСКВАНИЯТА
+        story.append(Paragraph("ПРОВЕРКА НА ИЗИСКВАНИЯТА:", thermal_header_style))
+        story.append(Spacer(1, 8))
+        
+        # Изчисляване на сумата на дебелините
+        if all('h' in layer for layer in st.session_state.layers_data):
+            sum_h = sum(layer['h'] for layer in st.session_state.layers_data)
+            
+            check_data = [
+                ["Параметър", "Стойност"],
+                ["Сума на дебелините (H)", f"{sum_h:.2f} cm"],
+                ["Изчислена дълбочина на замръзване (z)", f"{z_value:.2f} cm"]
+            ]
+            
+            check_table = Table(check_data, colWidths=[70*mm, 50*mm])
+            check_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), font_name),
+                ('FONTSIZE', (0, 0), (-1, 0), 9),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+                ('TOPPADDING', (0, 0), (-1, 0), 8),
+                
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+                ('FONTNAME', (0, 1), (-1, -1), font_name),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+                ('TOPPADDING', (0, 1), (-1, -1), 6),
+                
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+            ]))
+            
+            story.append(check_table)
+            story.append(Spacer(1, 10))
+            
+            # Проверка на условието
+            if z_value > sum_h:
+                condition_text = "✅ Условието е изпълнено: z > Σh"
+                condition_style = ParagraphStyle(
+                    'ConditionOK',
+                    fontName=font_name,
+                    fontSize=11,
+                    textColor=colors.HexColor('#2e7d32'),
+                    spaceAfter=8,
+                    alignment=1,
+                    backColor=colors.HexColor('#e8f5e9')
+                )
+                story.append(Paragraph(condition_text, condition_style))
+                
+                conclusion_text = "Конструкцията удовлетворява изискванията! Замръзващата дълбочина (z) е по-голяма от общата дебелина на пластовете."
+                conclusion_style = ParagraphStyle(
+                    'ConclusionOK',
+                    fontName=font_name,
+                    fontSize=9,
+                    textColor=colors.HexColor('#2e7d32'),
+                    spaceAfter=12,
+                    alignment=1
+                )
+                story.append(Paragraph(conclusion_text, conclusion_style))
+            else:
+                condition_text = "❌ Условието НЕ е изпълнено: z ≤ Σh"
+                condition_style = ParagraphStyle(
+                    'ConditionFail',
+                    fontName=font_name,
+                    fontSize=11,
+                    textColor=colors.HexColor('#c62828'),
+                    spaceAfter=8,
+                    alignment=1,
+                    backColor=colors.HexColor('#ffebee')
+                )
+                story.append(Paragraph(condition_text, condition_style))
+                
+                conclusion_text = "Конструкцията НЕ удовлетворява изискванията! Замръзващата дълбочина (z) трябва да бъде по-голяма от общата дебелина на пластовете."
+                conclusion_style = ParagraphStyle(
+                    'ConclusionFail',
+                    fontName=font_name,
+                    fontSize=9,
+                    textColor=colors.HexColor('#c62828'),
+                    spaceAfter=8,
+                    alignment=1
+                )
+                story.append(Paragraph(conclusion_text, conclusion_style))
+                
+                # Препоръки
+                recommendations_style = ParagraphStyle(
+                    'Recommendations',
+                    fontName=font_name,
+                    fontSize=9,
+                    textColor=colors.HexColor('#5D4037'),
+                    spaceAfter=6,
+                    leftIndent=10
+                )
+                
+                story.append(Paragraph("Препоръки:", thermal_header_style))
+                story.append(Paragraph("• Увеличете дебелините на някои от пластовете", recommendations_style))
+                story.append(Paragraph("• Използвайте материали с по-ниски λ коефициенти", recommendations_style))
+                story.append(Paragraph("• Прегледайте избраните стойности за λоп и λзп", recommendations_style))
 
+
+        
         # Дата и подпис
         story.append(Spacer(1, 20))
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
