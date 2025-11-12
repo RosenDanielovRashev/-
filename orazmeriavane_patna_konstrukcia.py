@@ -959,7 +959,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             # Основното изчисление - ПОСЛЕДНО
             if layer.get("mode") == "Ed / Ei":
-                story.append(Paragraph(f"• Ed = Ei × (Ed/Ei) = {layer['Ei']:.0f} × {EdEi_point:.3f} = {layer['Ed']:.0f} MPa", layer_value_style))
+                story.append(Paragraph(f"• Ed = Ei × (Ed/Ei) = {layer['Ei']:.0f} × {EdEi_point:.3f} = {layer['Ed']:.3f} MPa", layer_value_style))
             else:
                 story.append(Paragraph(f"• h = D × (h/D) = {st.session_state.final_D} × {hD_point:.3f} = {layer['h']:.2f} cm", layer_value_style))
             
