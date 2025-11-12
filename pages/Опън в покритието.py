@@ -595,8 +595,8 @@ def generate_pdf_report():
         # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
             'CustomTitle',
-            fontSize=26,  # Увеличена с 10%
-            spaceAfter=22,  # Увеличена с 10%
+            fontSize=20,  # Увеличена с 10%
+            spaceAfter=15,  # Увеличена с 10%
             alignment=1,
             textColor=colors.HexColor('#006064'),
             fontName=font_name,
