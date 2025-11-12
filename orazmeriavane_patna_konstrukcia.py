@@ -982,40 +982,53 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 distances.sort()
                 closest_isos = [distances[0][1], distances[1][1]] if len(distances) >= 2 else [current_e_ei, current_e_ei]
             
-            # Филтрираме изолиниите, които да показваме с надписи:
-            # 1. Тези, които са кратни на 0.05
-            # 2. Двата най-близки до точката на интерполация
-            isos_to_label = set()
-            
-            # Добавяме изолинии, кратни на 0.05
+            # Филтрираме изолиниите, които са кратни на 0.05 и са близки до точката
+            isos_to_label = []
             for val in all_e_ei_values:
                 if abs(val * 100) % 5 == 0:  # Проверка дали е кратно на 0.05
-                    isos_to_label.add(val)
+                    # Проверяваме колко е близо до точката на интерполация
+                    if any(abs(val - iso) < 0.1 for iso in closest_isos):  # Допустима разлика 0.1
+                        isos_to_label.append(val)
             
-            # Добавяме двата най-близки изолинии (ако все още не са добавени)
-            isos_to_label.add(closest_isos[0])
-            isos_to_label.add(closest_isos[1])
+            # Ако няма намерени подходящи изолинии, вземаме двата най-близки
+            if not isos_to_label:
+                isos_to_label = closest_isos[:2]
             
-            # Сортираме изолиниите за поредност
-            isos_to_label = sorted(isos_to_label)
-            
-            # Добавяме всички изолинии, но само маркираните ще имат надписи
+            # Добавяме всички изолинии
             for val in all_e_ei_values:
                 group_sorted = data[data["Ee_over_Ei"] == val].sort_values("h_over_D")
                 
-                # Определяме дали трябва да покажем надпис за тази изолиния
-                show_legend = val in isos_to_label
-                name = f"Ee/Ei = {val:.2f}" if show_legend else None
+                # Проверяваме дали трябва да добавим надпис за тази изолиния
+                show_label = val in isos_to_label
                 
                 fig.add_trace(go.Scatter(
                     x=group_sorted["h_over_D"],
                     y=group_sorted["Ed_over_Ei"],
                     mode='lines',
-                    name=name,
+                    name=f"Ee/Ei = {val:.2f}",
                     line=dict(width=1.5),
-                    showlegend=show_legend,
+                    showlegend=False,  # Без легенда
                     hovertemplate=f"Ee/Ei = {val:.2f}<br>h/D = %{{x:.3f}}<br>Ed/Ei = %{{y:.3f}}<extra></extra>"
                 ))
+                
+                # Добавяме надпис директно върху линията
+                if show_label and len(group_sorted) > 0:
+                    # Вземаме средна точка на линията за поставяне на надписа
+                    mid_idx = len(group_sorted) // 2
+                    x_pos = group_sorted.iloc[mid_idx]["h_over_D"]
+                    y_pos = group_sorted.iloc[mid_idx]["Ed_over_Ei"]
+                    
+                    fig.add_annotation(
+                        x=x_pos,
+                        y=y_pos,
+                        text=f"Ee/Ei = {val:.2f}",
+                        showarrow=False,
+                        bgcolor="white",
+                        bordercolor="black",
+                        borderwidth=1,
+                        borderpad=2,
+                        font=dict(size=10, color="black")
+                    )
             
             if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
                 hD = layer["hD_point"]
@@ -1028,8 +1041,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                         y=[layer['y_low'], layer['y_high']],
                         mode='lines',
                         line=dict(color='purple', dash='dash', width=2),
-                        name=f"Интерполация Ee/Ei: {layer['low_iso']:.2f} - {layer['high_iso']:.2f}",
-                        showlegend=True
+                        name=f"Интерполация",
+                        showlegend=False
                     ))
                 
                 fig.add_trace(go.Scatter(
@@ -1037,22 +1050,14 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     mode='markers',
                     marker=dict(color='red', size=12),
                     name='Резултат',
-                    showlegend=True
+                    showlegend=False
                 ))
             
             fig.update_layout(
                 title=f"Пласт {i + 1} - Ed/Ei = f(h/D)",
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
-                showlegend=True,
-                legend=dict(
-                    yanchor="top",
-                    y=0.99,
-                    xanchor="left",
-                    x=0.01,
-                    bgcolor='rgba(255,255,255,0.8)',
-                    font=dict(size=10)
-                ),
+                showlegend=False,  # Без легенда
                 template="plotly_white",
                 width=1200,
                 height=800
