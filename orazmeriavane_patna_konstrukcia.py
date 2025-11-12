@@ -1000,9 +1000,17 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 
                 # Добавяме надпис само за двата най-близки изолинии
                 if val in isos_to_label:
-                    # Вземаме точка в края на линията за поставяне на надписа
-                    x_pos = group_sorted.iloc[-1]["h_over_D"]
-                    y_pos = group_sorted.iloc[-1]["Ed_over_Ei"]
+                    # Намираме точка в диапазона h/D 0-0.2 за поставяне на надписа
+                    points_in_range = group_sorted[group_sorted["h_over_D"] <= 0.2]
+                    if len(points_in_range) > 0:
+                        # Вземаме средна точка в диапазона 0-0.2
+                        mid_idx = len(points_in_range) // 2
+                        x_pos = points_in_range.iloc[mid_idx]["h_over_D"]
+                        y_pos = points_in_range.iloc[mid_idx]["Ed_over_Ei"]
+                    else:
+                        # Ако няма точки в диапазона, вземаме първата точка
+                        x_pos = group_sorted.iloc[0]["h_over_D"]
+                        y_pos = group_sorted.iloc[0]["Ed_over_Ei"]
                     
                     fig.add_annotation(
                         x=x_pos,
