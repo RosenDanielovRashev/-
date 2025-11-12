@@ -1059,7 +1059,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     showlegend=False
                 ))
             fig.update_layout(
-                title=f"Пласт {i + 1} - Ed/Ei = f(h/D)",
+                title=f"Пласт {i + 1} ",
                 xaxis_title="h / D",
                 yaxis_title="Ed / Ei",
                 showlegend=False,
