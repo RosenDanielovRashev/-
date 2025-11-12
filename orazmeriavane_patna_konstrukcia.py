@@ -974,6 +974,12 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             # Намиране на стойността Ee/Ei за текущия пласт
             current_e_ei = layer['Ee'] / layer['Ei']
             
+            # Изчисляваме Ed/Ei точката, ако липсва
+            if 'EdEi_point' not in layer and 'Ed' in layer and 'Ei' in layer:
+                EdEi_point = layer['Ed'] / layer['Ei']
+            else:
+                EdEi_point = layer.get('EdEi_point', current_e_ei)
+            
             # Филтрираме само изолиниите, които са кратни на 0.05
             multiples_of_005 = [val for val in all_e_ei_values if abs(val * 100) % 5 == 0]
             
@@ -1028,7 +1034,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
                 hD = layer["hD_point"]
-                EdEi = layer["Ed"] / layer["Ei"]
+                # Използваме изчислената EdEi_point вместо да я преизчисляваме
+                EdEi = EdEi_point
                 
                 # Добавяне на интерполационна линия
                 if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
