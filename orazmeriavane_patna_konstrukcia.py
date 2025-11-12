@@ -1244,10 +1244,10 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     'ConditionOK',
                     fontName=font_name,
                     fontSize=11,
-                    textColor=colors.HexColor('#2e7d32'),
+                    textColor=colors.HexColor('#c62828'),
                     spaceAfter=6,
                     alignment=1,
-                    backColor=colors.HexColor('#e8f5e9')
+                    backColor=colors.HexColor('#ffebee')
                 )
                 story.append(Paragraph(condition_text, condition_style))
                 
@@ -1256,7 +1256,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     'ConclusionOK',
                     fontName=font_name,
                     fontSize=9,
-                    textColor=colors.HexColor('#2e7d32'),
+                    textColor=colors.HexColor('#c62828'),
                     spaceAfter=12,
                     alignment=1
                 )
@@ -1268,10 +1268,10 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     'ConditionFail',
                     fontName=font_name,
                     fontSize=11,
-                    textColor=colors.HexColor('#c62828'),
+                    textColor=colors.HexColor('#2e7d32'),
                     spaceAfter=6,
                     alignment=1,
-                    backColor=colors.HexColor('#ffebee')
+                    backColor=colors.HexColor('#e8f5e9')
                 )
                 story.append(Paragraph(condition_text, condition_style))
                 
@@ -1280,7 +1280,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     'ConclusionFail',
                     fontName=font_name,
                     fontSize=9,
-                    textColor=colors.HexColor('#c62828'),
+                    textColor=colors.HexColor('#2e7d32'),
                     spaceAfter=12,
                     alignment=1
                 )
