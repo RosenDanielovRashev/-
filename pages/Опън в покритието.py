@@ -560,13 +560,20 @@ start_page_number = st.number_input(
     help="Задайте от кой номер да започва номерацията на страниците"
 )
 
+# КОРИГИРАН NumberedDocTemplate клас
 class NumberedDocTemplate(SimpleDocTemplate):
     def __init__(self, filename, start_page=1, **kwargs):
         self.start_page = start_page
         super().__init__(filename, **kwargs)
-
+        
+    def afterPage(self):
+        """Override to add page numbers with offset"""
+        self._pageNumber = self.start_page + self.page - 1
+        super().afterPage()
+        
     def handle_pageBegin(self):
-        self.page = self.page + self.start_page - 1
+        """Override to handle custom page numbering"""
+        self.canv.setPageNumber(self.start_page + self.page - 1)
         super().handle_pageBegin()
 
 def generate_pdf_report():
