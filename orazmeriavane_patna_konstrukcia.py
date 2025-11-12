@@ -343,13 +343,16 @@ elif mode == "h / D":
         if result is None:
             st.warning("❗ Точката е извън обхвата на наличните изолинии.")
         else:
+            # ВАЖНО: Изчисляваме EdEi_point правилно
+            EdEi_point = Ed_input / layer_data["Ei"]
+            
             layer_data.update({
                 "Ee": layer_data["Ee"],
                 "Ei": layer_data["Ei"],
                 "h": result,
                 "Ed": Ed_input,
                 "hD_point": hD_point,
-                "EdEi_point": Ed_input / layer_data["Ei"],  # ДОБАВЕНО ТУК
+                "EdEi_point": EdEi_point,  # Това е ключовата корекция
                 "y_low": y_low,
                 "y_high": y_high,
                 "low_iso": low_iso,
@@ -357,14 +360,11 @@ elif mode == "h / D":
                 "mode": mode
             })
 
-            # ДОБАВЕТЕ ТОВА:
-            st.rerun()
-            
             success_message = (
                 f"✅ Изчислено: h/D = {hD_point:.3f}  \n"
                 f"h = D*{hD_point:.3f} = {d_value} * {hD_point:.3f} = {layer_data['h']:.2f}  \n"
                 f"h = {result:.2f} cm  \n"
-                f"Ed/Ei = {Ed_input:.1f}/{layer_data['Ei']:.0f} = {Ed_input/layer_data['Ei']:.3f}  \n"
+                f"Ed/Ei = {Ed_input:.1f}/{layer_data['Ei']:.0f} = {EdEi_point:.3f}  \n"  # Вече използваме EdEi_point
                 f"Ee/Ei = {layer_data['Ee']:.0f}/ {layer_data['Ei']:.0f}= {layer_data['Ee']/layer_data['Ei']:.3f}  \n"
             )
             
@@ -376,7 +376,8 @@ elif mode == "h / D":
                 next_layer = st.session_state.layers_data[layer_idx + 1]
                 next_layer["Ee"] = Ed_input
                 st.info(f"ℹ️ Ee за пласт {layer_idx + 2} е автоматично обновен на {Ed_input:.2f} MPa")
-
+            
+            st.rerun()
 if "hD_point" in layer_data and "Ed" in layer_data and "Ei" in layer_data:
     fig = go.Figure()
     for value, group in data.groupby("Ee_over_Ei"):
