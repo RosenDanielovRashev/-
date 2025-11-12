@@ -356,6 +356,9 @@ elif mode == "h / D":
                 "high_iso": high_iso,
                 "mode": mode
             })
+
+            # ДОБАВЕТЕ ТОВА:
+            st.rerun()
             
             success_message = (
                 f"✅ Изчислено: h/D = {hD_point:.3f}  \n"
