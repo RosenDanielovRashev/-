@@ -700,113 +700,36 @@ def generate_pdf_report():
         
         if "fig" in st.session_state:
             try:
-                # Генериране на цветна графика
-                img_bytes = pio.to_image(st.session_state["fig"], format="png", width=1000, height=750)
-                pil_img = PILImage.open(BytesIO(img_bytes))
-                img_buffer = io.BytesIO()
-                pil_img.save(img_buffer, format="PNG")
-                img_buffer.seek(0)
-                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-                story.append(Spacer(1, 15))
-            except Exception as e:
-                error_style = ParagraphStyle(
-                    'ErrorStyle',
-                    parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=5,
-                    fontName=font_name,
-                    textColor=colors.HexColor('#d32f2f'),
-                    alignment=1
-                )
-                story.append(Paragraph("Грешка при генериране на графика", error_style))
-# НОВ ЛИСТ ЗА ГРАФИКАТА
-story.append(PageBreak())
-
-# ГРАФИКА НА НОМОГРАМАТА (цветна)
-graph_title_style = ParagraphStyle(
-    'GraphTitle',
-    fontName=font_name,
-    fontSize=16,
-    textColor=colors.HexColor('#2C5530'),
-    spaceAfter=15,
-    alignment=1
-)
-story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
-
-if "fig" in st.session_state:
-    try:
-        # Създаваме копие на фигурата и задаваме цветова схема
-        fig_copy = go.Figure(st.session_state["fig"])
-        
-        # Задаваме цветова схема за линиите
-        colorscale = px.colors.qualitative.Set1  # Ярка цветова палитра
-        
-        # Обновяваме цветовете на всички трасове
-        for i, trace in enumerate(fig_copy.data):
-            if hasattr(trace, 'line'):
-                trace.line.color = colorscale[i % len(colorscale)]
-            if hasattr(trace, 'marker'):
-                trace.marker.color = colorscale[i % len(colorscale)]
-        
-        # Обновяваме оформлението за по-добри цветове
-        fig_copy.update_layout(
-            plot_bgcolor='white',
-            paper_bgcolor='white',
-            font=dict(color='black'),
-            xaxis=dict(linecolor='black', gridcolor='lightgray'),
-            yaxis=dict(linecolor='black', gridcolor='lightgray')
-        )
-        
-        # Генериране на цветна графика с по-високо качество
-        img_bytes = pio.to_image(
-            fig_copy, 
-            format="png", 
-            width=1200, 
-            height=900,
-            scale=2,  # Повишаване на качеството
-            engine="kaleido"
-        )
-        
-        pil_img = PILImage.open(BytesIO(img_bytes))
-        img_buffer = io.BytesIO()
-        pil_img.save(img_buffer, format="PNG")
-        img_buffer.seek(0)
-        story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-        story.append(Spacer(1, 15))
-        
-    except Exception as e:
-        # Алтернативен подход ако горният не работи
-        try:
-            # Опитваме се да експортираме оригиналната фигура с kaleido
-            img_bytes = pio.to_image(
-                st.session_state["fig"], 
-                format="png", 
-                width=1200, 
-                height=900,
-                scale=2,
-                engine="kaleido"
-            )
-            
-            pil_img = PILImage.open(BytesIO(img_bytes))
-            img_buffer = io.BytesIO()
-            pil_img.save(img_buffer, format="PNG")
-            img_buffer.seek(0)
-            story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-            story.append(Spacer(1, 15))
-            
-        except Exception as e2:
-            # Fallback - опитваме се да запазим цветовете чрез друг метод
-            try:
-                # Задаваме цветова схема директно в оформлението
-                st.session_state["fig"].update_layout(
-                    colorway=px.colors.qualitative.Bold  # Ярка цветова палитра
+                # Създаваме копие на фигурата и задаваме цветова схема
+                fig_copy = go.Figure(st.session_state["fig"])
+                
+                # Задаваме цветова схема за линиите
+                colorscale = px.colors.qualitative.Set1  # Ярка цветова палитра
+                
+                # Обновяваме цветовете на всички трасове
+                for i, trace in enumerate(fig_copy.data):
+                    if hasattr(trace, 'line'):
+                        trace.line.color = colorscale[i % len(colorscale)]
+                    if hasattr(trace, 'marker'):
+                        trace.marker.color = colorscale[i % len(colorscale)]
+                
+                # Обновяваме оформлението за по-добри цветове
+                fig_copy.update_layout(
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    font=dict(color='black'),
+                    xaxis=dict(linecolor='black', gridcolor='lightgray'),
+                    yaxis=dict(linecolor='black', gridcolor='lightgray')
                 )
                 
+                # Генериране на цветна графика с по-високо качество
                 img_bytes = pio.to_image(
-                    st.session_state["fig"], 
+                    fig_copy, 
                     format="png", 
                     width=1200, 
-                    height=900
+                    height=900,
+                    scale=2,  # Повишаване на качеството
+                    engine="kaleido"
                 )
                 
                 pil_img = PILImage.open(BytesIO(img_bytes))
@@ -816,17 +739,60 @@ if "fig" in st.session_state:
                 story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
                 story.append(Spacer(1, 15))
                 
-            except Exception as e3:
-                error_style = ParagraphStyle(
-                    'ErrorStyle',
-                    parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=5,
-                    fontName=font_name,
-                    textColor=colors.HexColor('#d32f2f'),
-                    alignment=1
-                )
-                story.append(Paragraph(f"Грешка при генериране на графика: {e3}", error_style))
+            except Exception as e:
+                # Алтернативен подход ако горният не работи
+                try:
+                    # Опитваме се да експортираме оригиналната фигура с kaleido
+                    img_bytes = pio.to_image(
+                        st.session_state["fig"], 
+                        format="png", 
+                        width=1200, 
+                        height=900,
+                        scale=2,
+                        engine="kaleido"
+                    )
+                    
+                    pil_img = PILImage.open(BytesIO(img_bytes))
+                    img_buffer = io.BytesIO()
+                    pil_img.save(img_buffer, format="PNG")
+                    img_buffer.seek(0)
+                    story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                    story.append(Spacer(1, 15))
+                    
+                except Exception as e2:
+                    # Fallback - опитваме се да запазим цветовете чрез друг метод
+                    try:
+                        # Задаваме цветова схема директно в оформлението
+                        st.session_state["fig"].update_layout(
+                            colorway=px.colors.qualitative.Bold  # Ярка цветова палитра
+                        )
+                        
+                        img_bytes = pio.to_image(
+                            st.session_state["fig"], 
+                            format="png", 
+                            width=1200, 
+                            height=900
+                        )
+                        
+                        pil_img = PILImage.open(BytesIO(img_bytes))
+                        img_buffer = io.BytesIO()
+                        pil_img.save(img_buffer, format="PNG")
+                        img_buffer.seek(0)
+                        story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                        story.append(Spacer(1, 15))
+                        
+                    except Exception as e3:
+                        error_style = ParagraphStyle(
+                            'ErrorStyle',
+                            parent=styles['Normal'],
+                            fontSize=10,
+                            spaceAfter=5,
+                            fontName=font_name,
+                            textColor=colors.HexColor('#d32f2f'),
+                            alignment=1
+                        )
+                        story.append(Paragraph(f"Грешка при генериране на графика: {e3}", error_style))
+
         # ДОПУСТИМИ НАПРЕЖЕНИЯ
         img_path = "Допустими опънни напрежения.png"
         if os.path.exists(img_path):
@@ -969,6 +935,7 @@ if "fig" in st.session_state:
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
         return None
+
 # -----------------------------
 # Бутон за генериране на PDF
 # -----------------------------
