@@ -1125,11 +1125,11 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         title_style = ParagraphStyle(
             'CustomTitle',
             fontSize=18,
-            spaceAfter=13,  # По-малко разстояние
+            spaceAfter=8,  # По-малко разстояние
             alignment=1,
             textColor=colors.HexColor('#006064'),
             fontName=font_name,
-            leading=30,
+            leading=20,
         )
         
         story.append(Paragraph("Проверка на пътната конструкция срещу замръзване", title_style))
