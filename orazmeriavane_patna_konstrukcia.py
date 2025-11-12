@@ -1185,7 +1185,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 # Символна формула като текстов низ
                 symbolic_formula = " + ".join(symbolic_terms)
                 story.append(Paragraph("Символна формула:", thermal_value_style))
-                formula_text_symbolic = f'R₀ = {symbolic_formula}'
+                formula_text_symbolic = f'R<sub>0</sub> = {symbolic_formula}'
                 story.append(Paragraph(formula_text_symbolic, thermal_value_style))
                 
                 story.append(Spacer(1, 3))
@@ -1195,8 +1195,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 story.append(Paragraph("Формула със заместени стойности:", thermal_value_style))
                 formula_text_numeric = f'R<sub>0</sub> = {numeric_formula} = {R0:.3f} m²K/W'
                 story.append(Paragraph(formula_text_numeric, thermal_value_style))
-                
-                        
+        
+                                
         story.append(Spacer(1, 15))
         
         # ПРОВЕРКА НА ИЗИСКВАНИЯТА
