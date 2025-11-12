@@ -956,7 +956,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             # Основни параметри
             story.append(Paragraph(f"• Ee/Ei = {layer['Ee']:.0f} / {layer['Ei']:.0f} = {EeEi_ratio:.3f}", layer_value_style))
             story.append(Paragraph(f"• h/D = {layer['h']:.1f} / {st.session_state.final_D} = {hD_point:.3f}", layer_value_style))
-            story.append(Paragraph(f"• Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.0f}", layer_value_style))
+            story.append(Paragraph(f"• Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.3f}", layer_value_style))
             
             # Основното изчисление - ПОСЛЕДНО
             if layer.get("mode") == "Ed / Ei":
