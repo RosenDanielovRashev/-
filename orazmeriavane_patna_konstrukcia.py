@@ -349,6 +349,7 @@ elif mode == "h / D":
                 "h": result,
                 "Ed": Ed_input,
                 "hD_point": hD_point,
+                "EdEi_point": Ed_input / layer_data["Ei"],  # ДОБАВЕНО ТУК
                 "y_low": y_low,
                 "y_high": y_high,
                 "low_iso": low_iso,
@@ -953,9 +954,9 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Spacer(1, 3))  # По-малко разстояние
             
             # Основни параметри
-            story.append(Paragraph(f"• Ee/Ei = {layer['Ee']:.3f} / {layer['Ei']:.3f} = {EeEi_ratio:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Ee/Ei = {layer['Ee']:.0f} / {layer['Ei']:.0f} = {EeEi_ratio:.3f}", layer_value_style))
             story.append(Paragraph(f"• h/D = {layer['h']:.1f} / {st.session_state.final_D} = {hD_point:.3f}", layer_value_style))
-            story.append(Paragraph(f"• Ed/Ei = {layer['Ed']:.3f} / {layer['Ei']:.3f} = {EdEi_point:.3f}", layer_value_style))
+            story.append(Paragraph(f"• Ed/Ei = {layer['Ed']:.0f} / {layer['Ei']:.0f} = {EdEi_point:.0f}", layer_value_style))
             
             # Основното изчисление - ПОСЛЕДНО
             if layer.get("mode") == "Ed / Ei":
