@@ -1263,7 +1263,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 
                 story.append(Paragraph(conclusion_text, conclusion_style))
             else:
-                condition_text =  "Условието е изпълнено: z > Σh"
+                condition_text =  "Условието е изпълнено: z < Σh"
                 condition_style = ParagraphStyle(
                     'ConditionFail',
                     fontName=font_name,
