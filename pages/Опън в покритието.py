@@ -549,79 +549,92 @@ def generate_pdf_report():
         story.append(info_table)
         story.append(Spacer(1, 20))
 
-        # ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
+        # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
         formulas_title_style = ParagraphStyle(
             'FormulasTitle',
             fontName=font_name,
             fontSize=16,
             textColor=colors.HexColor('#2C5530'),
-            spaceAfter=15,
-            alignment=1
+            spaceAfter=10,
+            alignment=0
         )
-        story.append(Paragraph("ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ", formulas_title_style))
+        story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
+        
+        subtitle_style = ParagraphStyle(
+            'SubtitleStyle',
+            parent=styles['Normal'],
+            fontSize=11,
+            spaceAfter=8,
+            fontName=font_name,
+            textColor=colors.HexColor('#5D4037'),
+            alignment=0
+        )
+        story.append(Paragraph("Основни формули за изчисление:", subtitle_style))
 
-        # Основни формули като текст (както в оригинала)
+        # Основни формули като LaTeX (както на снимката)
         formula_style = ParagraphStyle(
             'FormulaStyle',
             parent=styles['Normal'],
             fontSize=10,
-            spaceAfter=8,
+            spaceAfter=12,
             fontName=font_name,
             textColor=colors.HexColor('#4B5563'),
-            alignment=1,
-            leftIndent=0
+            alignment=0,
+            leftIndent=10
         )
 
-        story.append(Paragraph("Esr = Σ(Ei × hi) / Σhi", formula_style))
-        story.append(Paragraph("H = Σhi", formula_style))
-        story.append(Paragraph("σR = 1.15 × p × σR(номограма)", formula_style))
+        story.append(Paragraph(r"\[E_{sr} = \frac{\sum\limits_{i=1}^{n}(E_i \cdot h_i)}{\sum\limits_{i=1}^{n}h_i}\]", formula_style))
+        story.append(Paragraph(r"\[H = \sum\limits_{i=1}^{n}h_i\]", formula_style))
+        story.append(Paragraph(r"\[\sigma_R = 1.15 \cdot p \cdot \sigma_R^{номограмма}\]", formula_style))
         
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 20))
 
-        # ИЗЧИСЛЕНИЯ С ЧИСЛЕНИ СТОЙНОСТИ
+        # 3. ИЗЧИСЛЕНИЯ
         calculations_title_style = ParagraphStyle(
             'CalculationsTitle',
             fontName=font_name,
-            fontSize=14,
-            textColor=colors.HexColor('#5D4037'),
+            fontSize=16,
+            textColor=colors.HexColor('#2C5530'),
             spaceAfter=10,
             alignment=0
         )
-        story.append(Paragraph("ИЗЧИСЛЕНИЯ:", calculations_title_style))
+        story.append(Paragraph("3. Изчисления", calculations_title_style))
+        story.append(Paragraph("Изчислителни формули:", subtitle_style))
 
-        # Изчисление на Esr и H
+        # Изчисление на Esr и H с числени стойности
         num = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
         den = sum(st.session_state.hi_list)
         Esr_val = num / den if den else 0
         H_val = den
         
-        num_str = " + ".join([f"{Ei:.2f}×{hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
+        num_str = " + ".join([f"{Ei:.2f} \\times {hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
         den_str = " + ".join([f"{hi:.2f}" for hi in st.session_state.hi_list])
 
         calculation_style = ParagraphStyle(
             'CalculationStyle',
             parent=styles['Normal'],
-            fontSize=9,
-            spaceAfter=5,
+            fontSize=10,
+            spaceAfter=12,
             fontName=font_name,
             textColor=colors.HexColor('#4B5563'),
+            alignment=0,
             leftIndent=10
         )
 
-        story.append(Paragraph(f"• Esr = ({num_str}) / ({den_str}) = {Esr_val:.2f} MPa", calculation_style))
-        story.append(Paragraph(f"• H = {den_str} = {H_val:.2f} cm", calculation_style))
+        story.append(Paragraph(fr"\[E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr_val:.2f} \, \text{{MPa}}\]", calculation_style))
+        story.append(Paragraph(fr"\[H = {den_str} = {H_val:.2f} \, \text{{cm}}\]", calculation_style))
 
         if 'final_sigma' in st.session_state:
-            story.append(Paragraph(f"• Esr/Ed = {Esr_val:.2f} / {st.session_state.final_Ed:.2f} = {Esr_val/st.session_state.final_Ed:.3f}", calculation_style))
-            story.append(Paragraph(f"• H/D = {H_val:.2f} / {st.session_state.final_D:.2f} = {H_val/st.session_state.final_D:.3f}", calculation_style))
-            story.append(Paragraph(f"• σR(номограма) = {st.session_state.final_sigma:.3f} MPa", calculation_style))
+            story.append(Paragraph(fr"\[\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr_val/st.session_state.final_Ed:.3f}\]", calculation_style))
+            story.append(Paragraph(fr"\[\frac{{H}}{{D}} = \frac{{{H_val:.2f}}}{{{st.session_state.final_D:.2f}}} = {H_val/st.session_state.final_D:.3f}\]", calculation_style))
+            story.append(Paragraph(fr"\[\sigma_R^{{номограмма}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}\]", calculation_style))
 
         axle_load = st.session_state.get("axle_load", 100)
         p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
         if p_loc and 'final_sigma' in st.session_state:
             sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
-            story.append(Paragraph(f"• p = {p_loc:.3f} (за осов товар {axle_load} kN)", calculation_style))
-            story.append(Paragraph(f"• σR = 1.15 × {p_loc:.3f} × {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} MPa", calculation_style))
+            story.append(Paragraph(fr"\[p = {p_loc:.3f} \, \text{{(за осов товар {axle_load} kN)}}\]", calculation_style))
+            story.append(Paragraph(fr"\[\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \, \text{{MPa}}\]", calculation_style))
 
         story.append(Spacer(1, 20))
 
