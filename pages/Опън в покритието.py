@@ -596,11 +596,11 @@ def generate_pdf_report():
         title_style = ParagraphStyle(
             'CustomTitle',
             fontSize=20,  # Увеличена с 10%
-            spaceAfter=15,  # Увеличена с 10%
+            spaceAfter=5,  # Увеличена с 10%
             alignment=1,
             textColor=colors.HexColor('#006064'),
             fontName=font_name,
-            leading=33,  # Увеличена с 10%
+            leading=20,  # Увеличена с 10%
         )
         
         story.append(Paragraph("ОПЪН В ПОКРИТИЕТО", title_style))
