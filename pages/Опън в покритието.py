@@ -454,14 +454,14 @@ class EnhancedPDF(FPDF):
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
-def render_formula_to_image(formula_text, fontsize=20, dpi=150):
+def render_formula_to_image(formula_text, fontsize=24, dpi=150):  # Увеличено от 20 на 24 (20%)
     """Рендва формула като изображение чрез matplotlib mathtext"""
     plt.rcParams['text.usetex'] = False
     plt.rcParams['mathtext.fontset'] = 'cm'
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.size'] = fontsize
     
-    fig = plt.figure(figsize=(8, 1.2))  # По-къса фигура за по-компактно
+    fig = plt.figure(figsize=(9.6, 1.44))  # Увеличено с 20% от 8, 1.2
     plt.text(0.5, 0.5, f'${formula_text}$', 
              horizontalalignment='center', 
              verticalalignment='center',
@@ -587,8 +587,8 @@ def generate_pdf_report():
             # Първа колона
             if i < len(formulas):
                 try:
-                    img_buf1 = render_formula_to_image(formulas[i], fontsize=18, dpi=150)
-                    row.append(RLImage(img_buf1, width=75*mm, height=15*mm))
+                    img_buf1 = render_formula_to_image(formulas[i], fontsize=21.6, dpi=150)  # Увеличено от 18 на 21.6 (20%)
+                    row.append(RLImage(img_buf1, width=90*mm, height=18*mm))  # Увеличено от 75*15 на 90*18 (20%)
                 except:
                     row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), subtitle_style))
             else:
@@ -597,8 +597,8 @@ def generate_pdf_report():
             # Втора колона
             if i + 1 < len(formulas):
                 try:
-                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=18, dpi=150)
-                    row.append(RLImage(img_buf2, width=75*mm, height=15*mm))
+                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=21.6, dpi=150)  # Увеличено от 18 на 21.6 (20%)
+                    row.append(RLImage(img_buf2, width=90*mm, height=18*mm))  # Увеличено от 75*15 на 90*18 (20%)
                 except:
                     row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), subtitle_style))
             else:
@@ -606,7 +606,7 @@ def generate_pdf_report():
             
             formula_table_data.append(row)
 
-        formula_table = Table(formula_table_data, colWidths=[80*mm, 80*mm])
+        formula_table = Table(formula_table_data, colWidths=[96*mm, 96*mm])  # Увеличено от 80*2 на 96*2 (20%)
         formula_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -664,8 +664,8 @@ def generate_pdf_report():
             # Първа колона
             if i < len(calculation_formulas):
                 try:
-                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=16, dpi=150)
-                    row.append(RLImage(img_buf1, width=75*mm, height=14*mm))
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=19.2, dpi=150)  # Увеличено от 16 на 19.2 (20%)
+                    row.append(RLImage(img_buf1, width=90*mm, height=16.8*mm))  # Увеличено от 75*14 на 90*16.8 (20%)
                 except:
                     simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, subtitle_style))
@@ -675,8 +675,8 @@ def generate_pdf_report():
             # Втора колона
             if i + 1 < len(calculation_formulas):
                 try:
-                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=16, dpi=150)
-                    row.append(RLImage(img_buf2, width=75*mm, height=14*mm))
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=19.2, dpi=150)  # Увеличено от 16 на 19.2 (20%)
+                    row.append(RLImage(img_buf2, width=90*mm, height=16.8*mm))  # Увеличено от 75*14 на 90*16.8 (20%)
                 except:
                     simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, subtitle_style))
@@ -685,7 +685,7 @@ def generate_pdf_report():
             
             calc_table_data.append(row)
 
-        calc_table = Table(calc_table_data, colWidths=[80*mm, 80*mm])
+        calc_table = Table(calc_table_data, colWidths=[96*mm, 96*mm])  # Увеличено от 80*2 на 96*2 (20%)
         calc_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
