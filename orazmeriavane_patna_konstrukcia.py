@@ -971,30 +971,23 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             # Списък с всички уникални стойности на Ee/Ei
             all_e_ei_values = sorted(data["Ee_over_Ei"].unique())
             
-            # Намиране на двата най-близки изолинии до точката на интерполация, които са кратни на 0.05
-            if all(k in layer for k in ["low_iso", "high_iso"]):
-                closest_isos = [layer['low_iso'], layer['high_iso']]
-            else:
-                # Ако няма интерполационни данни, използваме стойността Ee/Ei за текущия пласт
-                current_e_ei = layer['Ee'] / layer['Ei']
-                # Намираме двата най-близки изолинии, които са кратни на 0.05
-                distances = [(abs(val - current_e_ei), val) for val in all_e_ei_values if abs(val * 100) % 5 == 0]
+            # Намиране на стойността Ee/Ei за текущия пласт
+            current_e_ei = layer['Ee'] / layer['Ei']
+            
+            # Филтрираме само изолиниите, които са кратни на 0.05
+            multiples_of_005 = [val for val in all_e_ei_values if abs(val * 100) % 5 == 0]
+            
+            # Намираме двата най-близки изолинии до текущата стойност, които са кратни на 0.05
+            if multiples_of_005:
+                distances = [(abs(val - current_e_ei), val) for val in multiples_of_005]
                 distances.sort()
-                closest_isos = [distances[0][1], distances[1][1]] if len(distances) >= 2 else [current_e_ei, current_e_ei]
-            
-            # Вземаме само двата най-близки изолинии, които са кратни на 0.05
-            isos_to_label = []
-            for iso in closest_isos:
-                if abs(iso * 100) % 5 == 0:  # Проверка дали е кратно на 0.05
-                    isos_to_label.append(iso)
-            
-            # Ако няма достатъчно изолинии, кратни на 0.05, добавяме още
-            if len(isos_to_label) < 2:
-                additional_isos = [val for val in all_e_ei_values if abs(val * 100) % 5 == 0 and val not in isos_to_label]
-                isos_to_label.extend(additional_isos[:2 - len(isos_to_label)])
-            
-            # Вземаме само първите 2
-            isos_to_label = isos_to_label[:2]
+                # Вземаме двата най-близки
+                isos_to_label = [distances[0][1], distances[1][1]] if len(distances) >= 2 else [distances[0][1]]
+            else:
+                # Ако няма изолинии, кратни на 0.05, вземаме двата най-близки от всички
+                distances = [(abs(val - current_e_ei), val) for val in all_e_ei_values]
+                distances.sort()
+                isos_to_label = [distances[0][1], distances[1][1]] if len(distances) >= 2 else [distances[0][1]]
             
             # Добавяме всички изолинии
             for val in all_e_ei_values:
@@ -1063,7 +1056,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 width=1200,
                 height=800
             )
-
             # Конвертиране на фигурата в изображение с PILImage
             try:
                 img_bytes = pio.to_image(fig, format="png", width=1200, height=800)
