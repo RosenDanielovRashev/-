@@ -523,496 +523,496 @@ class EnhancedPDF(FPDF):
 
         self.ln(4)
 
-        # -------------------------------------------------
-        # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
-        # -------------------------------------------------
-        def render_formula_to_image(formula_text, fontsize=24, dpi=150):
-            """Рендва формула като изображение чрез matplotlib mathtext"""
-            plt.rcParams['text.usetex'] = False
-            plt.rcParams['mathtext.fontset'] = 'cm'
-            plt.rcParams['font.family'] = 'serif'
-            plt.rcParams['font.size'] = fontsize
-            
-            fig = plt.figure(figsize=(9.6, 1.44))
-            plt.text(0.5, 0.5, f'${formula_text}$', 
-                     horizontalalignment='center', 
-                     verticalalignment='center',
-                     transform=plt.gca().transAxes,
-                     fontsize=fontsize)
-            plt.axis('off')
-            
-            buf = BytesIO()
-            plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.2,
-                        facecolor='white', edgecolor='none')
-            plt.close(fig)
-            buf.seek(0)
-            return buf
+# -------------------------------------------------
+# Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
+# -------------------------------------------------
+def render_formula_to_image(formula_text, fontsize=24, dpi=150):
+    """Рендва формула като изображение чрез matplotlib mathtext"""
+    plt.rcParams['text.usetex'] = False
+    plt.rcParams['mathtext.fontset'] = 'cm'
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.size'] = fontsize
+    
+    fig = plt.figure(figsize=(9.6, 1.44))
+    plt.text(0.5, 0.5, f'${formula_text}$', 
+             horizontalalignment='center', 
+             verticalalignment='center',
+             transform=plt.gca().transAxes,
+             fontsize=fontsize)
+    plt.axis('off')
+    
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.2,
+                facecolor='white', edgecolor='none')
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+def generate_pdf_report():
+    try:
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            leftMargin=15 * mm,
+            rightMargin=15 * mm,
+            topMargin=15 * mm,
+            bottomMargin=15 * mm
+        )
+        story = []
+        styles = getSampleStyleSheet()
+
+        # Зареждане на шрифт
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            font_name = 'DejaVuSans-Bold'
+        except:
+            font_name = 'Helvetica-Bold'
+
+        # ЗАГЛАВИЕ
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            fontSize=24,
+            spaceAfter=20,
+            alignment=1,
+            textColor=colors.HexColor('#006064'),
+            fontName=font_name,
+            leading=30,
+        )
         
-        def generate_pdf_report():
-            try:
-                buffer = io.BytesIO()
-                doc = SimpleDocTemplate(
-                    buffer,
-                    pagesize=A4,
-                    leftMargin=15 * mm,
-                    rightMargin=15 * mm,
-                    topMargin=15 * mm,
-                    bottomMargin=15 * mm
-                )
-                story = []
-                styles = getSampleStyleSheet()
-        
-                # Зареждане на шрифт
+        story.append(Paragraph("ОПЪН В ПОКРИТИЕТО", title_style))
+        story.append(Spacer(1, 15))
+
+        # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
+        table_data = [
+            ["ПАРАМЕТЪР", "СТОЙНОСТ", "ЕДИНИЦА"],
+            ["Диаметър D", f"{st.session_state.final_D:.2f}", "cm"],
+            ["Брой пластове", "2", ""],
+            ["Осова тежест", f"{st.session_state.get('axle_load', 100)}", "kN"],
+        ]
+
+        for i in range(2):
+            table_data.append([f"Пласт {i+1} - Ei", f"{st.session_state.Ei_list[i]:.2f}", "MPa"])
+            table_data.append([f"Пласт {i+1} - hi", f"{st.session_state.hi_list[i]:.2f}", "cm"])
+
+        table_data.append(["Ed", f"{st.session_state.final_Ed:.2f}", "MPa"])
+
+        info_table = Table(table_data, colWidths=[60*mm, 50*mm, 30*mm], hAlign='LEFT')
+        info_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
+            ('TOPPADDING', (0, 0), (-1, 0), 5),
+            
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+            ('FONTNAME', (0, 1), (-1, -1), font_name),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
+            ('TOPPADDING', (0, 1), (-1, -1), 3),
+            
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+        ]))
+
+        story.append(info_table)
+        story.append(Spacer(1, 25))
+
+        # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ (намалена големина с 20%)
+        formulas_title_style = ParagraphStyle(
+            'FormulasTitle',
+            fontName=font_name,
+            fontSize=12.8,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=10,
+            alignment=0
+        )
+        story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
+
+        # Основни формули в две колони
+        formulas = [
+            r"E_{sr} = \frac{\sum (E_i h_i)}{\sum h_i}",
+            r"H = \sum h_i", 
+            r"\sigma_R = 1.15 p \sigma_R^{nom}"
+        ]
+
+        # Създаваме таблица с две колони за формулите
+        formula_table_data = []
+        for i in range(0, len(formulas), 2):
+            row = []
+            # Първа колона
+            if i < len(formulas):
                 try:
-                    pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
-                    pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
-                    font_name = 'DejaVuSans-Bold'
+                    img_buf1 = render_formula_to_image(formulas[i], fontsize=21.6, dpi=150)
+                    row.append(RLImage(img_buf1, width=90*mm, height=18*mm))
                 except:
-                    font_name = 'Helvetica-Bold'
-        
-                # ЗАГЛАВИЕ
-                title_style = ParagraphStyle(
-                    'CustomTitle',
-                    fontSize=24,
-                    spaceAfter=20,
-                    alignment=1,
-                    textColor=colors.HexColor('#006064'),
-                    fontName=font_name,
-                    leading=30,
-                )
-                
-                story.append(Paragraph("ОПЪН В ПОКРИТИЕТО", title_style))
-                story.append(Spacer(1, 15))
-        
-                # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
-                table_data = [
-                    ["ПАРАМЕТЪР", "СТОЙНОСТ", "ЕДИНИЦА"],
-                    ["Диаметър D", f"{st.session_state.final_D:.2f}", "cm"],
-                    ["Брой пластове", "2", ""],
-                    ["Осова тежест", f"{st.session_state.get('axle_load', 100)}", "kN"],
-                ]
-        
-                for i in range(2):
-                    table_data.append([f"Пласт {i+1} - Ei", f"{st.session_state.Ei_list[i]:.2f}", "MPa"])
-                    table_data.append([f"Пласт {i+1} - hi", f"{st.session_state.hi_list[i]:.2f}", "cm"])
-        
-                table_data.append(["Ed", f"{st.session_state.final_Ed:.2f}", "MPa"])
-        
-                info_table = Table(table_data, colWidths=[60*mm, 50*mm, 30*mm], hAlign='LEFT')
-                info_table.setStyle(TableStyle([
-                    ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
-                    ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                    ('FONTNAME', (0, 0), (-1, 0), font_name),
-                    ('FONTSIZE', (0, 0), (-1, 0), 9),
-                    ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-                    ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-                    ('TOPPADDING', (0, 0), (-1, 0), 5),
-                    
-                    ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
-                    ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
-                    ('FONTNAME', (0, 1), (-1, -1), font_name),
-                    ('FONTSIZE', (0, 1), (-1, -1), 8),
-                    ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-                    ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
-                    ('TOPPADDING', (0, 1), (-1, -1), 3),
-                    
-                    ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-                    ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
-                ]))
-        
-                story.append(info_table)
-                story.append(Spacer(1, 25))
-        
-                # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ (намалена големина с 20%)
-                formulas_title_style = ParagraphStyle(
-                    'FormulasTitle',
-                    fontName=font_name,
-                    fontSize=12.8,
-                    textColor=colors.HexColor('#2C5530'),
-                    spaceAfter=10,
-                    alignment=0
-                )
-                story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
-        
-                # Основни формули в две колони
-                formulas = [
-                    r"E_{sr} = \frac{\sum (E_i h_i)}{\sum h_i}",
-                    r"H = \sum h_i", 
-                    r"\sigma_R = 1.15 p \sigma_R^{nom}"
-                ]
-        
-                # Създаваме таблица с две колони за формулите
-                formula_table_data = []
-                for i in range(0, len(formulas), 2):
-                    row = []
-                    # Първа колона
-                    if i < len(formulas):
-                        try:
-                            img_buf1 = render_formula_to_image(formulas[i], fontsize=21.6, dpi=150)
-                            row.append(RLImage(img_buf1, width=90*mm, height=18*mm))
-                        except:
-                            row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), formulas_title_style))
-                    else:
-                        row.append('')
-                    
-                    # Втора колона
-                    if i + 1 < len(formulas):
-                        try:
-                            img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=21.6, dpi=150)
-                            row.append(RLImage(img_buf2, width=90*mm, height=18*mm))
-                        except:
-                            row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), formulas_title_style))
-                    else:
-                        row.append('')
-                    
-                    formula_table_data.append(row)
-        
-                formula_table = Table(formula_table_data, colWidths=[96*mm, 96*mm])
-                formula_table.setStyle(TableStyle([
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
-                    ('TOPPADDING', (0, 0), (-1, -1), 8),
-                ]))
-                
-                story.append(formula_table)
-                story.append(Spacer(1, 20))
-        
-                # 3. ИЗЧИСЛЕНИЯ (намалена големина с 20%)
-                calculations_title_style = ParagraphStyle(
-                    'CalculationsTitle',
-                    fontName=font_name,
-                    fontSize=12.8,
-                    textColor=colors.HexColor('#2C5530'),
-                    spaceAfter=10,
-                    alignment=0
-                )
-                story.append(Paragraph("3. Изчисления", calculations_title_style))
-        
-                # Изчисление на Esr и H с числени стойности
-                num = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
-                den = sum(st.session_state.hi_list)
-                Esr_val = num / den if den else 0
-                H_val = den
-                
-                # Формули за изчисления
-                calculation_formulas = [
-                    fr"E_{{sr}} = \frac{{{st.session_state.Ei_list[0]:.0f} \times {st.session_state.hi_list[0]:.0f} + {st.session_state.Ei_list[1]:.0f} \times {st.session_state.hi_list[1]:.0f}}}{{{st.session_state.hi_list[0]:.0f} + {st.session_state.hi_list[1]:.0f}}} = {Esr_val:.0f} \ \mathrm{{MPa}}",
-                    fr"H = {st.session_state.hi_list[0]:.0f} + {st.session_state.hi_list[1]:.0f} = {H_val:.0f} \ \mathrm{{cm}}"
-                ]
-        
-                if 'final_sigma' in st.session_state:
-                    calculation_formulas.extend([
-                        fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.0f}}}{{{st.session_state.final_Ed:.0f}}} = {Esr_val/st.session_state.final_Ed:.3f}",
-                        fr"\frac{{H}}{{D}} = \frac{{{H_val:.0f}}}{{{st.session_state.final_D:.0f}}} = {H_val/st.session_state.final_D:.3f}",
-                        fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \ \mathrm{{MPa}}"
-                    ])
-        
-                axle_load = st.session_state.get("axle_load", 100)
-                p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
-                if p_loc and 'final_sigma' in st.session_state:
-                    sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
-                    calculation_formulas.extend([
-                        fr"p = {p_loc:.3f} \ \mathrm{{({axle_load} \ kN)}}",
-                        fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \ \mathrm{{MPa}}"
-                    ])
-        
-                # Изчисления в две колони
-                calc_table_data = []
-                for i in range(0, len(calculation_formulas), 2):
-                    row = []
-                    # Първа колона
-                    if i < len(calculation_formulas):
-                        try:
-                            img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=19.2, dpi=150)
-                            row.append(RLImage(img_buf1, width=90*mm, height=16.8*mm))
-                        except:
-                            simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
-                            row.append(Paragraph(simple_text, calculations_title_style))
-                    else:
-                        row.append('')
-                    
-                    # Втора колона
-                    if i + 1 < len(calculation_formulas):
-                        try:
-                            img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=19.2, dpi=150)
-                            row.append(RLImage(img_buf2, width=90*mm, height=16.8*mm))
-                        except:
-                            simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
-                            row.append(Paragraph(simple_text, calculations_title_style))
-                    else:
-                        row.append('')
-                    
-                    calc_table_data.append(row)
-        
-                calc_table = Table(calc_table_data, colWidths=[96*mm, 96*mm])
-                calc_table.setStyle(TableStyle([
-                    ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                    ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                    ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                    ('TOPPADDING', (0, 0), (-1, -1), 6),
-                ]))
-                
-                story.append(calc_table)
-                story.append(Spacer(1, 20))
-        
-                # НОВ ЛИСТ ЗА ГРАФИКАТА
-                story.append(PageBreak())
-        
-                # ГРАФИКА НА НОМОГРАМАТА
-                graph_title_style = ParagraphStyle(
-                    'GraphTitle',
-                    fontName=font_name,
-                    fontSize=16,
-                    textColor=colors.HexColor('#2C5530'),
-                    spaceAfter=15,
-                    alignment=1
-                )
-                story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
-                
-                # ИЗПОЛЗВАНЕ НА НОВАТА ФУНКЦИЯ ЗА ОПТИМИЗИРАНА ГРАФИКА
+                    row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), formulas_title_style))
+            else:
+                row.append('')
+            
+            # Втора колона
+            if i + 1 < len(formulas):
                 try:
-                    # Създаване на оптимизирана графика за PDF
-                    pdf_fig = go.Figure()
-                    
-                    # Цветова схема, която се вижда добре в PDF
-                    colors_palette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
-                                     '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-                    
-                    # Добавяне на всички изолинии от данните
-                    for i, (val, group) in enumerate(data.groupby("Esr_over_Ed")):
-                        pdf_fig.add_trace(go.Scatter(
-                            x=group["H_over_D"],
-                            y=group["sigma_R"],
-                            mode='lines',
-                            name=f"Esr/Ed = {val:.1f}",
-                            line=dict(color=colors_palette[i % len(colors_palette)], width=2)
-                        ))
-                    
-                    # Добавяне на точката на потребителя (ако има изчисление)
-                    if 'final_hD' in st.session_state and 'final_sigma' in st.session_state:
-                        pdf_fig.add_trace(go.Scatter(
-                            x=[st.session_state.final_hD], 
-                            y=[st.session_state.final_sigma],
-                            mode='markers',
-                            marker=dict(size=12, color='red', symbol='circle', 
-                                       line=dict(color='darkred', width=2)),
-                            name="Изчислена точка"
-                        ))
-                    
-                    # Настройки за PDF с легенда в дясно
-                    pdf_fig.update_layout(
-                        title=dict(
-                            text="Номограма: σR в долния пласт на покритието",
-                            font=dict(size=18, color='black', family="Arial")
-                        ),
-                        xaxis=dict(
-                            title="H / D",
-                            title_font=dict(size=14, color='black'),
-                            tickfont=dict(size=12, color='black'),
-                            linecolor='black',
-                            gridcolor='lightgray',
-                            mirror=True,
-                            showgrid=True
-                        ),
-                        yaxis=dict(
-                            title="σR [MPa]",
-                            title_font=dict(size=14, color='black'),
-                            tickfont=dict(size=12, color='black'),
-                            linecolor='black',
-                            gridcolor='lightgray',
-                            mirror=True,
-                            showgrid=True
-                        ),
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        legend=dict(
-                            bgcolor='rgba(255,255,255,0.9)',
-                            bordercolor='black',
-                            borderwidth=1,
-                            font=dict(size=10, color='black'),
-                            x=1.05,  # Преместване на легендата в дясно
-                            y=0.5,
-                            xanchor='left',
-                            yanchor='middle'
-                        ),
-                        width=1200,
-                        height=800,
-                        margin=dict(r=150)  # Увеличаване на десния маржин за легендата
-                    )
-                    
-                    img_bytes = pio.to_image(
-                        pdf_fig, 
-                        format="png", 
-                        width=1200, 
-                        height=800,
-                        scale=4,
-                        engine="kaleido"
-                    )
-                    
-                    pil_img = PILImage.open(BytesIO(img_bytes))
-                    img_buffer = io.BytesIO()
-                    pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
-                    img_buffer.seek(0)
-                    
-                    story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-                    story.append(Spacer(1, 15))
-                    
-                except Exception as e:
-                    error_style = ParagraphStyle(
-                        'ErrorStyle',
-                        parent=styles['Normal'],
-                        fontSize=10,
-                        spaceAfter=5,
-                        fontName=font_name,
-                        textColor=colors.HexColor('#d32f2f'),
-                        alignment=1
-                    )
-                    story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
+                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=21.6, dpi=150)
+                    row.append(RLImage(img_buf2, width=90*mm, height=18*mm))
+                except:
+                    row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), formulas_title_style))
+            else:
+                row.append('')
+            
+            formula_table_data.append(row)
+
+        formula_table = Table(formula_table_data, colWidths=[96*mm, 96*mm])
+        formula_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ]))
         
-                # РЕЗУЛТАТИ И ПРОВЕРКА
-                results_title_style = ParagraphStyle(
-                    'ResultsTitle',
+        story.append(formula_table)
+        story.append(Spacer(1, 20))
+
+        # 3. ИЗЧИСЛЕНИЯ (намалена големина с 20%)
+        calculations_title_style = ParagraphStyle(
+            'CalculationsTitle',
+            fontName=font_name,
+            fontSize=12.8,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=10,
+            alignment=0
+        )
+        story.append(Paragraph("3. Изчисления", calculations_title_style))
+
+        # Изчисление на Esr и H с числени стойности
+        num = sum(Ei * hi for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list))
+        den = sum(st.session_state.hi_list)
+        Esr_val = num / den if den else 0
+        H_val = den
+        
+        # Формули за изчисления
+        calculation_formulas = [
+            fr"E_{{sr}} = \frac{{{st.session_state.Ei_list[0]:.0f} \times {st.session_state.hi_list[0]:.0f} + {st.session_state.Ei_list[1]:.0f} \times {st.session_state.hi_list[1]:.0f}}}{{{st.session_state.hi_list[0]:.0f} + {st.session_state.hi_list[1]:.0f}}} = {Esr_val:.0f} \ \mathrm{{MPa}}",
+            fr"H = {st.session_state.hi_list[0]:.0f} + {st.session_state.hi_list[1]:.0f} = {H_val:.0f} \ \mathrm{{cm}}"
+        ]
+
+        if 'final_sigma' in st.session_state:
+            calculation_formulas.extend([
+                fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.0f}}}{{{st.session_state.final_Ed:.0f}}} = {Esr_val/st.session_state.final_Ed:.3f}",
+                fr"\frac{{H}}{{D}} = \frac{{{H_val:.0f}}}{{{st.session_state.final_D:.0f}}} = {H_val/st.session_state.final_D:.3f}",
+                fr"\sigma_R^{{nom}} = {st.session_state.final_sigma:.3f} \ \mathrm{{MPa}}"
+            ])
+
+        axle_load = st.session_state.get("axle_load", 100)
+        p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
+        if p_loc and 'final_sigma' in st.session_state:
+            sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
+            calculation_formulas.extend([
+                fr"p = {p_loc:.3f} \ \mathrm{{({axle_load} \ kN)}}",
+                fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \ \mathrm{{MPa}}"
+            ])
+
+        # Изчисления в две колони
+        calc_table_data = []
+        for i in range(0, len(calculation_formulas), 2):
+            row = []
+            # Първа колона
+            if i < len(calculation_formulas):
+                try:
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=19.2, dpi=150)
+                    row.append(RLImage(img_buf1, width=90*mm, height=16.8*mm))
+                except:
+                    simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
+            else:
+                row.append('')
+            
+            # Втора колона
+            if i + 1 < len(calculation_formulas):
+                try:
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=19.2, dpi=150)
+                    row.append(RLImage(img_buf2, width=90*mm, height=16.8*mm))
+                except:
+                    simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
+            else:
+                row.append('')
+            
+            calc_table_data.append(row)
+
+        calc_table = Table(calc_table_data, colWidths=[96*mm, 96*mm])
+        calc_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ]))
+        
+        story.append(calc_table)
+        story.append(Spacer(1, 20))
+
+        # НОВ ЛИСТ ЗА ГРАФИКАТА
+        story.append(PageBreak())
+
+        # ГРАФИКА НА НОМОГРАМАТА
+        graph_title_style = ParagraphStyle(
+            'GraphTitle',
+            fontName=font_name,
+            fontSize=16,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=15,
+            alignment=1
+        )
+        story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
+        
+        # ИЗПОЛЗВАНЕ НА НОВАТА ФУНКЦИЯ ЗА ОПТИМИЗИРАНА ГРАФИКА
+        try:
+            # Създаване на оптимизирана графика за PDF
+            pdf_fig = go.Figure()
+            
+            # Цветова схема, която се вижда добре в PDF
+            colors_palette = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+                             '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+            
+            # Добавяне на всички изолинии от данните
+            for i, (val, group) in enumerate(data.groupby("Esr_over_Ed")):
+                pdf_fig.add_trace(go.Scatter(
+                    x=group["H_over_D"],
+                    y=group["sigma_R"],
+                    mode='lines',
+                    name=f"Esr/Ed = {val:.1f}",
+                    line=dict(color=colors_palette[i % len(colors_palette)], width=2)
+                ))
+            
+            # Добавяне на точката на потребителя (ако има изчисление)
+            if 'final_hD' in st.session_state and 'final_sigma' in st.session_state:
+                pdf_fig.add_trace(go.Scatter(
+                    x=[st.session_state.final_hD], 
+                    y=[st.session_state.final_sigma],
+                    mode='markers',
+                    marker=dict(size=12, color='red', symbol='circle', 
+                               line=dict(color='darkred', width=2)),
+                    name="Изчислена точка"
+                ))
+            
+            # Настройки за PDF с легенда в дясно
+            pdf_fig.update_layout(
+                title=dict(
+                    text="Номограма: σR в долния пласт на покритието",
+                    font=dict(size=18, color='black', family="Arial")
+                ),
+                xaxis=dict(
+                    title="H / D",
+                    title_font=dict(size=14, color='black'),
+                    tickfont=dict(size=12, color='black'),
+                    linecolor='black',
+                    gridcolor='lightgray',
+                    mirror=True,
+                    showgrid=True
+                ),
+                yaxis=dict(
+                    title="σR [MPa]",
+                    title_font=dict(size=14, color='black'),
+                    tickfont=dict(size=12, color='black'),
+                    linecolor='black',
+                    gridcolor='lightgray',
+                    mirror=True,
+                    showgrid=True
+                ),
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                legend=dict(
+                    bgcolor='rgba(255,255,255,0.9)',
+                    bordercolor='black',
+                    borderwidth=1,
+                    font=dict(size=10, color='black'),
+                    x=1.05,  # Преместване на легендата в дясно
+                    y=0.5,
+                    xanchor='left',
+                    yanchor='middle'
+                ),
+                width=1200,
+                height=800,
+                margin=dict(r=150)  # Увеличаване на десния маржин за легендата
+            )
+            
+            img_bytes = pio.to_image(
+                pdf_fig, 
+                format="png", 
+                width=1200, 
+                height=800,
+                scale=4,
+                engine="kaleido"
+            )
+            
+            pil_img = PILImage.open(BytesIO(img_bytes))
+            img_buffer = io.BytesIO()
+            pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
+            img_buffer.seek(0)
+            
+            story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+            story.append(Spacer(1, 15))
+            
+        except Exception as e:
+            error_style = ParagraphStyle(
+                'ErrorStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=5,
+                fontName=font_name,
+                textColor=colors.HexColor('#d32f2f'),
+                alignment=1
+            )
+            story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
+
+        # РЕЗУЛТАТИ И ПРОВЕРКА
+        results_title_style = ParagraphStyle(
+            'ResultsTitle',
+            fontName=font_name,
+            fontSize=16,
+            textColor=colors.HexColor('#006064'),
+            spaceAfter=15,
+            alignment=1
+        )
+        story.append(Paragraph("РЕЗУЛТАТИ И ПРОВЕРКА", results_title_style))
+
+        if 'final_sigma_R' in st.session_state and 'manual_sigma_value' in st.session_state:
+            check_passed = st.session_state.final_sigma_R <= st.session_state.manual_sigma_value
+
+            # Таблица с резултати
+            results_data = [
+                ["ПАРАМЕТЪР", "СТОЙНОСТ"],
+                ["Изчислено σR", f"{st.session_state.final_sigma_R:.3f} MPa"],
+                ["Допустимо σR", f"{st.session_state.manual_sigma_value:.2f} MPa"]
+            ]
+
+            results_table = Table(results_data, colWidths=[80*mm, 60*mm], hAlign='CENTER')
+            results_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), font_name),
+                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+                ('TOPPADDING', (0, 0), (-1, 0), 6),
+                
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+                ('FONTNAME', (0, 1), (-1, -1), font_name),
+                ('FONTSIZE', (0, 1), (-1, -1), 9),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
+                ('TOPPADDING', (0, 1), (-1, -1), 4),
+                
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+            ]))
+
+            story.append(results_table)
+            story.append(Spacer(1, 15))
+
+            # Съобщение за проверка
+            if check_passed:
+                status_style = ParagraphStyle(
+                    'StatusOK',
                     fontName=font_name,
-                    fontSize=16,
-                    textColor=colors.HexColor('#006064'),
-                    spaceAfter=15,
+                    fontSize=12,
+                    textColor=colors.HexColor('#2e7d32'),
+                    spaceAfter=12,
+                    alignment=1,
+                    backColor=colors.HexColor('#e8f5e9')
+                )
+                story.append(Paragraph("✅ ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
+                subtitle_style = ParagraphStyle(
+                    'SubtitleStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#5D4037'),
                     alignment=1
                 )
-                story.append(Paragraph("РЕЗУЛТАТИ И ПРОВЕРКА", results_title_style))
-        
-                if 'final_sigma_R' in st.session_state and 'manual_sigma_value' in st.session_state:
-                    check_passed = st.session_state.final_sigma_R <= st.session_state.manual_sigma_value
-        
-                    # Таблица с резултати
-                    results_data = [
-                        ["ПАРАМЕТЪР", "СТОЙНОСТ"],
-                        ["Изчислено σR", f"{st.session_state.final_sigma_R:.3f} MPa"],
-                        ["Допустимо σR", f"{st.session_state.manual_sigma_value:.2f} MPa"]
-                    ]
-        
-                    results_table = Table(results_data, colWidths=[80*mm, 60*mm], hAlign='CENTER')
-                    results_table.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
-                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-                        ('FONTNAME', (0, 0), (-1, 0), font_name),
-                        ('FONTSIZE', (0, 0), (-1, 0), 10),
-                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                        ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
-                        ('TOPPADDING', (0, 0), (-1, 0), 6),
-                        
-                        ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
-                        ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
-                        ('FONTNAME', (0, 1), (-1, -1), font_name),
-                        ('FONTSIZE', (0, 1), (-1, -1), 9),
-                        ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
-                        ('TOPPADDING', (0, 1), (-1, -1), 4),
-                        
-                        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-                        ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
-                    ]))
-        
-                    story.append(results_table)
-                    story.append(Spacer(1, 15))
-        
-                    # Съобщение за проверка
-                    if check_passed:
-                        status_style = ParagraphStyle(
-                            'StatusOK',
-                            fontName=font_name,
-                            fontSize=12,
-                            textColor=colors.HexColor('#2e7d32'),
-                            spaceAfter=12,
-                            alignment=1,
-                            backColor=colors.HexColor('#e8f5e9')
-                        )
-                        story.append(Paragraph("✅ ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
-                        subtitle_style = ParagraphStyle(
-                            'SubtitleStyle',
-                            parent=styles['Normal'],
-                            fontSize=10,
-                            spaceAfter=5,
-                            fontName=font_name,
-                            textColor=colors.HexColor('#5D4037'),
-                            alignment=1
-                        )
-                        story.append(Paragraph("Изчисленото σR е по-малко или равно на допустимото σR", subtitle_style))
-                    else:
-                        status_style = ParagraphStyle(
-                            'StatusFail',
-                            fontName=font_name,
-                            fontSize=12,
-                            textColor=colors.HexColor('#c62828'),
-                            spaceAfter=12,
-                            alignment=1,
-                            backColor=colors.HexColor('#ffebee')
-                        )
-                        story.append(Paragraph("❌ ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
-                        subtitle_style = ParagraphStyle(
-                            'SubtitleStyle',
-                            parent=styles['Normal'],
-                            fontSize=10,
-                            spaceAfter=5,
-                            fontName=font_name,
-                            textColor=colors.HexColor('#5D4037'),
-                            alignment=1
-                        )
-                        story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", subtitle_style))
-        
-                # ДОПУСТИМИ НАПРЕЖЕНИЯ (преместено след проверката)
-                img_path = "Допустими опънни напрежения.png"
-                if os.path.exists(img_path):
-                    allowable_title_style = ParagraphStyle(
-                        'AllowableTitle',
-                        fontName=font_name,
-                        fontSize=14,
-                        textColor=colors.HexColor('#2C5530'),
-                        spaceAfter=10,
-                        alignment=1
-                    )
-                    story.append(Spacer(1, 20))
-                    story.append(Paragraph("ДОПУСТИМИ ОПЪННИ НАПРЕЖЕНИЯ", allowable_title_style))
-                    
-                    try:
-                        pil_img = PILImage.open(img_path)
-                        img_buffer = io.BytesIO()
-                        pil_img.save(img_buffer, format="PNG")
-                        img_buffer.seek(0)
-                        story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-                        story.append(Spacer(1, 15))
-                    except Exception as e:
-                        error_style = ParagraphStyle(
-                            'ErrorStyle',
-                            parent=styles['Normal'],
-                            fontSize=10,
-                            spaceAfter=5,
-                            fontName=font_name,
-                            textColor=colors.HexColor('#d32f2f'),
-                            alignment=1
-                        )
-                        story.append(Paragraph("Грешка при зареждане на изображение", error_style))
-        
-                # ДАТА И ПОДПИС
-                story.append(Spacer(1, 20))
-                current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-                date_style = ParagraphStyle(
-                    'DateStyle',
+                story.append(Paragraph("Изчисленото σR е по-малко или равно на допустимото σR", subtitle_style))
+            else:
+                status_style = ParagraphStyle(
+                    'StatusFail',
                     fontName=font_name,
-                    fontSize=9,
-                    alignment=2,
-                    textColor=colors.HexColor('#666666')
+                    fontSize=12,
+                    textColor=colors.HexColor('#c62828'),
+                    spaceAfter=12,
+                    alignment=1,
+                    backColor=colors.HexColor('#ffebee')
                 )
-                story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
-        
-                # Финализиране на PDF
-                doc.build(story)
-                buffer.seek(0)
-                
-                return buffer
-        
+                story.append(Paragraph("❌ ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
+                subtitle_style = ParagraphStyle(
+                    'SubtitleStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#5D4037'),
+                    alignment=1
+                )
+                story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", subtitle_style))
+
+        # ДОПУСТИМИ НАПРЕЖЕНИЯ (преместено след проверката)
+        img_path = "Допустими опънни напрежения.png"
+        if os.path.exists(img_path):
+            allowable_title_style = ParagraphStyle(
+                'AllowableTitle',
+                fontName=font_name,
+                fontSize=14,
+                textColor=colors.HexColor('#2C5530'),
+                spaceAfter=10,
+                alignment=1
+            )
+            story.append(Spacer(1, 20))
+            story.append(Paragraph("ДОПУСТИМИ ОПЪННИ НАПРЕЖЕНИЯ", allowable_title_style))
+            
+            try:
+                pil_img = PILImage.open(img_path)
+                img_buffer = io.BytesIO()
+                pil_img.save(img_buffer, format="PNG")
+                img_buffer.seek(0)
+                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                story.append(Spacer(1, 15))
             except Exception as e:
-                st.error(f"Грешка при генериране на PDF: {e}")
-                return None
+                error_style = ParagraphStyle(
+                    'ErrorStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=1
+                )
+                story.append(Paragraph("Грешка при зареждане на изображение", error_style))
+
+        # ДАТА И ПОДПИС
+        story.append(Spacer(1, 20))
+        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+        date_style = ParagraphStyle(
+            'DateStyle',
+            fontName=font_name,
+            fontSize=9,
+            alignment=2,
+            textColor=colors.HexColor('#666666')
+        )
+        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
+
+        # Финализиране на PDF
+        doc.build(story)
+        buffer.seek(0)
+        
+        return buffer
+
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {e}")
+        return None
 
 # -----------------------------
 # Бутон за генериране на PDF
