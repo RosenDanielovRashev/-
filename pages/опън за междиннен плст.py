@@ -10,7 +10,20 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib import mathtext
 from io import BytesIO
- 
+import io
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Image as RLImage, Table, TableStyle, PageBreak
+)
+from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
+from PIL import Image as PILImage
+import plotly.io as pio
+from datetime import datetime
 
 # Опит за импорт на cairosvg (за векторни формули)
 try:
@@ -562,375 +575,511 @@ if layer_idx in st.session_state.layer_results:
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
 
-    def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, manual_value=None, check_passed=None):
-        # Създаваме PDF клас с разширена функционалност
-        # В началото на файла, заменете дефиницията на класа EnhancedPDF с тази от втория файл:
+# =============================================================================
+# НОВ PDF ГЕНЕРАТОР СЪС СТИЛА ОТ "ОПЪН В ПОКРИТИЕТО"
+# =============================================================================
+
+def render_formula_to_image(formula_text, fontsize=26, dpi=150):
+    """Рендва формула като изображение чрез matplotlib mathtext"""
+    plt.rcParams['text.usetex'] = False
+    plt.rcParams['mathtext.fontset'] = 'cm'
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.size'] = fontsize
+    
+    fig = plt.figure(figsize=(10.56, 1.58))
+    plt.text(0.5, 0.5, f'${formula_text}$', 
+             horizontalalignment='center', 
+             verticalalignment='center',
+             transform=plt.gca().transAxes,
+             fontsize=fontsize)
+    plt.axis('off')
+    
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.2,
+                facecolor='white', edgecolor='none')
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+class NumberedDocTemplate(SimpleDocTemplate):
+    def __init__(self, filename, start_page=1, **kwargs):
+        self.start_page = start_page
+        super().__init__(filename, **kwargs)
         
-        class EnhancedPDF(FPDF):
-            def __init__(self):
-                super().__init__()
-                self.temp_font_files = []
-                self.temp_image_files = []
+    def afterPage(self):
+        """Override to add page numbers with offset"""
+        self._pageNumber = self.start_page + self.page - 1
+        super().afterPage()
+
+def generate_pdf_report():
+    try:
+        buffer = io.BytesIO()
+        doc = NumberedDocTemplate(
+            buffer,
+            start_page=start_page_number,
+            pagesize=A4,
+            leftMargin=15 * mm,
+            rightMargin=15 * mm,
+            topMargin=15 * mm,
+            bottomMargin=15 * mm
+        )
+        story = []
+        styles = getSampleStyleSheet()
+
+        # Зареждане на шрифт
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            font_name = 'DejaVuSans-Bold'
+        except:
+            font_name = 'Helvetica-Bold'
+
+        # ЗАГЛАВИЕ
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            fontSize=20,
+            spaceAfter=5,
+            alignment=1,
+            textColor=colors.HexColor('#006064'),
+            fontName=font_name,
+            leading=20,
+        )
         
-            def footer(self):
-                self.set_y(-15)
-                self.set_font('DejaVu', 'I', 8)
-                self.cell(0, 10, f'Страница {self.page_no()}', 0, 0, 'C')
-                
-            def add_font_from_bytes(self, family, style, font_bytes):
-                with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
-                    tmp_file.write(font_bytes)
-                    tmp_file_path = tmp_file.name
-                    self.temp_font_files.append(tmp_file_path)
-                    self.add_font(family, style, tmp_file_path)
-                    
-            def cleanup_temp_files(self):
-                for file_path in self.temp_font_files + self.temp_image_files:
-                    try:
-                        os.unlink(file_path)
-                    except Exception as e:
-                        print(f"Грешка при изтриване на временен файл: {e}")
+        story.append(Paragraph("ОПЪН В МЕЖДИНЕН ПЛАСТ", title_style))
+        story.append(Spacer(1, 16.5))
+
+        # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
+        table_data = [
+            ["ПАРАМЕТЪР", "СТОЙНОСТ", "ЕДИНИЦА"],
+            ["Диаметър D", f"{D:.2f}", "cm"],
+            ["Брой пластове", f"{n}", ""],
+            ["Осова тежест", f"{st.session_state.get('axle_load', 100)}", "kN"],
+            ["Пласт за проверка", f"{layer_idx+1}", ""],
+        ]
+
+        for i in range(n):
+            table_data.append([f"Пласт {i+1} - Ei", f"{E_values[i]:.2f}", "MPa"])
+            table_data.append([f"Пласт {i+1} - hi", f"{h_values[i]:.2f}", "cm"])
+            table_data.append([f"Пласт {i+1} - Edi", f"{Ed_values[i]:.2f}", "MPa"])
+
+        info_table = Table(table_data, colWidths=[66*mm, 55*mm, 33*mm], hAlign='LEFT')
+        info_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 9.9),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 5.5),
+            ('TOPPADDING', (0, 0), (-1, 0), 5.5),
             
-            def _formula_png_from_svg_or_fallback(self, formula_text, dpi=300):
-                """
-                Прави PNG път от формула чрез SVG→PNG, ако няма cairosvg → fallback PNG буфер.
-                Връща път към PNG файл, добавен към temp списъка.
-                """
-                try:
-                    # SVG временен файл
-                    with tempfile.NamedTemporaryFile(delete=False, suffix=".svg") as tmp_svg:
-                        render_formula_to_svg(formula_text, tmp_svg.name)
-                        # PNG от SVG
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_png:
-                            svg_to_png(tmp_svg.name, tmp_png.name, dpi=dpi)
-                            png_path = tmp_png.name
-                    self.temp_image_files.append(png_path)
-                    return png_path
-                except Exception:
-                    # Fallback: директно PNG от matplotlib
-                    buf = render_formula_to_image_fallback(formula_text, fontsize=22, dpi=450)
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                        tmp_file.write(buf.getvalue())
-                        png_path = tmp_file.name
-                    self.temp_image_files.append(png_path)
-                    return png_path
-                    
-            def add_latex_formula(self, formula_text, width=100, line_gap=12):
-                """
-                Добавя ЕДНА формула като изображение (векторен рендер до PNG), без фонови плочи.
-                """
-                try:
-                    png_path = self._formula_png_from_svg_or_fallback(formula_text)
-                    # Вмъкване с фиксирана ширина → еднакъв визуален размер
-                    self.image(png_path, x=self.get_x(), y=self.get_y(), w=width)
-                    # Приблизителен вертикален интервал
-                    self.ln(line_gap + width * 0.22)
-                except Exception:
-                    self.set_font('DejaVu', 'I', 12)
-                    self.multi_cell(0, 8, formula_text)
-                    self.ln(5)
-                    
-            def add_plotly_figure(self, fig, width=180):
-                try:
-                    img_bytes = pio.to_image(
-                        fig,
-                        format="png",
-                        width=1200,
-                        height=900,
-                        scale=3,
-                        engine="kaleido"
-                    )
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-                        tmp_file.write(img_bytes)
-                        tmp_file_path = tmp_file.name
-                        self.temp_image_files.append(tmp_file_path)
-                    self.image(tmp_file_path, x=10, w=width)
-                    self.ln(10)
-                    return True
-                except Exception as e:
-                    print(f"Грешка при добавяне на Plotly фигура: {e}")
-                    return False
-                    
-            def add_formula_section(self, title, formulas, columns=2, col_width=95, img_width=85, row_gap=8):
-                """
-                Секция с формули, подредени по колони, без фон и с еднакво мащабиране.
-                - img_width контролира реалната ширина на всяка формула.
-                """
-                self.set_font('DejaVu', 'B', 12)
-                self.cell(0, 8, title, ln=True)
-                self.ln(2)
-        
-                # Групираме по броя колони
-                rows = [formulas[i:i+columns] for i in range(0, len(formulas), columns)]
-        
-                for row in rows:
-                    # Начална X позиция
-                    start_x = 10
-                    self.set_x(start_x)
-                    max_row_height = 0
-        
-                    for idx, formula in enumerate(row):
-                        try:
-                            png_path = self._formula_png_from_svg_or_fallback(formula)
-                            # Картинка с фиксиран img_width за еднакъв размер
-                            self.image(png_path, x=self.get_x(), y=self.get_y(), w=img_width)
-                        except Exception:
-                            # Текстов fallback
-                            self.set_font('DejaVu', '', 11)
-                            self.multi_cell(col_width, 6, formula)
-                        # Преместваме в следващата колона
-                        self.set_x(start_x + col_width * (idx + 1))
-                        max_row_height = max(max_row_height, img_width * 0.28)
-        
-                    # Нов ред с малък промеждутък
-                    self.ln(max(18, int(max_row_height)) + row_gap)
-        
-                self.ln(4)
-        pdf = EnhancedPDF()
-        pdf.set_auto_page_break(auto=True, margin=20)
-        
-        # Зареждане на шрифтове
-        try:
-            base_dir = os.path.dirname(os.path.abspath(__file__))
-        except NameError:
-            base_dir = os.getcwd()
-        font_dir = os.path.join(base_dir, "fonts")
-        os.makedirs(font_dir, exist_ok=True)
-    
-        sans_path = os.path.join(font_dir, "DejaVuSans.ttf")
-        bold_path = os.path.join(font_dir, "DejaVuSans-Bold.ttf")
-        italic_path = os.path.join(font_dir, "DejaVuSans-Oblique.ttf")
-    
-        try:
-            if all(os.path.exists(p) for p in [sans_path, bold_path, italic_path]):
-                with open(sans_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', '', f.read())
-                with open(bold_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', 'B', f.read())
-                with open(italic_path, "rb") as f:
-                    pdf.add_font_from_bytes('DejaVu', 'I', f.read())
-            else:
-                from fpdf.fonts import FontsByFPDF
-                fonts = FontsByFPDF()
-                for style, data in [('', fonts.helvetica),
-                                    ('B', fonts.helvetica_bold),
-                                    ('I', fonts.helvetica_oblique)]:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.ttf') as tmp_file:
-                        tmp_file.write(data)
-                        pdf.add_font('DejaVu', style, tmp_file.name)
-        except Exception as e:
-            st.error(f"Грешка при зареждане на шрифтове: {e}")
-            return b""
-        
-        # Заглавна страница
-        pdf.add_page()
-        pdf.set_font('DejaVu', 'B', 18)
-        pdf.cell(0, 15, 'ОПЪН В МЕЖДИНЕН ПЛАСТ', ln=True, align='C')
-        pdf.ln(6)
-        
-        # 1. Входни параметри
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, '1. Входни параметри', ln=True)
-        
-        col_width = 60
-        row_height = 8
-    
-        pdf.set_font('DejaVu', 'B', 11)
-        pdf.set_fill_color(200, 220, 255)
-        pdf.cell(col_width, row_height, 'Параметър', border=1, align='C', fill=True)
-        pdf.cell(col_width, row_height, 'Стойност', border=1, align='C', fill=True)
-        pdf.cell(col_width, row_height, 'Мерна единица', border=1, align='C', fill=True)
-        pdf.ln(row_height)
-    
-        pdf.set_font('DejaVu', '', 10)
-        
-        # Основни параметри
-        axle_load = st.session_state.get("axle_load", 100)
-        params = [
-            ("Диаметър D", f"{D:.2f}", "cm"),
-            ("Брой пластове", f"{len(h_values)}", ""),
-            ("Осова тежест", f"{axle_load}", "kN"),
-            ("Пласт за проверка", f"{layer_idx+1}", "")
-        ]
-        
-        # Данни за всеки пласт
-        for i in range(len(h_values)):
-            params.append((f"Пласт {i+1} - Ei", f"{E_values[i]:.2f}", "MPa"))
-            params.append((f"Пласт {i+1} - hi", f"{h_values[i]:.2f}", "cm"))
-            params.append((f"Пласт {i+1} - Edi", f"{Ed_values[i]:.2f}", "MPa"))
-        
-        fill = False
-        for p_name, p_val, p_unit in params:
-            pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
-            pdf.cell(col_width, row_height, p_name, border=1, fill=True)
-            pdf.cell(col_width, row_height, p_val, border=1, align='C', fill=True)
-            pdf.cell(col_width, row_height, p_unit, border=1, align='C', fill=True)
-            pdf.ln(row_height)
-            fill = not fill
-    
-        pdf.ln(5)
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+            ('FONTNAME', (0, 1), (-1, -1), font_name),
+            ('FONTSIZE', (0, 1), (-1, -1), 8.8),
+            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3.3),
+            ('TOPPADDING', (0, 1), (-1, -1), 3.3),
+            
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+        ]))
 
-        pdf.add_page()
+        story.append(info_table)
+        story.append(Spacer(1, 27.5))
 
-        pdf.ln(6)
-     
-        # 2. Формули за изчисление
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, '2. Формули за изчисление', ln=True)
-        
-        formulas_section2 = [
+        # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
+        formulas_title_style = ParagraphStyle(
+            'FormulasTitle',
+            fontName=font_name,
+            fontSize=14.08,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=11,
+            alignment=0
+        )
+        story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
+
+        # Основни формули в две колони
+        formulas = [
             r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
-            r"H_n = \sum_{i=1}^n h_i",
+            r"H_n = \sum_{i=1}^n h_i", 
             r"Esr = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}",
-            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограма}}"
+            r"\sigma_R = 1.15 p \sigma_R^{nom}"
         ]
-     
-        pdf.add_formula_section("", formulas_section2, columns=2, col_width=95, img_width=85, row_gap=-3)
+
+        # Създаваме таблица с две колони за формулите
+        formula_table_data = []
+        for i in range(0, len(formulas), 2):
+            row = []
+            # Първа колона
+            if i < len(formulas):
+                try:
+                    img_buf1 = render_formula_to_image(formulas[i], fontsize=23.76, dpi=150)
+                    row.append(RLImage(img_buf1, width=99*mm, height=19.8*mm))
+                except:
+                    row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), formulas_title_style))
+            else:
+                row.append('')
+            
+            # Втора колона
+            if i + 1 < len(formulas):
+                try:
+                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=23.76, dpi=150)
+                    row.append(RLImage(img_buf2, width=99*mm, height=19.8*mm))
+                except:
+                    row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), formulas_title_style))
+            else:
+                row.append('')
+            
+            formula_table_data.append(row)
+
+        formula_table = Table(formula_table_data, colWidths=[105.6*mm, 105.6*mm])
+        formula_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8.8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8.8),
+        ]))
         
-        # 3. Изчисления (с числени замествания)
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, f'3. Изчисления за пласт {layer_idx+1}', ln=True)
-        
+        story.append(formula_table)
+        story.append(Spacer(1, 22))
+
+        # 3. ИЗЧИСЛЕНИЯ
+        calculations_title_style = ParagraphStyle(
+            'CalculationsTitle',
+            fontName=font_name,
+            fontSize=14.08,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=11,
+            alignment=0
+        )
+        story.append(Paragraph("3. Изчисления", calculations_title_style))
+
         # Изчислителни формули със стойности
-        formulas_section3 = []
+        calculation_formulas = []
+        
+        results = st.session_state.layer_results.get(layer_idx, {})
         
         # H_{n-1}
         if layer_idx > 0:
             h_terms_n1 = " + ".join([f"{h_values[i]:.2f}" for i in range(layer_idx)])
-            formulas_section3.append(fr"H_{{{layer_idx}}} = {h_terms_n1} = {results['H_n_1_r']:.2f} \, \text{{cm}}")
+            calculation_formulas.append(fr"H_{{{layer_idx}}} = {h_terms_n1} = {results.get('H_n_1_r', 0):.2f} \, \mathrm{{cm}}")
         else:
-            formulas_section3.append(fr"H_{{{layer_idx}}} = 0 \, \text{{cm}}")
+            calculation_formulas.append(fr"H_{{{layer_idx}}} = 0 \, \mathrm{{cm}}")
         
         # H_n
-        h_terms_n = " + ".join([f"{h_values[i]:.2f}" for i in range(results['n_for_calc'])])
-        formulas_section3.append(fr"H_{{{results['n_for_calc']}}} = {h_terms_n} = {results['H_n_r']:.2f} \, \text{{cm}}")
+        h_terms_n = " + ".join([f"{h_values[i]:.2f}" for i in range(results.get('n_for_calc', n))])
+        calculation_formulas.append(fr"H_{{{results.get('n_for_calc', n)}}} = {h_terms_n} = {results.get('H_n_r', 0):.2f} \, \mathrm{{cm}}")
         
         # Esr
         if layer_idx > 0:
             numerator = " + ".join([f"{E_values[i]:.2f} \\times {h_values[i]:.2f}" for i in range(layer_idx)])
             denominator = " + ".join([f"{h_values[i]:.2f}" for i in range(layer_idx)])
-            formulas_section3.append(fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {results['Esr_r']:.2f} \, \text{{MPa}}")
+            calculation_formulas.append(fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {results.get('Esr_r', 0):.2f} \, \mathrm{{MPa}}")
         else:
-            formulas_section3.append("Esr = 0 \, \text{MPa} (няма предишни пластове)")
+            calculation_formulas.append("Esr = 0 \, \mathrm{MPa} (няма предишни пластове)")
         
         # Други изчисления
-        formulas_section3.append(fr"\frac{{H_{{{results['n_for_calc']}}}}}{{D}} = \frac{{{results['H_n_r']:.2f}}}{{{D:.2f}}} = {results['ratio_r']:.3f}")
-        formulas_section3.append(fr"E_{{{layer_idx+1}}} = {results['En_r']:.2f} \, \text{{MPa}}")
-        formulas_section3.append(fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = \frac{{{results['Esr_r']:.2f}}}{{{results['En_r']:.2f}}} = {results['Esr_over_En_r']:.3f}")
-        formulas_section3.append(fr"\frac{{E_{{{layer_idx+1}}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']:.2f}}}{{{results['Ed_r']:.2f}}} = {results['En_over_Ed_r']:.3f}")
-        
-        # Информация за осов товар
-        if axle_load == 100:
-            p = 0.620
-        elif axle_load == 115:
-            p = 0.633
-        else:
-            p = "неизвестен"
-        
+        calculation_formulas.extend([
+            fr"\frac{{H_{{{results.get('n_for_calc', n)}}}}{{D}} = \frac{{{results.get('H_n_r', 0):.2f}}}{{{D:.2f}}} = {results.get('ratio_r', 0):.3f}",
+            fr"E_{{{layer_idx+1}}} = {results.get('En_r', 0):.2f} \, \mathrm{{MPa}}",
+            fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = \frac{{{results.get('Esr_r', 0):.2f}}}{{{results.get('En_r', 0):.2f}}} = {results.get('Esr_over_En_r', 0):.3f}",
+            fr"\frac{{E_{{{layer_idx+1}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results.get('En_r', 0):.2f}}}{{{results.get('Ed_r', 0):.2f}}} = {results.get('En_over_Ed_r', 0):.3f}"
+        ])
+
+        # Информация за σR и p
+        sigma_r = st.session_state.get("final_sigma", None)
         if sigma_r is not None:
-            formulas_section3.append(fr"\sigma_R^{{номограма}} = {sigma_r:.3f} \, \text{{MPa}}")
+            calculation_formulas.append(fr"\sigma_R^{{\mathrm{{nom}}}} = {sigma_r:.3f} \, \mathrm{{MPa}}")
         
-        if p != "неизвестен" and sigma_r is not None and sigma_final is not None:
-            formulas_section3.append(fr"p = {p:.3f} \, \text{{ (за осов товар {axle_load} kN)}}")
-            formulas_section3.append(fr"\sigma_R = 1.15 \times {p:.3f} \times {sigma_r:.3f} = {sigma_final:.3f} \, \text{{MPa}}")
+        axle_load = st.session_state.get("axle_load", 100)
+        p = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
         
-        pdf.add_formula_section("", formulas_section3, columns=2, col_width=95, img_width=85, row_gap=-3)
-        
-        pdf.ln(5)
-     
-        pdf.add_page()
-
-        pdf.ln(6)
-     
-        # 4. Графика на номограмата
-        pdf.set_font("DejaVu", "B", 12)
-        pdf.cell(0, 8, "4. ГРАФИКА", 0, 1)
-        
-        try:
-            # Запазване на графиката като временно изображение
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_img:
-                # Експортиране на фигурата с висока резолюция
-                fig.write_image(tmp_img.name, format='png', width=1000, height=750, scale=2)
-                pdf.image(tmp_img.name, x=10, w=190)
-                pdf.ln(10)
-                # Маркиране за изтриване по-късно
-                pdf.temp_image_files.append(tmp_img.name)
-        except Exception as e:
-            pdf.set_font('DejaVu', '', 10)
-            pdf.cell(0, 6, f"Грешка при добавяне на графиката: {e}", 0, 1)
-            st.error(f"Грешка при експорт на графиката за PDF: {e}")
-         
-        pdf.add_page()
-
-        pdf.ln(6)
-     
-        # 5. Допустими напрежения
-        img_path = "Допустими опънни напрежения.png"
-        if os.path.exists(img_path):
-            pdf.set_font('DejaVu', 'B', 14)
-            pdf.cell(0, 10, '5. Допустими опънни напрежения', ln=True)
-            try:
-                pdf.image(img_path, x=10, w=190)
-                pdf.ln(10)
-            except Exception as e:
-                pdf.set_font('DejaVu', '', 10)
-                pdf.cell(0, 6, f"Грешка при добавяне на изображението: {e}", 0, 1)
-        
-        # 6. Резултати и проверка
-        pdf.set_font('DejaVu', 'B', 14)
-        pdf.cell(0, 10, '6. Резултати и проверка', ln=True)
-        
-        if sigma_final is not None and manual_value is not None:
-            pdf.set_font('DejaVu', 'B', 10)
-            pdf.set_fill_color(200, 220, 255)
-            pdf.cell(90, 8, 'Параметър', border=1, align='C', fill=True)
-            pdf.cell(90, 8, 'Стойност', border=1, align='C', fill=True)
-            pdf.ln(8)
-    
-            pdf.set_font('DejaVu', '', 10)
-            for label, val in [
-                ('Изчислено σR', f"{sigma_final:.3f} MPa"),
-                ('Допустимо σR (ръчно)', f"{manual_value:.2f} MPa")
-            ]:
-                pdf.set_fill_color(245, 245, 245) if label.startswith('Изчислено') else pdf.set_fill_color(255, 255, 255)
-                pdf.cell(90, 8, label, border=1, fill=True)
-                pdf.cell(90, 8, val, border=1, align='C', fill=True)
-                pdf.ln(8)
-    
-            pdf.ln(5)
-            if check_passed:
-                pdf.set_text_color(0, 100, 0)
-                pdf.set_font('DejaVu', 'B', 12)
-                pdf.cell(0, 10, "✅ Проверка: УДОВЛЕТВОРЕНА", ln=True)
-            else:
-                pdf.set_text_color(150, 0, 0)
-                pdf.set_font('DejaVu', 'B', 12)
-                pdf.cell(0, 10, "❌ Проверка: НЕУДОВЛЕТВОРЕНА", ln=True)
-    
-            pdf.set_text_color(0, 0, 0)
-        
-        # Запазване на PDF
-        pdf.cleanup_temp_files()
-        return pdf.output(dest='S')
-        
-    # Добавяне на бутон за генериране на PDF отчет
-    if st.button("Генерирай PDF отчет"):
-        with st.spinner("Генериране на PDF..."):
-            # Вземете необходимите данни за отчета
-            sigma_r = st.session_state.get("final_sigma", None)
+        if p and sigma_r is not None:
             sigma_final = st.session_state.get("final_sigma_R", None)
-            manual_value = st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', None)
-            check_passed = st.session_state.check_results.get(f'check_result_{layer_idx}', None)
+            if sigma_final is not None:
+                calculation_formulas.extend([
+                    fr"p = {p:.3f} \, \mathrm{{({axle_load} \, kN)}}",
+                    fr"\sigma_R = 1.15 \times {p:.3f} \times {sigma_r:.3f} = {sigma_final:.3f} \, \mathrm{{MPa}}"
+                ])
+
+        # Изчисления в две колони
+        calc_table_data = []
+        for i in range(0, len(calculation_formulas), 2):
+            row = []
+            # Първа колона
+            if i < len(calculation_formulas):
+                try:
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=21.12, dpi=150)
+                    row.append(RLImage(img_buf1, width=99*mm, height=18.48*mm))
+                except:
+                    simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
+            else:
+                row.append('')
             
-            # Генериране на PDF
-            pdf_bytes = generate_pdf_report(
-                layer_idx, results, D, sigma_r, sigma_final, manual_value, check_passed
+            # Втора колона
+            if i + 1 < len(calculation_formulas):
+                try:
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=21.12, dpi=150)
+                    row.append(RLImage(img_buf2, width=99*mm, height=18.48*mm))
+                except:
+                    simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
+            else:
+                row.append('')
+            
+            calc_table_data.append(row)
+
+        calc_table = Table(calc_table_data, colWidths=[105.6*mm, 105.6*mm])
+        calc_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6.6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6.6),
+        ]))
+        
+        story.append(calc_table)
+        story.append(Spacer(1, 22))
+
+        # НОВ ЛИСТ ЗА ГРАФИКАТА
+        story.append(PageBreak())
+
+        # ГРАФИКА НА НОМОГРАМАТА
+        graph_title_style = ParagraphStyle(
+            'GraphTitle',
+            fontName=font_name,
+            fontSize=17.6,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=16.5,
+            alignment=1
+        )
+        story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
+        
+        # Създаване на оптимизирана графика за PDF
+        try:
+            # Тук трябва да вмъкнете кода за създаване на вашата графика fig
+            # Ако вече имате fig в session_state или другаде, използвайте я
+            if 'fig' not in locals():
+                # Създаване на примерна графика - заменете с вашата реална графика
+                fig = go.Figure()
+                # Добавете вашите трасове и настройки за графиката тук
+                
+            img_bytes = pio.to_image(
+                fig, 
+                format="png", 
+                width=1200, 
+                height=800,
+                scale=4,
+                engine="kaleido"
             )
             
-            # Показване на линк за изтегляне
-            b64 = base64.b64encode(pdf_bytes).decode()
-            href = f'<a href="data:application/octet-stream;base64,{b64}" download="опън_за_междинен_пласт_отчет.pdf">Изтегли PDF отчет</a>'
-            st.markdown(href, unsafe_allow_html=True)
+            pil_img = PILImage.open(BytesIO(img_bytes))
+            img_buffer = io.BytesIO()
+            pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
+            img_buffer.seek(0)
+            
+            story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+            story.append(Spacer(1, 15))
+            
+        except Exception as e:
+            error_style = ParagraphStyle(
+                'ErrorStyle',
+                parent=styles['Normal'],
+                fontSize=11,
+                spaceAfter=5.5,
+                fontName=font_name,
+                textColor=colors.HexColor('#d32f2f'),
+                alignment=1
+            )
+            story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
 
-# Линк към предишната страница
-st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
+        # РЕЗУЛТАТИ И ПРОВЕРКА
+        results_title_style = ParagraphStyle(
+            'ResultsTitle',
+            fontName=font_name,
+            fontSize=17.6,
+            textColor=colors.HexColor('#006064'),
+            spaceAfter=16.5,
+            alignment=1
+        )
+        story.append(Paragraph("РЕЗУЛТАТИ И ПРОВЕРКА", results_title_style))
+
+        sigma_final = st.session_state.get("final_sigma_R", None)
+        manual_value = st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', None)
+        
+        if sigma_final is not None and manual_value is not None:
+            check_passed = sigma_final <= manual_value
+
+            # Таблица с резултати
+            results_data = [
+                ["ПАРАМЕТЪР", "СТОЙНОСТ"],
+                ["Изчислено σR", f"{sigma_final:.3f} MPa"],
+                ["Допустимо σR", f"{manual_value:.2f} MPa"]
+            ]
+
+            results_table = Table(results_data, colWidths=[88*mm, 66*mm], hAlign='CENTER')
+            results_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+                ('FONTNAME', (0, 0), (-1, 0), font_name),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6.6),
+                ('TOPPADDING', (0, 0), (-1, 0), 6.6),
+                
+                ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+                ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+                ('FONTNAME', (0, 1), (-1, -1), font_name),
+                ('FONTSIZE', (0, 1), (-1, -1), 9.9),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 4.4),
+                ('TOPPADDING', (0, 1), (-1, -1), 4.4),
+                
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+            ]))
+
+            story.append(results_table)
+            story.append(Spacer(1, 16.5))
+
+            # Съобщение за проверка
+            if check_passed:
+                status_style = ParagraphStyle(
+                    'StatusOK',
+                    fontName=font_name,
+                    fontSize=13.2,
+                    textColor=colors.HexColor('#2e7d32'),
+                    spaceAfter=13.2,
+                    alignment=1,
+                    backColor=colors.HexColor('#e8f5e9')
+                )
+                story.append(Paragraph("ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
+                subtitle_style = ParagraphStyle(
+                    'SubtitleStyle',
+                    parent=styles['Normal'],
+                    fontSize=11,
+                    spaceAfter=5.5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#5D4037'),
+                    alignment=1
+                )
+                story.append(Paragraph("Изчисленото σR е по-малко или равно на допустимото σR", subtitle_style))
+            else:
+                status_style = ParagraphStyle(
+                    'StatusFail',
+                    fontName=font_name,
+                    fontSize=13.2,
+                    textColor=colors.HexColor('#c62828'),
+                    spaceAfter=13.2,
+                    alignment=1,
+                    backColor=colors.HexColor('#ffebee')
+                )
+                story.append(Paragraph("ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
+                subtitle_style = ParagraphStyle(
+                    'SubtitleStyle',
+                    parent=styles['Normal'],
+                    fontSize=11,
+                    spaceAfter=5.5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#5D4037'),
+                    alignment=1
+                )
+                story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", subtitle_style))
+
+        # ДОПУСТИМИ НАПРЕЖЕНИЯ
+        img_path = "Допустими опънни напрежения.png"
+        if os.path.exists(img_path):
+            allowable_title_style = ParagraphStyle(
+                'AllowableTitle',
+                fontName=font_name,
+                fontSize=15.4,
+                textColor=colors.HexColor('#2C5530'),
+                spaceAfter=11,
+                alignment=1
+            )
+            story.append(Spacer(1, 22))
+
+            # НОВА СТРАНИЦА С ВСИЧКИ СНИМКИ
+            story.append(PageBreak())
+            story.append(Paragraph("ДОПЪЛНИТЕЛНИ МАТЕРИАЛИ", allowable_title_style))
+            
+            try:
+                pil_img = PILImage.open(img_path)
+                img_buffer = io.BytesIO()
+                pil_img.save(img_buffer, format="PNG")
+                img_buffer.seek(0)
+                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                story.append(Spacer(1, 15))
+            except Exception as e:
+                error_style = ParagraphStyle(
+                    'ErrorStyle',
+                    parent=styles['Normal'],
+                    fontSize=11,
+                    spaceAfter=5.5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=1
+                )
+                story.append(Paragraph("Грешка при зареждане на изображение", error_style))
+
+        # ДАТА И ПОДПИС
+        story.append(Spacer(1, 22))
+        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+        date_style = ParagraphStyle(
+            'DateStyle',
+            fontName=font_name,
+            fontSize=9.9,
+            alignment=2,
+            textColor=colors.HexColor('#666666')
+        )
+        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
+        
+        # Добавяне на номера на страниците
+        def add_page_number(canvas, doc):
+            canvas.saveState()
+            canvas.setFont('DejaVuSans', 8)
+            page_num = doc.start_page + canvas.getPageNumber() - 1
+            canvas.drawString(190*mm, 15*mm, f"{page_num}")
+            canvas.restoreState()
+        
+        # Финализиране на PDF
+        doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
+        buffer.seek(0)
+        
+        return buffer
+
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {e}")
+        return None
+
+# UI за избор на начален номер на страница
+st.markdown("---")
+st.subheader("Настройки за PDF отчет")
+start_page_number = st.number_input(
+    "Начален номер на страница:",
+    min_value=1,
+    max_value=1000,
+    value=1,
+    step=1,
+    help="Задайте от кой номер да започва номерацията на страниците",
+    key="start_page_intermediate"
+)
+
+# Бутон за генериране на PDF
+st.markdown("---")
+st.subheader("Генериране на PDF отчет")
+if st.button("📄 Генерирай PDF отчет", type="primary", key="pdf_button_intermediate"):
+    with st.spinner('Генериране на PDF отчет...'):
+        try:
+            pdf_buffer = generate_pdf_report()
+            if pdf_buffer:
+                st.success("✅ PDF отчетът с модерно графично оформление е готов!")
+                st.download_button(
+                    "📥 Изтегли PDF отчет",
+                    pdf_buffer,
+                    file_name=f"Опън_в_междинен_пласт_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                    mime="application/pdf"
+                )
+            else:
+                st.error("❌ Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
+        except Exception as e:
+            st.error(f"Грешка при генериране на PDF: {str(e)}")
