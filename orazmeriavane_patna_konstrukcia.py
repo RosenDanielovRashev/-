@@ -1155,7 +1155,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         story.append(Spacer(1, 20))
         
         # ИЗЧИСЛЕНИЕ НА R₀
-        story.append(Paragraph("ИЗЧИСЛЕНИЕ НА R₀:", thermal_header_style))
+        story.append(Paragraph("ИЗЧИСЛЕНИЕ НА R<sub>0</sub>:", thermal_header_style))
         story.append(Spacer(1, 8))
         
         # Проверка дали имаме нужните данни
@@ -1173,33 +1173,35 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     h_m = h_cm / 100  # преобразуваме cm → m
                     if lam != 0:
                         terms.append(h_m / lam)
-                        symbolic_terms.append(f"h_{i+1}/λ_{i+1}")
+                        # използваме <sub> за индексите
+                        symbolic_terms.append(f"h<sub>{i+1}</sub>/λ<sub>{i+1}</sub>")
                         numeric_terms.append(f"{h_m:.3f}/{lam:.3f}")
                 
                 R0 = sum(terms)
                 
-                # Символна формула като текстов низ
+                # Символна формула
                 symbolic_formula = " + ".join(symbolic_terms)
                 story.append(Paragraph("Символна формула:", thermal_value_style))
-                formula_text_symbolic = f'R₀ = {symbolic_formula}'
+                formula_text_symbolic = f'R<sub>0</sub> = {symbolic_formula}'
                 story.append(Paragraph(formula_text_symbolic, thermal_value_style))
                 
                 story.append(Spacer(1, 5))
                 
-                # Числена формула като текстов низ
+                # Числена формула
                 numeric_formula = " + ".join(numeric_terms)
                 story.append(Paragraph("Формула със заместени стойности:", thermal_value_style))
-                formula_text_numeric = f'R₀ = {numeric_formula}'
+                formula_text_numeric = f'R<sub>0</sub> = {numeric_formula}'
                 story.append(Paragraph(formula_text_numeric, thermal_value_style))
                 
                 story.append(Spacer(1, 5))
                 
                 # Краен резултат
-                result_text = f'R₀ = {R0:.3f} m²K/W'
+                result_text = f'R<sub>0</sub> = {R0:.3f} m²K/W'
                 story.append(Paragraph("Краен резултат:", thermal_value_style))
                 story.append(Paragraph(result_text, thermal_value_style))
         
         story.append(Spacer(1, 20))
+
         
         # ПРОВЕРКА НА ИЗИСКВАНИЯТА
         story.append(Paragraph("ПРОВЕРКА НА ИЗИСКВАНИЯТА:", thermal_header_style))
