@@ -1036,7 +1036,7 @@ def generate_pdf_report():
             canvas.saveState()
             canvas.setFont('DejaVuSans', 8)
             page_num = doc.start_page + canvas.getPageNumber() - 1
-            canvas.drawString(190*mm, 15*mm, f"Страница {page_num}")
+            canvas.drawString(190*mm, 15*mm, f"{page_num}")
             canvas.restoreState()
         
         # Финализиране на PDF
