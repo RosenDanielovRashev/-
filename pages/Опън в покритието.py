@@ -454,14 +454,25 @@ class EnhancedPDF(FPDF):
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
-def render_formula_to_image(formula_text, fontsize=14, dpi=150):
-    """Рендва формула като изображение чрез matplotlib"""
-    fig = plt.figure(figsize=(8, 2))
-    fig.text(0.05, 0.5, f'${formula_text}$', fontsize=fontsize, ha='left', va='center')
+def render_formula_to_image(formula_text, fontsize=16, dpi=200):
+    """Рендва формула като изображение чрез matplotlib с по-добро качество"""
+    # Използваме LaTeX за по-добро качество
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.size'] = fontsize
+    
+    fig = plt.figure(figsize=(10, 1.5))
+    # Центрираме формулата
+    plt.text(0.5, 0.5, f'${formula_text}$', 
+             horizontalalignment='center', 
+             verticalalignment='center',
+             transform=plt.gca().transAxes)
     plt.axis('off')
+    
     buf = BytesIO()
-    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.1)
-    plt.close()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.2,
+                facecolor='white', edgecolor='none')
+    plt.close(fig)
     buf.seek(0)
     return buf
 
@@ -471,10 +482,10 @@ def generate_pdf_report():
         doc = SimpleDocTemplate(
             buffer,
             pagesize=A4,
-            leftMargin=10 * mm,
-            rightMargin=10 * mm,
-            topMargin=10 * mm,
-            bottomMargin=10 * mm
+            leftMargin=15 * mm,
+            rightMargin=15 * mm,
+            topMargin=15 * mm,
+            bottomMargin=15 * mm
         )
         story = []
         styles = getSampleStyleSheet()
@@ -485,7 +496,6 @@ def generate_pdf_report():
             pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
             font_name = 'DejaVuSans-Bold'
         except:
-            # Fallback to default fonts if DejaVu is not available
             font_name = 'Helvetica-Bold'
 
         # ЗАГЛАВИЕ
@@ -503,16 +513,6 @@ def generate_pdf_report():
         story.append(Spacer(1, 15))
 
         # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
-        info_style = ParagraphStyle(
-            'InfoStyle',
-            parent=styles['Normal'],
-            fontSize=9,
-            spaceAfter=6,
-            fontName=font_name,
-            textColor=colors.HexColor('#333333')
-        )
-
-        # Таблица с параметри
         table_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ", "ЕДИНИЦА"],
             ["Диаметър D", f"{st.session_state.final_D:.2f}", "cm"],
@@ -520,17 +520,14 @@ def generate_pdf_report():
             ["Осова тежест", f"{st.session_state.get('axle_load', 100)}", "kN"],
         ]
 
-        # Добавяне на Ei и hi за всеки пласт
         for i in range(2):
             table_data.append([f"Пласт {i+1} - Ei", f"{st.session_state.Ei_list[i]:.2f}", "MPa"])
             table_data.append([f"Пласт {i+1} - hi", f"{st.session_state.hi_list[i]:.2f}", "cm"])
 
         table_data.append(["Ed", f"{st.session_state.final_Ed:.2f}", "MPa"])
 
-        # Създаване на таблица
         info_table = Table(table_data, colWidths=[60*mm, 50*mm, 30*mm], hAlign='LEFT')
         info_table.setStyle(TableStyle([
-            # Header стил
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
@@ -538,10 +535,7 @@ def generate_pdf_report():
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
             ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
             ('TOPPADDING', (0, 0), (-1, 0), 5),
-            ('LEFTPADDING', (0, 0), (-1, 0), 8),
-            ('RIGHTPADDING', (0, 0), (-1, 0), 8),
             
-            # Данни стил
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
             ('FONTNAME', (0, 1), (-1, -1), font_name),
@@ -549,16 +543,13 @@ def generate_pdf_report():
             ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
             ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
             ('TOPPADDING', (0, 1), (-1, -1), 3),
-            ('LEFTPADDING', (0, 1), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 1), (-1, -1), 8),
             
-            # Grid и border
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
         ]))
 
         story.append(info_table)
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 25))
 
         # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
         formulas_title_style = ParagraphStyle(
@@ -574,30 +565,40 @@ def generate_pdf_report():
         subtitle_style = ParagraphStyle(
             'SubtitleStyle',
             parent=styles['Normal'],
-            fontSize=11,
-            spaceAfter=8,
+            fontSize=12,
+            spaceAfter=15,
             fontName=font_name,
             textColor=colors.HexColor('#5D4037'),
             alignment=0
         )
         story.append(Paragraph("Основни формули за изчисление:", subtitle_style))
 
-        # Основни формули като изображения
+        # Основни формули
         formulas = [
             r"E_{sr} = \frac{\sum\limits_{i=1}^{n}(E_i \cdot h_i)}{\sum\limits_{i=1}^{n}h_i}",
             r"H = \sum\limits_{i=1}^{n}h_i", 
-            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{номограмма}"
+            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{\mathrm{номограмма}}"
         ]
 
         for formula in formulas:
             try:
-                img_buf = render_formula_to_image(formula, fontsize=12, dpi=150)
-                story.append(RLImage(img_buf, width=160*mm, height=15*mm))
-                story.append(Spacer(1, 8))
+                img_buf = render_formula_to_image(formula, fontsize=14, dpi=200)
+                story.append(RLImage(img_buf, width=160*mm, height=20*mm))
+                story.append(Spacer(1, 10))
             except Exception as e:
-                story.append(Paragraph(f"Грешка при рендване на формула: {formula}", subtitle_style))
+                # Fallback - показваме формулата като текст
+                fallback_style = ParagraphStyle(
+                    'FallbackStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=8,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=0
+                )
+                story.append(Paragraph(f"Формула: {formula}", fallback_style))
         
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 25))
 
         # 3. ИЗЧИСЛЕНИЯ
         calculations_title_style = ParagraphStyle(
@@ -620,7 +621,7 @@ def generate_pdf_report():
         num_str = " + ".join([f"{Ei:.2f} \\times {hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
         den_str = " + ".join([f"{hi:.2f}" for hi in st.session_state.hi_list])
 
-        # Формули за изчисления като изображения
+        # Формули за изчисления
         calculation_formulas = [
             fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr_val:.2f} \, \text{{MPa}}",
             fr"H = {den_str} = {H_val:.2f} \, \text{{cm}}"
@@ -630,7 +631,7 @@ def generate_pdf_report():
             calculation_formulas.extend([
                 fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr_val/st.session_state.final_Ed:.3f}",
                 fr"\frac{{H}}{{D}} = \frac{{{H_val:.2f}}}{{{st.session_state.final_D:.2f}}} = {H_val/st.session_state.final_D:.3f}",
-                fr"\sigma_R^{{номограмма}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}"
+                fr"\sigma_R^{{\mathrm{{номограмма}}}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}"
             ])
 
         axle_load = st.session_state.get("axle_load", 100)
@@ -638,21 +639,30 @@ def generate_pdf_report():
         if p_loc and 'final_sigma' in st.session_state:
             sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
             calculation_formulas.extend([
-                fr"p = {p_loc:.3f} \, \text{{(за осов товар {axle_load} kN)}}",
+                fr"p = {p_loc:.3f} \, \text{{(за осов товар {axle_load} \, \text{{kN}})}}",
                 fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \, \text{{MPa}}"
             ])
 
         for formula in calculation_formulas:
             try:
-                img_buf = render_formula_to_image(formula, fontsize=11, dpi=150)
-                story.append(RLImage(img_buf, width=160*mm, height=12*mm))
-                story.append(Spacer(1, 6))
+                img_buf = render_formula_to_image(formula, fontsize=12, dpi=200)
+                story.append(RLImage(img_buf, width=160*mm, height=18*mm))
+                story.append(Spacer(1, 8))
             except Exception as e:
-                story.append(Paragraph(f"Грешка при рендване на формула: {formula}", subtitle_style))
+                # Fallback
+                fallback_style = ParagraphStyle(
+                    'FallbackStyle',
+                    parent=styles['Normal'],
+                    fontSize=9,
+                    spaceAfter=6,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=0
+                )
+                story.append(Paragraph(f"Изчисление: {formula}", fallback_style))
 
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 25))
 
-        # ОСТАНАЛАТА ЧАСТ ОТ КОДА ОСТАВА НЕПРОМЕНЕНА...
         # ГРАФИКА
         if "fig" in st.session_state:
             graph_title_style = ParagraphStyle(
@@ -666,15 +676,24 @@ def generate_pdf_report():
             story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
             
             try:
-                img_bytes = pio.to_image(st.session_state["fig"], format="png", width=1200, height=900)
+                img_bytes = pio.to_image(st.session_state["fig"], format="png", width=1000, height=750)
                 pil_img = PILImage.open(BytesIO(img_bytes))
                 img_buffer = io.BytesIO()
                 pil_img.save(img_buffer, format="PNG")
                 img_buffer.seek(0)
-                story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))
-                story.append(Spacer(1, 10))
+                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                story.append(Spacer(1, 15))
             except Exception as e:
-                story.append(Paragraph(f"Грешка при генериране на графика: {e}", subtitle_style))
+                error_style = ParagraphStyle(
+                    'ErrorStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=1
+                )
+                story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
 
         # ДОПУСТИМИ НАПРЕЖЕНИЯ
         img_path = "Допустими опънни напрежения.png"
@@ -694,9 +713,19 @@ def generate_pdf_report():
                 img_buffer = io.BytesIO()
                 pil_img.save(img_buffer, format="PNG")
                 img_buffer.seek(0)
-                story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))
+                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                story.append(Spacer(1, 15))
             except Exception as e:
-                story.append(Paragraph(f"Грешка при зареждане на изображение: {e}", subtitle_style))
+                error_style = ParagraphStyle(
+                    'ErrorStyle',
+                    parent=styles['Normal'],
+                    fontSize=10,
+                    spaceAfter=5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=1
+                )
+                story.append(Paragraph(f"Грешка при зареждане на изображение: {e}", error_style))
 
         # РЕЗУЛТАТИ И ПРОВЕРКА
         results_title_style = ParagraphStyle(
