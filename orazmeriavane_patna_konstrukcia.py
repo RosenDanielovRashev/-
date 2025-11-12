@@ -377,12 +377,31 @@ if "hD_point" in layer_data and "Ed" in layer_data and "Ei" in layer_data:
     fig = go.Figure()
     for value, group in data.groupby("Ee_over_Ei"):
         group_sorted = group.sort_values("h_over_D")
+        
+        # Проверка дали стойността е кратна на 0.05
+        is_multiple_of_005 = abs(value * 20 - round(value * 20)) < 0.001
+        
+        # Добавяме основната линия (винаги се показва)
         fig.add_trace(go.Scatter(
             x=group_sorted["h_over_D"],
             y=group_sorted["Ed_over_Ei"],
             mode='lines',
             name=f"Ee/Ei = {value:.2f}"
         ))
+        
+        # Добавяме отделен trace САМО за надписите през 0.05
+        if is_multiple_of_005:
+            # Взимаме средна точка на линията за надписа
+            mid_point = len(group_sorted) // 2
+            fig.add_trace(go.Scatter(
+                x=[group_sorted.iloc[mid_point]["h_over_D"]],
+                y=[group_sorted.iloc[mid_point]["Ed_over_Ei"]],
+                mode='text',
+                text=[f"{value:.2f}"],
+                textposition="middle right",
+                textfont=dict(size=10, color="black"),
+                showlegend=False
+            ))
     
     hD_point = layer_data['hD_point']
     EdEi_point = layer_data['Ed'] / layer_data['Ei']
