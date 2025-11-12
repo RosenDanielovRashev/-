@@ -1191,19 +1191,12 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 
                 story.append(Spacer(1, 5))
                 
-                # Числена формула
+                # Числена формула + краен резултат
                 numeric_formula = " + ".join(numeric_terms)
                 story.append(Paragraph("Формула със заместени стойности:", thermal_value_style))
-                formula_text_numeric = f'R<sub>0</sub> = {numeric_formula}'
+                formula_text_numeric = f'R<sub>0</sub> = {numeric_formula} = {R0:.3f} m²K/W'
                 story.append(Paragraph(formula_text_numeric, thermal_value_style))
-                
-                story.append(Spacer(1, 5))
-                
-                # Краен резултат
-                result_text = f'R<sub>0</sub> = {R0:.3f} m²K/W'
-                story.append(Paragraph("Краен резултат:", thermal_value_style))
-                story.append(Paragraph(result_text, thermal_value_style))
-        
+
         story.append(Spacer(1, 20))
 
         
