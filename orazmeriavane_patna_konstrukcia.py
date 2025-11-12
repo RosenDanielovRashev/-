@@ -1120,6 +1120,20 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             spaceAfter=4,
             leftIndent=25
         )
+
+                # ЗАГЛАВИЕ (оригиналния стил)
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            fontSize=24,
+            spaceAfter=20,  # По-малко разстояние
+            alignment=1,
+            textColor=colors.HexColor('#006064'),
+            fontName=font_name,
+            leading=30,
+        )
+        
+        story.append(Paragraph("Проверка на пътната конструкция срещу замръзване", title_style))
+        story.append(Spacer(1, 15))  # По-малко разстояние
         
         # ТАБЛИЦА С ДЕБЕЛИНИ И λ КОЕФИЦИЕНТИ - ПЪРВО
         story.append(Paragraph("ДЕБЕЛИНИ И λ КОЕФИЦИЕНТИ НА ПЛАСТОВЕТЕ:", thermal_header_style))
