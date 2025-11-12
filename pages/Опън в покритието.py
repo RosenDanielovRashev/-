@@ -454,6 +454,17 @@ class EnhancedPDF(FPDF):
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
+def render_formula_to_image(formula_text, fontsize=14, dpi=150):
+    """Рендва формула като изображение чрез matplotlib"""
+    fig = plt.figure(figsize=(8, 2))
+    fig.text(0.05, 0.5, f'${formula_text}$', fontsize=fontsize, ha='left', va='center')
+    plt.axis('off')
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.1)
+    plt.close()
+    buf.seek(0)
+    return buf
+
 def generate_pdf_report():
     try:
         buffer = io.BytesIO()
@@ -571,21 +582,20 @@ def generate_pdf_report():
         )
         story.append(Paragraph("Основни формули за изчисление:", subtitle_style))
 
-        # Основни формули като LaTeX (както на снимката)
-        formula_style = ParagraphStyle(
-            'FormulaStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            spaceAfter=12,
-            fontName=font_name,
-            textColor=colors.HexColor('#4B5563'),
-            alignment=0,
-            leftIndent=10
-        )
+        # Основни формули като изображения
+        formulas = [
+            r"E_{sr} = \frac{\sum\limits_{i=1}^{n}(E_i \cdot h_i)}{\sum\limits_{i=1}^{n}h_i}",
+            r"H = \sum\limits_{i=1}^{n}h_i", 
+            r"\sigma_R = 1.15 \cdot p \cdot \sigma_R^{номограмма}"
+        ]
 
-        story.append(Paragraph(r"\[E_{sr} = \frac{\sum\limits_{i=1}^{n}(E_i \cdot h_i)}{\sum\limits_{i=1}^{n}h_i}\]", formula_style))
-        story.append(Paragraph(r"\[H = \sum\limits_{i=1}^{n}h_i\]", formula_style))
-        story.append(Paragraph(r"\[\sigma_R = 1.15 \cdot p \cdot \sigma_R^{номограмма}\]", formula_style))
+        for formula in formulas:
+            try:
+                img_buf = render_formula_to_image(formula, fontsize=12, dpi=150)
+                story.append(RLImage(img_buf, width=160*mm, height=15*mm))
+                story.append(Spacer(1, 8))
+            except Exception as e:
+                story.append(Paragraph(f"Грешка при рендване на формула: {formula}", subtitle_style))
         
         story.append(Spacer(1, 20))
 
@@ -610,34 +620,39 @@ def generate_pdf_report():
         num_str = " + ".join([f"{Ei:.2f} \\times {hi:.2f}" for Ei, hi in zip(st.session_state.Ei_list, st.session_state.hi_list)])
         den_str = " + ".join([f"{hi:.2f}" for hi in st.session_state.hi_list])
 
-        calculation_style = ParagraphStyle(
-            'CalculationStyle',
-            parent=styles['Normal'],
-            fontSize=10,
-            spaceAfter=12,
-            fontName=font_name,
-            textColor=colors.HexColor('#4B5563'),
-            alignment=0,
-            leftIndent=10
-        )
-
-        story.append(Paragraph(fr"\[E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr_val:.2f} \, \text{{MPa}}\]", calculation_style))
-        story.append(Paragraph(fr"\[H = {den_str} = {H_val:.2f} \, \text{{cm}}\]", calculation_style))
+        # Формули за изчисления като изображения
+        calculation_formulas = [
+            fr"E_{{sr}} = \frac{{{num_str}}}{{{den_str}}} = {Esr_val:.2f} \, \text{{MPa}}",
+            fr"H = {den_str} = {H_val:.2f} \, \text{{cm}}"
+        ]
 
         if 'final_sigma' in st.session_state:
-            story.append(Paragraph(fr"\[\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr_val/st.session_state.final_Ed:.3f}\]", calculation_style))
-            story.append(Paragraph(fr"\[\frac{{H}}{{D}} = \frac{{{H_val:.2f}}}{{{st.session_state.final_D:.2f}}} = {H_val/st.session_state.final_D:.3f}\]", calculation_style))
-            story.append(Paragraph(fr"\[\sigma_R^{{номограмма}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}\]", calculation_style))
+            calculation_formulas.extend([
+                fr"\frac{{E_{{sr}}}}{{E_d}} = \frac{{{Esr_val:.2f}}}{{{st.session_state.final_Ed:.2f}}} = {Esr_val/st.session_state.final_Ed:.3f}",
+                fr"\frac{{H}}{{D}} = \frac{{{H_val:.2f}}}{{{st.session_state.final_D:.2f}}} = {H_val/st.session_state.final_D:.3f}",
+                fr"\sigma_R^{{номограмма}} = {st.session_state.final_sigma:.3f} \, \text{{MPa}}"
+            ])
 
         axle_load = st.session_state.get("axle_load", 100)
         p_loc = 0.620 if axle_load == 100 else 0.633 if axle_load == 115 else 0.0
         if p_loc and 'final_sigma' in st.session_state:
             sigma_final_loc = 1.15 * p_loc * st.session_state.final_sigma
-            story.append(Paragraph(fr"\[p = {p_loc:.3f} \, \text{{(за осов товар {axle_load} kN)}}\]", calculation_style))
-            story.append(Paragraph(fr"\[\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \, \text{{MPa}}\]", calculation_style))
+            calculation_formulas.extend([
+                fr"p = {p_loc:.3f} \, \text{{(за осов товар {axle_load} kN)}}",
+                fr"\sigma_R = 1.15 \times {p_loc:.3f} \times {st.session_state.final_sigma:.3f} = {sigma_final_loc:.3f} \, \text{{MPa}}"
+            ])
+
+        for formula in calculation_formulas:
+            try:
+                img_buf = render_formula_to_image(formula, fontsize=11, dpi=150)
+                story.append(RLImage(img_buf, width=160*mm, height=12*mm))
+                story.append(Spacer(1, 6))
+            except Exception as e:
+                story.append(Paragraph(f"Грешка при рендване на формула: {formula}", subtitle_style))
 
         story.append(Spacer(1, 20))
 
+        # ОСТАНАЛАТА ЧАСТ ОТ КОДА ОСТАВА НЕПРОМЕНЕНА...
         # ГРАФИКА
         if "fig" in st.session_state:
             graph_title_style = ParagraphStyle(
@@ -659,7 +674,7 @@ def generate_pdf_report():
                 story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))
                 story.append(Spacer(1, 10))
             except Exception as e:
-                story.append(Paragraph(f"Грешка при генериране на графика: {e}", calculation_style))
+                story.append(Paragraph(f"Грешка при генериране на графика: {e}", subtitle_style))
 
         # ДОПУСТИМИ НАПРЕЖЕНИЯ
         img_path = "Допустими опънни напрежения.png"
@@ -681,7 +696,7 @@ def generate_pdf_report():
                 img_buffer.seek(0)
                 story.append(RLImage(img_buffer, width=180 * mm, height=140 * mm))
             except Exception as e:
-                story.append(Paragraph(f"Грешка при зареждане на изображение: {e}", calculation_style))
+                story.append(Paragraph(f"Грешка при зареждане на изображение: {e}", subtitle_style))
 
         # РЕЗУЛТАТИ И ПРОВЕРКА
         results_title_style = ParagraphStyle(
@@ -740,7 +755,7 @@ def generate_pdf_report():
                     backColor=colors.HexColor('#e8f5e9')
                 )
                 story.append(Paragraph("✅ ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
-                story.append(Paragraph("Изчисленото σR е по-малко или равно на допустимото σR", calculation_style))
+                story.append(Paragraph("Изчисленото σR е по-малко или равно на допустимото σR", subtitle_style))
             else:
                 status_style = ParagraphStyle(
                     'StatusFail',
@@ -752,7 +767,7 @@ def generate_pdf_report():
                     backColor=colors.HexColor('#ffebee')
                 )
                 story.append(Paragraph("❌ ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
-                story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", calculation_style))
+                story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", subtitle_style))
 
         # ДАТА И ПОДПИС
         story.append(Spacer(1, 20))
