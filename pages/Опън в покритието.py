@@ -77,6 +77,78 @@ def compute_sigma_R(H, D, Esr, Ed):
     return None, None, None, None, None, None
 
 # -----------------------------
+# Функция за създаване на оптимизирана графика за PDF
+# -----------------------------
+def create_optimized_pdf_figure():
+    """Създава оптимизирана версия на графиката за PDF отчет"""
+    fig = go.Figure()
+    
+    # Цветова схема, която се вижда добре в PDF
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+              '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    
+    # Добавяне на всички изолинии от данните
+    for i, (val, group) in enumerate(data.groupby("Esr_over_Ed")):
+        fig.add_trace(go.Scatter(
+            x=group["H_over_D"],
+            y=group["sigma_R"],
+            mode='lines',
+            name=f"Esr/Ed = {val:.1f}",
+            line=dict(color=colors[i % len(colors)], width=2)
+        ))
+    
+    # Добавяне на точката на потребителя (ако има изчисление)
+    if 'final_hD' in st.session_state and 'final_sigma' in st.session_state:
+        fig.add_trace(go.Scatter(
+            x=[st.session_state.final_hD], 
+            y=[st.session_state.final_sigma],
+            mode='markers',
+            marker=dict(size=12, color='red', symbol='circle', 
+                       line=dict(color='darkred', width=2)),
+            name="Изчислена точка"
+        ))
+    
+    # Настройки за PDF
+    fig.update_layout(
+        title=dict(
+            text="Номограма: σR в долния пласт на покритието",
+            font=dict(size=18, color='black', family="Arial")
+        ),
+        xaxis=dict(
+            title="H / D",
+            title_font=dict(size=14, color='black'),
+            tickfont=dict(size=12, color='black'),
+            linecolor='black',
+            gridcolor='lightgray',
+            mirror=True,
+            showgrid=True
+        ),
+        yaxis=dict(
+            title="σR [MPa]",
+            title_font=dict(size=14, color='black'),
+            tickfont=dict(size=12, color='black'),
+            linecolor='black',
+            gridcolor='lightgray',
+            mirror=True,
+            showgrid=True
+        ),
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        legend=dict(
+            bgcolor='rgba(255,255,255,0.9)',
+            bordercolor='black',
+            borderwidth=1,
+            font=dict(size=10, color='black'),
+            x=0.02,
+            y=0.98
+        ),
+        width=1200,
+        height=800
+    )
+    
+    return fig
+
+# -----------------------------
 # UI: Заглавие и входове
 # -----------------------------
 st.title("Определяне опънното напрежение в долния пласт на покритието фиг.9.2")
@@ -687,8 +759,6 @@ def generate_pdf_report():
         # НОВ ЛИСТ ЗА ГРАФИКАТА
         story.append(PageBreak())
 
-        # В секцията за генериране на PDF, заменете частта за графиката със следния код:
-        
         # ГРАФИКА НА НОМОГРАМАТА
         graph_title_style = ParagraphStyle(
             'GraphTitle',
@@ -700,79 +770,39 @@ def generate_pdf_report():
         )
         story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
         
-        if "fig" in st.session_state:
-            try:
-                # СЪЗДАВАНЕ НА ГРАФИКА С ПРАВИЛНИТЕ ЦВЕТОВЕ ЗА PDF
-                # Вместо copy(), създаваме нова графика с подобрени настройки
-                original_fig = st.session_state["fig"]
-                
-                # Създаваме нова фигура с подобрени настройки за PDF
-                fig_pdf = go.Figure()
-                
-                # Копираме данните от оригиналната графика
-                for trace in original_fig.data:
-                    fig_pdf.add_trace(trace)
-                
-                # Прилагаме подобрени настройки за PDF
-                fig_pdf.update_layout(
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    font=dict(color='black', size=12),
-                    title=dict(
-                        text=original_fig.layout.title.text if original_fig.layout.title else "Номограма: σR срещу H/D",
-                        font=dict(color='black', size=16)
-                    ),
-                    xaxis=dict(
-                        linecolor='black',
-                        gridcolor='lightgray',
-                        title_font=dict(color='black', size=14),
-                        tickfont=dict(color='black', size=12)
-                    ),
-                    yaxis=dict(
-                        linecolor='black',
-                        gridcolor='lightgray',
-                        title_font=dict(color='black', size=14),
-                        tickfont=dict(color='black', size=12)
-                    ),
-                    legend=dict(
-                        bgcolor='rgba(255,255,255,0.8)',
-                        bordercolor='black',
-                        borderwidth=1,
-                        font=dict(color='black')
-                    ),
-                    width=1200,
-                    height=900
-                )
-                
-                # Експорт на графиката с висока резолюция
-                img_bytes = pio.to_image(
-                    fig_pdf, 
-                    format="png", 
-                    width=1200, 
-                    height=900,
-                    scale=3,  # Повишаване на качеството
-                    engine="kaleido"
-                )
-                
-                pil_img = PILImage.open(BytesIO(img_bytes))
-                img_buffer = io.BytesIO()
-                pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
-                img_buffer.seek(0)
-                
-                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-                story.append(Spacer(1, 15))
-                
-            except Exception as e:
-                error_style = ParagraphStyle(
-                    'ErrorStyle',
-                    parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=5,
-                    fontName=font_name,
-                    textColor=colors.HexColor('#d32f2f'),
-                    alignment=1
-                )
-                story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
+        # ИЗПОЛЗВАНЕ НА НОВАТА ФУНКЦИЯ ЗА ОПТИМИЗИРАНА ГРАФИКА
+        try:
+            # Създаване на оптимизирана графика за PDF
+            pdf_fig = create_optimized_pdf_figure()
+            
+            img_bytes = pio.to_image(
+                pdf_fig, 
+                format="png", 
+                width=1200, 
+                height=800,
+                scale=4,
+                engine="kaleido"
+            )
+            
+            pil_img = PILImage.open(BytesIO(img_bytes))
+            img_buffer = io.BytesIO()
+            pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
+            img_buffer.seek(0)
+            
+            story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+            story.append(Spacer(1, 15))
+            
+        except Exception as e:
+            error_style = ParagraphStyle(
+                'ErrorStyle',
+                parent=styles['Normal'],
+                fontSize=10,
+                spaceAfter=5,
+                fontName=font_name,
+                textColor=colors.HexColor('#d32f2f'),
+                alignment=1
+            )
+            story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
 
         # ДОПУСТИМИ НАПРЕЖЕНИЯ
         img_path = "Допустими опънни напрежения.png"
