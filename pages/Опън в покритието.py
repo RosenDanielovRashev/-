@@ -526,7 +526,7 @@ class EnhancedPDF(FPDF):
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
-def render_formula_to_image(formula_text, fontsize=28, dpi=150):  # Увеличена големина с 20%
+def render_formula_to_image(formula_text, fontsize=20, dpi=150):  # Увеличена големина с 20%
     """Рендва формула като изображение чрез matplotlib mathtext"""
     plt.rcParams['text.usetex'] = False
     plt.rcParams['mathtext.fontset'] = 'cm'
