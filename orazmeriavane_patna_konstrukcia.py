@@ -1029,20 +1029,8 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(layer_card)
             story.append(Spacer(1, 10))
 
-        # НОВА СТРАНИЦА ЗА ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКА
-        story.append(PageBreak())
-        
-        # Заглавие за топлинни параметри
-        thermal_title_style = ParagraphStyle(
-            'ThermalTitle',
-            fontName=font_name,
-            fontSize=16,
-            textColor=colors.HexColor('#2C5530'),
-            spaceAfter=12,
-            alignment=1
-        )
-        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКА", thermal_title_style))
-        story.append(Spacer(1, 10))
+        # СЛЕД ГРАФИЧНО ОБОБЩЕНИЕ - ДОБАВЯНЕ НА ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКИ
+        story.append(Spacer(1, 20))
         
         # Стилове за топлинни параметри
         thermal_header_style = ParagraphStyle(
@@ -1072,56 +1060,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             leftIndent=25
         )
         
-        # Топлинни параметри
-        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ:", thermal_header_style))
-        story.append(Spacer(1, 5))
-        
-        # λоп и λзп стойности
-        lambda_op = st.session_state.get("lambda_op_input", 2.5)
-        lambda_zp = st.session_state.get("lambda_zp_input", 2.5)
-        z1 = st.session_state.get("z1_input", 50)
-        
-        story.append(Paragraph(f"• λоп = {lambda_op:.2f} kcal/mhg", thermal_value_style))
-        story.append(Paragraph("Коефициент на топлопроводност в открито поле", thermal_note_style))
-        story.append(Paragraph("2.50 kcal/mhg за І климат. зона", thermal_note_style))
-        story.append(Paragraph("2.20 kcal/mhg за ІІ климат. зона", thermal_note_style))
-        story.append(Paragraph("(фиг.5.3)", thermal_note_style))
-        
-        story.append(Spacer(1, 5))
-        
-        story.append(Paragraph(f"• λзп = {lambda_zp:.2f} kcal/mhg", thermal_value_style))
-        story.append(Paragraph("Коефициент на топлопроводност под настилката", thermal_note_style))
-        story.append(Paragraph("Зависи от топлинната съпротивляемост", thermal_note_style))
-        story.append(Paragraph("(таблица 5.2)", thermal_note_style))
-        
-        story.append(Spacer(1, 10))
-        
-        # Изчисление на m
-        m_value = lambda_zp / lambda_op if lambda_op > 0 else 1.0
-        story.append(Paragraph("ИЗЧИСЛЕНИЕ НА m:", thermal_header_style))
-        story.append(Spacer(1, 5))
-        
-        # Формула за m
-        formula_text_m = f'm = λзп / λоп = {lambda_zp:.2f} / {lambda_op:.2f} = {m_value:.2f}'
-        story.append(Paragraph(formula_text_m, thermal_value_style))
-        
-        story.append(Spacer(1, 10))
-        
-        # z₁ и изчисление на z
-        story.append(Paragraph(f"• z₁ = {z1} cm", thermal_value_style))
-        story.append(Paragraph("Замръзваща дълбочина на почвата в открито поле", thermal_note_style))
-        story.append(Paragraph("Определя се от карта с изохети (фиг.5.2)", thermal_note_style))
-        
-        story.append(Spacer(1, 5))
-        
-        # Формула за z
-        z_value = z1 * m_value
-        formula_text_z = f'z = z₁ × m = {z1} × {m_value:.2f} = {z_value:.2f} cm'
-        story.append(Paragraph(formula_text_z, thermal_value_style))
-        
-        story.append(Spacer(1, 15))
-        
-        # ТАБЛИЦА С ДЕБЕЛИНИ И λ КОЕФИЦИЕНТИ
+        # ТАБЛИЦА С ДЕБЕЛИНИ И λ КОЕФИЦИЕНТИ - ПЪРВО
         story.append(Paragraph("ДЕБЕЛИНИ И λ КОЕФИЦИЕНТИ НА ПЛАСТОВЕТЕ:", thermal_header_style))
         story.append(Spacer(1, 8))
         
@@ -1164,7 +1103,56 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         ]))
         
         story.append(layers_table)
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 20))
+        
+        # ТОПЛИННИ ПАРАМЕТРИ - СЛЕД ТАБЛИЦАТА
+        story.append(Paragraph("ТОПЛИННИ ПАРАМЕТРИ:", thermal_header_style))
+        story.append(Spacer(1, 8))
+        
+        # λоп и λзп стойности
+        lambda_op = st.session_state.get("lambda_op_input", 2.5)
+        lambda_zp = st.session_state.get("lambda_zp_input", 2.5)
+        z1 = st.session_state.get("z1_input", 50)
+        
+        story.append(Paragraph(f"• λоп = {lambda_op:.2f} kcal/mhg", thermal_value_style))
+        story.append(Paragraph("Коефициент на топлопроводност в открито поле", thermal_note_style))
+        story.append(Paragraph("2.50 kcal/mhg за І климат. зона", thermal_note_style))
+        story.append(Paragraph("2.20 kcal/mhg за ІІ климат. зона", thermal_note_style))
+        story.append(Paragraph("(фиг.5.3)", thermal_note_style))
+        
+        story.append(Spacer(1, 5))
+        
+        story.append(Paragraph(f"• λзп = {lambda_zp:.2f} kcal/mhg", thermal_value_style))
+        story.append(Paragraph("Коефициент на топлопроводност под настилката", thermal_note_style))
+        story.append(Paragraph("Зависи от топлинната съпротивляемост", thermal_note_style))
+        story.append(Paragraph("(таблица 5.2)", thermal_note_style))
+        
+        story.append(Spacer(1, 10))
+        
+        # Изчисление на m
+        m_value = lambda_zp / lambda_op if lambda_op > 0 else 1.0
+        story.append(Paragraph("ИЗЧИСЛЕНИЕ НА m:", thermal_header_style))
+        story.append(Spacer(1, 5))
+        
+        # Формула за m като текст
+        formula_text_m = f'm = λзп / λоп = {lambda_zp:.2f} / {lambda_op:.2f} = {m_value:.2f}'
+        story.append(Paragraph(formula_text_m, thermal_value_style))
+        
+        story.append(Spacer(1, 10))
+        
+        # z₁ и изчисление на z
+        story.append(Paragraph(f"• z₁ = {z1} cm", thermal_value_style))
+        story.append(Paragraph("Замръзваща дълбочина на почвата в открито поле", thermal_note_style))
+        story.append(Paragraph("Определя се от карта с изохети (фиг.5.2)", thermal_note_style))
+        
+        story.append(Spacer(1, 5))
+        
+        # Формула за z като текст
+        z_value = z1 * m_value
+        formula_text_z = f'z = z₁ × m = {z1} × {m_value:.2f} = {z_value:.2f} cm'
+        story.append(Paragraph(formula_text_z, thermal_value_style))
+        
+        story.append(Spacer(1, 20))
         
         # ИЗЧИСЛЕНИЕ НА R₀
         story.append(Paragraph("ИЗЧИСЛЕНИЕ НА R₀:", thermal_header_style))
@@ -1185,20 +1173,20 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     h_m = h_cm / 100  # преобразуваме cm → m
                     if lam != 0:
                         terms.append(h_m / lam)
-                        symbolic_terms.append(f"\\frac{{h_{i+1}}}{{\\lambda_{i+1}}}")
-                        numeric_terms.append(f"\\frac{{{h_m:.3f}}}{{{lam:.3f}}}")
+                        symbolic_terms.append(f"h_{i+1}/λ_{i+1}")
+                        numeric_terms.append(f"{h_m:.3f}/{lam:.3f}")
                 
                 R0 = sum(terms)
                 
-                # Символна формула
+                # Символна формула като текстов низ
                 symbolic_formula = " + ".join(symbolic_terms)
-                story.append(Paragraph(f"Символна формула:", thermal_value_style))
+                story.append(Paragraph("Символна формула:", thermal_value_style))
                 formula_text_symbolic = f'R₀ = {symbolic_formula}'
                 story.append(Paragraph(formula_text_symbolic, thermal_value_style))
                 
                 story.append(Spacer(1, 5))
                 
-                # Числена формула  
+                # Числена формула като текстов низ
                 numeric_formula = " + ".join(numeric_terms)
                 story.append(Paragraph("Формула със заместени стойности:", thermal_value_style))
                 formula_text_numeric = f'R₀ = {numeric_formula}'
@@ -1313,8 +1301,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 story.append(Paragraph("• Увеличете дебелините на някои от пластовете", recommendations_style))
                 story.append(Paragraph("• Използвайте материали с по-ниски λ коефициенти", recommendations_style))
                 story.append(Paragraph("• Прегледайте избраните стойности за λоп и λзп", recommendations_style))
-
-
         
         # Дата и подпис
         story.append(Spacer(1, 20))
