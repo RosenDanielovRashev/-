@@ -926,7 +926,7 @@ def generate_pdf_report():
                     alignment=1,
                     backColor=colors.HexColor('#e8f5e9')
                 )
-                story.append(Paragraph("✅ ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
+                story.append(Paragraph("ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
                 subtitle_style = ParagraphStyle(
                     'SubtitleStyle',
                     parent=styles['Normal'],
@@ -947,7 +947,7 @@ def generate_pdf_report():
                     alignment=1,
                     backColor=colors.HexColor('#ffebee')
                 )
-                story.append(Paragraph("❌ ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
+                story.append(Paragraph("ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
                 subtitle_style = ParagraphStyle(
                     'SubtitleStyle',
                     parent=styles['Normal'],
@@ -971,7 +971,10 @@ def generate_pdf_report():
                 alignment=1
             )
             story.append(Spacer(1, 20))
-            story.append(Paragraph("ДОПУСТИМИ ОПЪННИ НАПРЕЖЕНИЯ", allowable_title_style))
+
+            # НОВА СТРАНИЦА С ВСИЧКИ СНИМКИ
+            story.append(PageBreak())
+            story.append(Paragraph("ДОПЪЛНИТЕЛНИ МАТЕРИАЛИ", allowable_title_style))
             
             try:
                 pil_img = PILImage.open(img_path)
