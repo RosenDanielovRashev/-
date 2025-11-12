@@ -1028,60 +1028,6 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Spacer(1, 8))  # Минимално разстояние
 
 
-        # НОВА СТРАНИЦА ЗА ГРАФИЧНО ОБОБЩЕНИЕ
-        story.append(PageBreak())
-        
-        # Заглавие
-        summary_title_style = ParagraphStyle(
-            'SummaryTitle',
-            fontName=font_name,
-            fontSize=18,
-            textColor=colors.HexColor('#2C5530'),
-            spaceAfter=15,
-            alignment=1
-        )
-        story.append(Paragraph("ГРАФИЧНО ОБОБЩЕНИЕ", summary_title_style))
-        story.append(Spacer(1, 10))
-        
-        # Модерна визуализация на пластовете
-        layer_title_style = ParagraphStyle('LayerTitle', fontName=font_name, fontSize=12, textColor=colors.HexColor('#5D4037'))
-        ee_style = ParagraphStyle('EeValue', fontName=font_name, fontSize=11, textColor=colors.HexColor('#0277BD'), alignment=2)
-        ed_style = ParagraphStyle('EdValue', fontName=font_name, fontSize=11, textColor=colors.HexColor('#2E7D32'), alignment=2)
-        h_style  = ParagraphStyle('HValue', fontName=font_name, fontSize=11, textColor=colors.HexColor('#D84315'), alignment=0)
-        ei_inner_style = ParagraphStyle('EiInner', fontName=font_name, fontSize=11, textColor=colors.HexColor('#004D40'), alignment=0)
-
-        card_style = TableStyle([
-            ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#E0F7FA')),
-            ('BOX', (0, 0), (-1, -1), 2, colors.HexColor('#26C6DA')),
-            ('INNERGRID', (0, 0), (-1, -1), 0.25, colors.white),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('LEFTPADDING', (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING', (0, 0), (-1, -1), 8),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-            ('ALIGN', (1, 0), (1, 0), 'RIGHT'),
-            ('ALIGN', (1, 1), (1, 1), 'LEFT'),
-            ('ALIGN', (1, 2), (1, 2), 'RIGHT'),
-        ])
-
-        story.append(Paragraph("СХЕМА НА ПЛАСТОВЕТЕ", layer_title_style))
-        story.append(Spacer(1, 8))
-
-        for i, layer in enumerate(st.session_state.layers_data):
-            if "Ed" not in layer:
-                continue
-            layer_data = [
-                [Paragraph(f"Пласт {i+1}", layer_title_style), Paragraph(f"Ee = {layer['Ee']:.0f} MPa", ee_style)],
-                [Paragraph(f"h = {layer['h']:.2f} cm", h_style), Paragraph(f"Ei = {layer['Ei']:.0f} MPa", ei_inner_style)],
-                ["", Paragraph(f"Ed = {layer['Ed']:.0f} MPa", ed_style)]
-            ]
-            layer_card = Table(layer_data, colWidths=[55*mm, 75*mm])
-            layer_card.setStyle(card_style)
-            story.append(layer_card)
-            story.append(Spacer(1, 10))
-
-
         # НОВА СТРАНИЦА ЗА ТОПЛИННИ ПАРАМЕТРИ И ПРОВЕРКА
         story.append(PageBreak())
 
