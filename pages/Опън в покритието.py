@@ -526,14 +526,14 @@ class EnhancedPDF(FPDF):
 # -------------------------------------------------
 # Генерация на PDF със стила от orazmeriavane_patna_konstrukcia.py
 # -------------------------------------------------
-def render_formula_to_image(formula_text, fontsize=20, dpi=150):  # Увеличена големина с 20%
+def render_formula_to_image(formula_text, fontsize=26, dpi=150):  # Увеличена големина с 10%
     """Рендва формула като изображение чрез matplotlib mathtext"""
     plt.rcParams['text.usetex'] = False
     plt.rcParams['mathtext.fontset'] = 'cm'
     plt.rcParams['font.family'] = 'serif'
     plt.rcParams['font.size'] = fontsize
     
-    fig = plt.figure(figsize=(11.5, 1.73))  # Увеличена с 20%
+    fig = plt.figure(figsize=(10.56, 1.58))  # Увеличена с 10%
     plt.text(0.5, 0.5, f'${formula_text}$', 
              horizontalalignment='center', 
              verticalalignment='center',
@@ -595,16 +595,16 @@ def generate_pdf_report():
         # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
             'CustomTitle',
-            fontSize=28,  # Увеличена с 20%
-            spaceAfter=24,  # Увеличена с 20%
+            fontSize=26,  # Увеличена с 10%
+            spaceAfter=22,  # Увеличена с 10%
             alignment=1,
             textColor=colors.HexColor('#006064'),
             fontName=font_name,
-            leading=36,  # Увеличена с 20%
+            leading=33,  # Увеличена с 10%
         )
         
         story.append(Paragraph("ОПЪН В ПОКРИТИЕТО", title_style))
-        story.append(Spacer(1, 18))  # Увеличена с 20%
+        story.append(Spacer(1, 16.5))  # Увеличена с 10%
 
         # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
         table_data = [
@@ -620,38 +620,38 @@ def generate_pdf_report():
 
         table_data.append(["Ed", f"{st.session_state.final_Ed:.2f}", "MPa"])
 
-        info_table = Table(table_data, colWidths=[72*mm, 60*mm, 36*mm], hAlign='LEFT')  # Увеличени с 20%
+        info_table = Table(table_data, colWidths=[66*mm, 55*mm, 33*mm], hAlign='LEFT')  # Увеличени с 10%
         info_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 10.8),  # Увеличена с 20%
+            ('FONTSIZE', (0, 0), (-1, 0), 9.9),  # Увеличена с 10%
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),  # Увеличена с 20%
-            ('TOPPADDING', (0, 0), (-1, 0), 6),  # Увеличена с 20%
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 5.5),  # Увеличена с 10%
+            ('TOPPADDING', (0, 0), (-1, 0), 5.5),  # Увеличена с 10%
             
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
             ('FONTNAME', (0, 1), (-1, -1), font_name),
-            ('FONTSIZE', (0, 1), (-1, -1), 9.6),  # Увеличена с 20%
+            ('FONTSIZE', (0, 1), (-1, -1), 8.8),  # Увеличена с 10%
             ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 3.6),  # Увеличена с 20%
-            ('TOPPADDING', (0, 1), (-1, -1), 3.6),  # Увеличена с 20%
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3.3),  # Увеличена с 10%
+            ('TOPPADDING', (0, 1), (-1, -1), 3.3),  # Увеличена с 10%
             
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
         ]))
 
         story.append(info_table)
-        story.append(Spacer(1, 30))  # Увеличена с 20%
+        story.append(Spacer(1, 27.5))  # Увеличена с 10%
 
-        # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ (увеличена големина с 20%)
+        # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ (увеличена големина с 10%)
         formulas_title_style = ParagraphStyle(
             'FormulasTitle',
             fontName=font_name,
-            fontSize=15.36,  # Увеличена с 20%
+            fontSize=14.08,  # Увеличена с 10%
             textColor=colors.HexColor('#2C5530'),
-            spaceAfter=12,  # Увеличена с 20%
+            spaceAfter=11,  # Увеличена с 10%
             alignment=0
         )
         story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
@@ -670,8 +670,8 @@ def generate_pdf_report():
             # Първа колона
             if i < len(formulas):
                 try:
-                    img_buf1 = render_formula_to_image(formulas[i], fontsize=25.92, dpi=150)  # Увеличена с 20%
-                    row.append(RLImage(img_buf1, width=108*mm, height=21.6*mm))  # Увеличена с 20%
+                    img_buf1 = render_formula_to_image(formulas[i], fontsize=23.76, dpi=150)  # Увеличена с 10%
+                    row.append(RLImage(img_buf1, width=99*mm, height=19.8*mm))  # Увеличена с 10%
                 except:
                     row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), formulas_title_style))
             else:
@@ -680,8 +680,8 @@ def generate_pdf_report():
             # Втора колона
             if i + 1 < len(formulas):
                 try:
-                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=25.92, dpi=150)  # Увеличена с 20%
-                    row.append(RLImage(img_buf2, width=108*mm, height=21.6*mm))  # Увеличена с 20%
+                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=23.76, dpi=150)  # Увеличена с 10%
+                    row.append(RLImage(img_buf2, width=99*mm, height=19.8*mm))  # Увеличена с 10%
                 except:
                     row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), formulas_title_style))
             else:
@@ -689,24 +689,24 @@ def generate_pdf_report():
             
             formula_table_data.append(row)
 
-        formula_table = Table(formula_table_data, colWidths=[115.2*mm, 115.2*mm])  # Увеличена с 20%
+        formula_table = Table(formula_table_data, colWidths=[105.6*mm, 105.6*mm])  # Увеличена с 10%
         formula_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 9.6),  # Увеличена с 20%
-            ('TOPPADDING', (0, 0), (-1, -1), 9.6),  # Увеличена с 20%
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8.8),  # Увеличена с 10%
+            ('TOPPADDING', (0, 0), (-1, -1), 8.8),  # Увеличена с 10%
         ]))
         
         story.append(formula_table)
-        story.append(Spacer(1, 24))  # Увеличена с 20%
+        story.append(Spacer(1, 22))  # Увеличена с 10%
 
-        # 3. ИЗЧИСЛЕНИЯ (увеличена големина с 20%)
+        # 3. ИЗЧИСЛЕНИЯ (увеличена големина с 10%)
         calculations_title_style = ParagraphStyle(
             'CalculationsTitle',
             fontName=font_name,
-            fontSize=15.36,  # Увеличена с 20%
+            fontSize=14.08,  # Увеличена с 10%
             textColor=colors.HexColor('#2C5530'),
-            spaceAfter=12,  # Увеличена с 20%
+            spaceAfter=11,  # Увеличена с 10%
             alignment=0
         )
         story.append(Paragraph("3. Изчисления", calculations_title_style))
@@ -746,8 +746,8 @@ def generate_pdf_report():
             # Първа колона
             if i < len(calculation_formulas):
                 try:
-                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=23.04, dpi=150)  # Увеличена с 20%
-                    row.append(RLImage(img_buf1, width=108*mm, height=20.16*mm))  # Увеличена с 20%
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=21.12, dpi=150)  # Увеличена с 10%
+                    row.append(RLImage(img_buf1, width=99*mm, height=18.48*mm))  # Увеличена с 10%
                 except:
                     simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, calculations_title_style))
@@ -757,8 +757,8 @@ def generate_pdf_report():
             # Втора колона
             if i + 1 < len(calculation_formulas):
                 try:
-                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=23.04, dpi=150)  # Увеличена с 20%
-                    row.append(RLImage(img_buf2, width=108*mm, height=20.16*mm))  # Увеличена с 20%
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=21.12, dpi=150)  # Увеличена с 10%
+                    row.append(RLImage(img_buf2, width=99*mm, height=18.48*mm))  # Увеличена с 10%
                 except:
                     simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, calculations_title_style))
@@ -767,16 +767,16 @@ def generate_pdf_report():
             
             calc_table_data.append(row)
 
-        calc_table = Table(calc_table_data, colWidths=[115.2*mm, 115.2*mm])  # Увеличена с 20%
+        calc_table = Table(calc_table_data, colWidths=[105.6*mm, 105.6*mm])  # Увеличена с 10%
         calc_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 7.2),  # Увеличена с 20%
-            ('TOPPADDING', (0, 0), (-1, -1), 7.2),  # Увеличена с 20%
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6.6),  # Увеличена с 10%
+            ('TOPPADDING', (0, 0), (-1, -1), 6.6),  # Увеличена с 10%
         ]))
         
         story.append(calc_table)
-        story.append(Spacer(1, 24))  # Увеличена с 20%
+        story.append(Spacer(1, 22))  # Увеличена с 10%
 
         # НОВ ЛИСТ ЗА ГРАФИКАТА
         story.append(PageBreak())
@@ -785,9 +785,9 @@ def generate_pdf_report():
         graph_title_style = ParagraphStyle(
             'GraphTitle',
             fontName=font_name,
-            fontSize=19.2,  # Увеличена с 20%
+            fontSize=17.6,  # Увеличена с 10%
             textColor=colors.HexColor('#2C5530'),
-            spaceAfter=18,  # Увеличена с 20%
+            spaceAfter=16.5,  # Увеличена с 10%
             alignment=1
         )
         story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
@@ -826,12 +826,12 @@ def generate_pdf_report():
             pdf_fig.update_layout(
                 title=dict(
                     text="Номограма: σR в долния пласт на покритието",
-                    font=dict(size=21.6, color='black', family="Arial")  # Увеличена с 20%
+                    font=dict(size=19.8, color='black', family="Arial")  # Увеличена с 10%
                 ),
                 xaxis=dict(
                     title="H / D",
-                    title_font=dict(size=16.8, color='black'),  # Увеличена с 20%
-                    tickfont=dict(size=14.4, color='black'),  # Увеличена с 20%
+                    title_font=dict(size=15.4, color='black'),  # Увеличена с 10%
+                    tickfont=dict(size=13.2, color='black'),  # Увеличена с 10%
                     linecolor='black',
                     gridcolor='lightgray',
                     mirror=True,
@@ -839,8 +839,8 @@ def generate_pdf_report():
                 ),
                 yaxis=dict(
                     title="σR [MPa]",
-                    title_font=dict(size=16.8, color='black'),  # Увеличена с 20%
-                    tickfont=dict(size=14.4, color='black'),  # Увеличена с 20%
+                    title_font=dict(size=15.4, color='black'),  # Увеличена с 10%
+                    tickfont=dict(size=13.2, color='black'),  # Увеличена с 10%
                     linecolor='black',
                     gridcolor='lightgray',
                     mirror=True,
@@ -852,7 +852,7 @@ def generate_pdf_report():
                     bgcolor='rgba(255,255,255,0.9)',
                     bordercolor='black',
                     borderwidth=1,
-                    font=dict(size=12, color='black'),  # Увеличена с 20%
+                    font=dict(size=11, color='black'),  # Увеличена с 10%
                     x=1.05,
                     y=0.5,
                     xanchor='left',
@@ -884,8 +884,8 @@ def generate_pdf_report():
             error_style = ParagraphStyle(
                 'ErrorStyle',
                 parent=styles['Normal'],
-                fontSize=12,  # Увеличена с 20%
-                spaceAfter=6,  # Увеличена с 20%
+                fontSize=11,  # Увеличена с 10%
+                spaceAfter=5.5,  # Увеличена с 10%
                 fontName=font_name,
                 textColor=colors.HexColor('#d32f2f'),
                 alignment=1
@@ -896,9 +896,9 @@ def generate_pdf_report():
         results_title_style = ParagraphStyle(
             'ResultsTitle',
             fontName=font_name,
-            fontSize=19.2,  # Увеличена с 20%
+            fontSize=17.6,  # Увеличена с 10%
             textColor=colors.HexColor('#006064'),
-            spaceAfter=18,  # Увеличена с 20%
+            spaceAfter=16.5,  # Увеличена с 10%
             alignment=1
         )
         story.append(Paragraph("РЕЗУЛТАТИ И ПРОВЕРКА", results_title_style))
@@ -913,38 +913,38 @@ def generate_pdf_report():
                 ["Допустимо σR", f"{st.session_state.manual_sigma_value:.2f} MPa"]
             ]
 
-            results_table = Table(results_data, colWidths=[96*mm, 72*mm], hAlign='CENTER')  # Увеличена с 20%
+            results_table = Table(results_data, colWidths=[88*mm, 66*mm], hAlign='CENTER')  # Увеличена с 10%
             results_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('FONTNAME', (0, 0), (-1, 0), font_name),
-                ('FONTSIZE', (0, 0), (-1, 0), 12),  # Увеличена с 20%
+                ('FONTSIZE', (0, 0), (-1, 0), 11),  # Увеличена с 10%
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 7.2),  # Увеличена с 20%
-                ('TOPPADDING', (0, 0), (-1, 0), 7.2),  # Увеличена с 20%
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6.6),  # Увеличена с 10%
+                ('TOPPADDING', (0, 0), (-1, 0), 6.6),  # Увеличена с 10%
                 
                 ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
                 ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
                 ('FONTNAME', (0, 1), (-1, -1), font_name),
-                ('FONTSIZE', (0, 1), (-1, -1), 10.8),  # Увеличена с 20%
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 4.8),  # Увеличена с 20%
-                ('TOPPADDING', (0, 1), (-1, -1), 4.8),  # Увеличена с 20%
+                ('FONTSIZE', (0, 1), (-1, -1), 9.9),  # Увеличена с 10%
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 4.4),  # Увеличена с 10%
+                ('TOPPADDING', (0, 1), (-1, -1), 4.4),  # Увеличена с 10%
                 
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
                 ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
             ]))
 
             story.append(results_table)
-            story.append(Spacer(1, 18))  # Увеличена с 20%
+            story.append(Spacer(1, 16.5))  # Увеличена с 10%
 
             # Съобщение за проверка
             if check_passed:
                 status_style = ParagraphStyle(
                     'StatusOK',
                     fontName=font_name,
-                    fontSize=14.4,  # Увеличена с 20%
+                    fontSize=13.2,  # Увеличена с 10%
                     textColor=colors.HexColor('#2e7d32'),
-                    spaceAfter=14.4,  # Увеличена с 20%
+                    spaceAfter=13.2,  # Увеличена с 10%
                     alignment=1,
                     backColor=colors.HexColor('#e8f5e9')
                 )
@@ -952,8 +952,8 @@ def generate_pdf_report():
                 subtitle_style = ParagraphStyle(
                     'SubtitleStyle',
                     parent=styles['Normal'],
-                    fontSize=12,  # Увеличена с 20%
-                    spaceAfter=6,  # Увеличена с 20%
+                    fontSize=11,  # Увеличена с 10%
+                    spaceAfter=5.5,  # Увеличена с 10%
                     fontName=font_name,
                     textColor=colors.HexColor('#5D4037'),
                     alignment=1
@@ -963,9 +963,9 @@ def generate_pdf_report():
                 status_style = ParagraphStyle(
                     'StatusFail',
                     fontName=font_name,
-                    fontSize=14.4,  # Увеличена с 20%
+                    fontSize=13.2,  # Увеличена с 10%
                     textColor=colors.HexColor('#c62828'),
-                    spaceAfter=14.4,  # Увеличена с 20%
+                    spaceAfter=13.2,  # Увеличена с 10%
                     alignment=1,
                     backColor=colors.HexColor('#ffebee')
                 )
@@ -973,8 +973,8 @@ def generate_pdf_report():
                 subtitle_style = ParagraphStyle(
                     'SubtitleStyle',
                     parent=styles['Normal'],
-                    fontSize=12,  # Увеличена с 20%
-                    spaceAfter=6,  # Увеличена с 20%
+                    fontSize=11,  # Увеличена с 10%
+                    spaceAfter=5.5,  # Увеличена с 10%
                     fontName=font_name,
                     textColor=colors.HexColor('#5D4037'),
                     alignment=1
@@ -987,12 +987,12 @@ def generate_pdf_report():
             allowable_title_style = ParagraphStyle(
                 'AllowableTitle',
                 fontName=font_name,
-                fontSize=16.8,  # Увеличена с 20%
+                fontSize=15.4,  # Увеличена с 10%
                 textColor=colors.HexColor('#2C5530'),
-                spaceAfter=12,  # Увеличена с 20%
+                spaceAfter=11,  # Увеличена с 10%
                 alignment=1
             )
-            story.append(Spacer(1, 24))  # Увеличена с 20%
+            story.append(Spacer(1, 22))  # Увеличена с 10%
 
             # НОВА СТРАНИЦА С ВСИЧКИ СНИМКИ
             story.append(PageBreak())
@@ -1009,8 +1009,8 @@ def generate_pdf_report():
                 error_style = ParagraphStyle(
                     'ErrorStyle',
                     parent=styles['Normal'],
-                    fontSize=12,  # Увеличена с 20%
-                    spaceAfter=6,  # Увеличена с 20%
+                    fontSize=11,  # Увеличена с 10%
+                    spaceAfter=5.5,  # Увеличена с 10%
                     fontName=font_name,
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
@@ -1018,12 +1018,12 @@ def generate_pdf_report():
                 story.append(Paragraph("Грешка при зареждане на изображение", error_style))
 
         # ДАТА И ПОДПИС
-        story.append(Spacer(1, 24))  # Увеличена с 20%
+        story.append(Spacer(1, 22))  # Увеличена с 10%
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         date_style = ParagraphStyle(
             'DateStyle',
             fontName=font_name,
-            fontSize=10.8,  # Увеличена с 20%
+            fontSize=9.9,  # Увеличена с 10%
             alignment=2,
             textColor=colors.HexColor('#666666')
         )
