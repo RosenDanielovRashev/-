@@ -105,7 +105,7 @@ def formula_png_from_svg_or_fallback(formula_text, dpi=300):
         except Exception as e2:
             print(f"И двата метода се провалиха: {e2}")
             return None
-            
+
 def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
@@ -250,7 +250,6 @@ if layer_idx in st.session_state.layer_results:
                 
         if df_original is None:
             st.error("Файлът 'danni_1.csv' не е намерен. Моля, уверете се, че файлът съществува.")
-            # Remove the return statement here
         else:
             csv_paths2 = [
                 "Оразмеряване на опън за междиннен плстH_D_1.csv",
@@ -330,12 +329,13 @@ if layer_idx in st.session_state.layer_results:
                             mode='text',
                             text=[f'{round(sr_Ei,2)}'],
                             textposition='middle left',
-                            textfont=dict(size=15, color='red'),  # По-малък размер
+                            textfont=dict(size=15, color='red'),
                             showlegend=False,
                             hoverinfo='skip'
                         ))
+                
                 # Interpolation and marking points
-                x_intercept = None  # Initialize x_intercept
+                x_intercept = None
                 if layer_idx > 0:
                     sr_Ei_values = sorted(df_new['sr_Ei'].unique())
                     target_sr_Ei = results['Esr_over_En_r']
@@ -391,7 +391,6 @@ if layer_idx in st.session_state.layer_results:
                                             x_lower = np.interp(y_at_ratio, df_lower['y'], df_lower['H/D'])
                                             x_upper = np.interp(y_at_ratio, df_upper['y'], df_upper['H/D'])
                                             
-                                            # ПОПРАВЕНО: Правилно отстъпване и изчисление
                                             x_intercept = x_lower + (x_upper - x_lower) * (Ei_Ed_target - Ei_Ed_values[i]) / (Ei_Ed_values[i+1] - Ei_Ed_values[i])
                                             break
 
@@ -463,12 +462,12 @@ if layer_idx in st.session_state.layer_results:
                 # --- Добавяне на невидим trace за втората ос (за да се покаже мащабът)
                 fig.add_trace(go.Scatter(
                     x=[0, 1],
-                    y=[None, None],  # y не влияе
+                    y=[None, None],
                     mode='lines',
                     line=dict(color='rgba(0,0,0,0)'),
                     showlegend=False,
                     hoverinfo='skip',
-                    xaxis='x2'  # Свързваме с втората ос
+                    xaxis='x2'
                 ))
 
                 fig.update_layout(
@@ -493,7 +492,6 @@ if layer_idx in st.session_state.layer_results:
                         range=[0, 2.7]
                     ),
                     showlegend=False
-                   
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
@@ -857,21 +855,29 @@ def generate_pdf_report():
         
         # Създаване на оптимизирана графика за PDF
         try:
-            # Тук трябва да вмъкнете кода за създаване на вашата графика fig
-            # Ако вече имате fig в session_state или другаде, използвайте я
-            if 'fig' not in locals():
-                # Създаване на примерна графика - заменете с вашата реална графика
-                fig = go.Figure()
-                # Добавете вашите трасове и настройки за графиката тук
-                
-            img_bytes = pio.to_image(
-                fig, 
-                format="png", 
-                width=1200, 
-                height=800,
-                scale=4,
-                engine="kaleido"
-            )
+            # Вземете фигурата от session_state или създайте нова
+            if 'fig' in locals():
+                img_bytes = pio.to_image(
+                    fig, 
+                    format="png", 
+                    width=1200, 
+                    height=800,
+                    scale=4,
+                    engine="kaleido"
+                )
+            else:
+                # Създаване на проста графика, ако няма налична
+                fig_simple = go.Figure()
+                fig_simple.add_trace(go.Scatter(x=[0, 1], y=[0, 1], mode='lines', name='Пример'))
+                fig_simple.update_layout(title="Примерна графика", xaxis_title="H/D", yaxis_title="y")
+                img_bytes = pio.to_image(
+                    fig_simple, 
+                    format="png", 
+                    width=1200, 
+                    height=800,
+                    scale=4,
+                    engine="kaleido"
+                )
             
             pil_img = PILImage.open(BytesIO(img_bytes))
             img_buffer = io.BytesIO()
@@ -1083,3 +1089,6 @@ if st.button("📄 Генерирай PDF отчет", type="primary", key="pdf_
                 st.error("❌ Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
         except Exception as e:
             st.error(f"Грешка при генериране на PDF: {str(e)}")
+
+# Линк към предишната страница
+st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
