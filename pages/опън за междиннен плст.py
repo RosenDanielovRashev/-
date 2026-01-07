@@ -981,8 +981,9 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                     height=500,
                     margin=dict(l=50, r=150, t=50, b=50)
                 )
-                # Експортиране на фигурата с висока резолюция
-                img_bytes = pio.to_image(fig, format="png", width=1500, height=1000, scale=5, engine="kaleido")
+          
+                # Генерираме графиката с висока резолюция за PDF
+                img_bytes = pio.to_image(fig, format="png", width=2000, height=1500, scale=6, engine="kaleido")
                 pil_img = PILImage.open(BytesIO(img_bytes))
                 img_buffer = io.BytesIO()
                 pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
