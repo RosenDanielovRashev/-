@@ -582,6 +582,14 @@ if layer_idx in st.session_state.layer_results:
                     margin=dict(l=50, r=50, t=50, b=150),  # Увеличаваме долния марж за легендата
                     autosize=False
                 )
+                
+                # Виждане в Streamlit с responsive настройки
+                st.plotly_chart(fig, use_container_width=True, config={
+                    'responsive': True,
+                    'displayModeBar': True,
+                    'displaylogo': False,
+                    'modeBarButtonsToRemove': ['lasso2d', 'select2d']
+                })
 
                 # Try to find the image in different locations
                 image_paths = [
