@@ -513,7 +513,7 @@ if layer_idx in st.session_state.layer_results:
                 fig.update_layout(
                     title=dict(
                         text='Графика на изолинии',
-                        font=dict(size=16, color='black')
+                        font=dict(size=14, color='black')
                     ),
                     xaxis=dict(
                         title='H/D',
@@ -566,13 +566,13 @@ if layer_idx in st.session_state.layer_results:
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    width=800,
-                    height=500,
-                    margin=dict(l=50, r=150, t=50, b=50),
-                    autosize=True
+                    # АВТОМАТИЧНО МАЩАБИРАНЕ - НЯМА ФИКСИРАНИ РАЗМЕРИ
+                    autosize=True,
+                    margin=dict(l=50, r=150, t=50, b=50, pad=0),
                 )
 
-                st.plotly_chart(fig, use_container_width=True, config={'responsive': True})
+                # Използваме контейнера с автоматично мащабиране
+                st.plotly_chart(fig, use_container_width=True)
 
                 # Try to find the image in different locations
                 image_paths = [
