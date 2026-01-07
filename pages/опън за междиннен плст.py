@@ -112,6 +112,10 @@ def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
 
+def to_superscript(number):
+    superscripts = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+    return str(number).translate(superscripts)
+
 # Initialize session state
 if 'layer_results' not in st.session_state:
     st.session_state.layer_results = {}
@@ -202,6 +206,9 @@ if st.button(f"Изчисли за пласт {layer_idx+1}"):
     results = calculate_layer(layer_idx)
     st.success(f"Изчисленията за пласт {layer_idx+1} са запазени!")
 
+# Глобална променлива за фигурата
+fig = None
+
 # Display results
 if layer_idx in st.session_state.layer_results:
     results = st.session_state.layer_results[layer_idx]
@@ -220,16 +227,17 @@ if layer_idx in st.session_state.layer_results:
     st.write(f"H{to_subscript(results['n_for_calc'])} = {results['H_n_r']}")
 
     if layer_idx > 0:
-        st.latex(r"Esr = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}")
+        # КОРИГИРАНА ФОРМУЛА ЗА Esr - вместо точки използваме \cdot
+        st.latex(r"E_{sr} = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}")
         numerator = " + ".join([f"{results['E_values'][i]} \cdot {results['h_values'][i]}" for i in range(layer_idx)])
         denominator = " + ".join([f"{results['h_values'][i]}" for i in range(layer_idx)])
-        st.latex(fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {round(results['Esr_r'])}")
+        st.latex(fr"E_{{sr}} = \frac{{{numerator}}}{{{denominator}}} = {round(results['Esr_r'])}")
     else:
         st.write("Esr = 0 (няма предишни пластове)")
 
     st.latex(fr"\frac{{H_n}}{{D}} = \frac{{{results['H_n_r']}}}{{{D}}} = {results['ratio_r']}")
     st.latex(fr"E_{{{layer_idx+1}}} = {results['En_r']}")
-    st.latex(fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = {results['Esr_over_En_r']}")
+    st.latex(fr"\frac{{E_{{sr}}}}{{E_{{{layer_idx+1}}}}} = {results['Esr_over_En_r']}")
     st.latex(fr"\frac{{E_{{{layer_idx+1}}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']}}}{{{results['Ed_r']}}} = {results['En_over_Ed_r']}")
 
     # Visualization
@@ -275,7 +283,15 @@ if layer_idx in st.session_state.layer_results:
 
                 fig = go.Figure()
 
-                # Add isolines from original df
+                # Цветова палитра за изолиниите
+                colors_isolines = [
+                    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+                    '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf',
+                    '#aec7e8', '#ffbb78', '#98df8a', '#ff9896', '#c5b0d5',
+                    '#c49c94', '#f7b6d2', '#c7c7c7', '#dbdb8d', '#9edae5'
+                ]
+                
+                # Add isolines from original df (Ei/Ed) - СИНИ изолинии
                 if 'Ei/Ed' in df_original.columns:
                     levels = sorted(df_original['Ei/Ed'].unique())
                     for i, level in enumerate(levels):
@@ -292,8 +308,10 @@ if layer_idx in st.session_state.layer_results:
                         
                         fig.add_trace(go.Scatter(
                             x=df_level['H/D'], y=df_level['y'],
-                            mode='lines', name=f'Ei/Ed = {round(level,3)}',
-                            line=dict(width=2)
+                            mode='lines', 
+                            name=f'Ei/Ed = {round(level,2)}',
+                            line=dict(color=colors_isolines[i % len(colors_isolines)], width=2),
+                            showlegend=True
                         ))
                         # Добавяме етикет за изолинията
                         fig.add_trace(go.Scatter(
@@ -301,14 +319,17 @@ if layer_idx in st.session_state.layer_results:
                             mode='text',
                             text=[f'{round(level,2)}'],
                             textposition='middle right',
-                            textfont=dict(size=15, color='blue'),
+                            textfont=dict(size=10, color=colors_isolines[i % len(colors_isolines)]),
                             showlegend=False,
                             hoverinfo='skip'
                         ))
                 
-                # Add isolines from new df
+                # Add isolines from new df (Esr/Ei) - ЧЕРВЕНИ изолинии
                 if 'sr_Ei' in df_new.columns:
-                    for sr_Ei in sorted(df_new['sr_Ei'].unique()):
+                    sr_Ei_levels = sorted(df_new['sr_Ei'].unique())
+                    offset = len(levels) if 'levels' in locals() else 0
+                    
+                    for i, sr_Ei in enumerate(sr_Ei_levels):
                         df_level = df_new[df_new['sr_Ei'] == sr_Ei].sort_values(by='H/D')
                         
                         # Избираме различна позиция за всяка линия
@@ -320,10 +341,17 @@ if layer_idx in st.session_state.layer_results:
                         x_mid = df_level['H/D'].iloc[mid_idx]
                         y_mid = df_level['y'].iloc[mid_idx]
                         
+                        # Използваме различна цветова палитра за втория тип изолинии
+                        color_idx = (offset + i) % len(colors_isolines)
+                        # Използваме по-тъмни цветове за втория тип
+                        color = colors_isolines[color_idx]
+                        
                         fig.add_trace(go.Scatter(
                             x=df_level['H/D'], y=df_level['y'],
-                            mode='lines', name=f'Esr/Ei = {round(sr_Ei,3)}',
-                            line=dict(width=2)
+                            mode='lines', 
+                            name=f'Esr/Ei = {round(sr_Ei,2)}',
+                            line=dict(color=color, width=2, dash='dash'),
+                            showlegend=True
                         ))
                         # Добавяме етикет за изолинията
                         fig.add_trace(go.Scatter(
@@ -331,10 +359,11 @@ if layer_idx in st.session_state.layer_results:
                             mode='text',
                             text=[f'{round(sr_Ei,2)}'],
                             textposition='middle left',
-                            textfont=dict(size=15, color='red'),  # По-малък размер
+                            textfont=dict(size=10, color=color),
                             showlegend=False,
                             hoverinfo='skip'
                         ))
+                
                 # Interpolation and marking points
                 x_intercept = None  # Initialize x_intercept
                 if layer_idx > 0:
@@ -363,15 +392,19 @@ if layer_idx in st.session_state.layer_results:
                         # Вертикална линия (синя)
                         fig.add_trace(go.Scatter(
                             x=[target_Hn_D, target_Hn_D], y=[0, y_at_ratio],
-                            mode='lines', line=dict(color='blue', dash='dash'),
-                            name='Вертикална линия'
+                            mode='lines', 
+                            line=dict(color='blue', dash='dash', width=2),
+                            name='Вертикална линия',
+                            showlegend=True
                         ))
 
                         # Червена точка
                         fig.add_trace(go.Scatter(
                             x=[target_Hn_D], y=[y_at_ratio],
-                            mode='markers', marker=dict(color='red', size=10),
-                            name='Точка на интерполация'
+                            mode='markers', 
+                            marker=dict(color='red', size=12, symbol='circle', line=dict(color='darkred', width=2)),
+                            name='Точка на интерполация',
+                            showlegend=True
                         ))
 
                         # Пресечна точка (оранжева)
@@ -399,16 +432,19 @@ if layer_idx in st.session_state.layer_results:
                                 if x_intercept is not None:
                                     fig.add_trace(go.Scatter(
                                         x=[x_intercept], y=[y_at_ratio],
-                                        mode='markers', marker=dict(color='orange', size=12),
-                                        name='Пресечна точка'
+                                        mode='markers', 
+                                        marker=dict(color='orange', size=14, symbol='diamond', line=dict(color='darkorange', width=2)),
+                                        name='Пресечна точка',
+                                        showlegend=True
                                     ))
                                     # Хоризонтална линия между червената и оранжевата точка
                                     fig.add_trace(go.Scatter(
                                         x=[target_Hn_D, x_intercept],
                                         y=[y_at_ratio, y_at_ratio],
                                         mode='lines',
-                                        line=dict(color='green', dash='dash'),
-                                        name='Линия между червена и оранжева точка'
+                                        line=dict(color='green', dash='dash', width=2),
+                                        name='Хоризонтална линия',
+                                        showlegend=True
                                     ))
 
                                     # Вертикална линия от оранжева точка до y=2.5
@@ -416,8 +452,9 @@ if layer_idx in st.session_state.layer_results:
                                         x=[x_intercept, x_intercept],
                                         y=[y_at_ratio, 2.5],
                                         mode='lines',
-                                        line=dict(color='purple', dash='dash'),
-                                        name='Вертикална линия до y=2.5'
+                                        line=dict(color='purple', dash='dash', width=2),
+                                        name='Вертикална линия до σr',
+                                        showlegend=True
                                     ))
 
                                     # Calculate sigma_r
@@ -472,29 +509,65 @@ if layer_idx in st.session_state.layer_results:
                     xaxis='x2'  # Свързваме с втората ос
                 ))
 
+                # Обновяване на оформлението с цветна легенда
                 fig.update_layout(
-                    title='Графика на изолинии',
+                    title=dict(
+                        text='Графика на изолинии',
+                        font=dict(size=18, color='black')
+                    ),
                     xaxis=dict(
                         title='H/D',
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black'),
+                        linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
                         showgrid=True,
-                        zeroline=False,
+                        range=[0, 1]
                     ),
                     xaxis2=dict(
                         overlaying='x',
                         side='top',
-                        range=[fig.layout.xaxis.range[0] if fig.layout.xaxis.range else 0, 1],
+                        range=[0, 1],
                         showgrid=False,
                         zeroline=False,
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
                         ticktext=['0', '0.25', '0.5', '0.75', '1'],
-                        title='σr'
+                        title='σr',
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black')
                     ),
                     yaxis=dict(
                         title='y',
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black'),
+                        linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
+                        showgrid=True,
                         range=[0, 2.7]
                     ),
-                    showlegend=False
-                   
+                    legend=dict(
+                        title=dict(
+                            text='Легенда:',
+                            font=dict(size=12, color='black')
+                        ),
+                        bgcolor='rgba(255,255,255,0.9)',
+                        bordercolor='black',
+                        borderwidth=1,
+                        font=dict(size=10, color='black'),
+                        x=1.05,  # Преместване на легендата вдясно
+                        y=0.5,
+                        xanchor='left',
+                        yanchor='middle',
+                        traceorder='normal',
+                        itemsizing='constant'
+                    ),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    width=1200,  # По-широка за да има място за легендата
+                    height=700,
+                    margin=dict(l=80, r=200, t=80, b=80)  # Оставяме място за легендата вдясно
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
@@ -575,6 +648,8 @@ if layer_idx in st.session_state.layer_results:
 
     except Exception as e:
         st.error(f"Грешка при визуализацията: {e}")
+        import traceback
+        st.error(traceback.format_exc())
 
 # КОРИГИРАН NumberedDocTemplate клас
 class NumberedDocTemplate(SimpleDocTemplate):
@@ -684,7 +759,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         formulas = [
             r"H_{n-1} = \sum_{i=1}^{n-1} h_i",
             r"H_n = \sum_{i=1}^n h_i", 
-            r"Esr = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}",
+            r"E_{sr} = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}",
             r"\sigma_R = 1.15 p \sigma_R^{nom}"
         ]
 
@@ -751,16 +826,16 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         
         # Esr
         if layer_idx > 0:
-            numerator = " + ".join([f"{E_values[i]:.0f} \times {h_values[i]:.0f}" for i in range(layer_idx)])
+            numerator = " + ".join([f"{E_values[i]:.0f} \cdot {h_values[i]:.0f}" for i in range(layer_idx)])
             denominator = " + ".join([f"{h_values[i]:.0f}" for i in range(layer_idx)])
-            calculation_formulas.append(fr"Esr = \frac{{{numerator}}}{{{denominator}}} = {results['Esr_r']:.0f} \ \mathrm{{MPa}}")
+            calculation_formulas.append(fr"E_{{sr}} = \frac{{{numerator}}}{{{denominator}}} = {results['Esr_r']:.0f} \ \mathrm{{MPa}}")
         else:
-            calculation_formulas.append("Esr = 0 \ \mathrm{MPa}")
+            calculation_formulas.append(r"E_{sr} = 0 \ \mathrm{MPa}")
         
         # Други изчисления
         calculation_formulas.append(fr"\frac{{H_{{{results['n_for_calc']}}}}}{{D}} = \frac{{{results['H_n_r']:.0f}}}{{{D:.0f}}} = {results['ratio_r']:.3f}")
         calculation_formulas.append(fr"E_{{{layer_idx+1}}} = {results['En_r']:.0f} \ \mathrm{{MPa}}")
-        calculation_formulas.append(fr"\frac{{Esr}}{{E_{{{layer_idx+1}}}}} = \frac{{{results['Esr_r']:.0f}}}{{{results['En_r']:.0f}}} = {results['Esr_over_En_r']:.3f}")
+        calculation_formulas.append(fr"\frac{{E_{{sr}}}}{{E_{{{layer_idx+1}}}}} = \frac{{{results['Esr_r']:.0f}}}{{{results['En_r']:.0f}}} = {results['Esr_over_En_r']:.3f}")
         calculation_formulas.append(fr"\frac{{E_{{{layer_idx+1}}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']:.0f}}}{{{results['Ed_r']:.0f}}} = {results['En_over_Ed_r']:.3f}")
         
         # Информация за осов товар и σR
@@ -832,17 +907,82 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
         
         try:
-            # Експортиране на фигурата с висока резолюция
-            img_bytes = pio.to_image(fig, format="png", width=1200, height=800, scale=4, engine="kaleido")
-            
-            pil_img = PILImage.open(BytesIO(img_bytes))
-            img_buffer = io.BytesIO()
-            pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
-            img_buffer.seek(0)
-            
-            story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
-            story.append(Spacer(1, 15))
-            
+            if fig is not None:
+                # Обновяване на оформлението за PDF с по-добра легенда
+                fig_pdf = go.Figure(fig)
+                
+                # Настройки за PDF
+                fig_pdf.update_layout(
+                    title=dict(
+                        text='Номограма: σR в междинен пласт',
+                        font=dict(size=18, color='black', family="Arial")
+                    ),
+                    xaxis=dict(
+                        title='H/D',
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black'),
+                        linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
+                        showgrid=True,
+                        range=[0, 1]
+                    ),
+                    xaxis2=dict(
+                        overlaying='x',
+                        side='top',
+                        range=[0, 1],
+                        showgrid=False,
+                        zeroline=False,
+                        tickvals=[0, 0.25, 0.5, 0.75, 1],
+                        ticktext=['0', '0.25', '0.5', '0.75', '1'],
+                        title='σr',
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black')
+                    ),
+                    yaxis=dict(
+                        title='y',
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black'),
+                        linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
+                        showgrid=True,
+                        range=[0, 2.7]
+                    ),
+                    legend=dict(
+                        title=dict(
+                            text='Легенда:',
+                            font=dict(size=12, color='black')
+                        ),
+                        bgcolor='rgba(255,255,255,0.9)',
+                        bordercolor='black',
+                        borderwidth=1,
+                        font=dict(size=10, color='black'),
+                        x=1.02,
+                        y=0.5,
+                        xanchor='left',
+                        yanchor='middle',
+                        traceorder='normal',
+                        itemsizing='constant'
+                    ),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    width=1200,
+                    height=800,
+                    margin=dict(l=80, r=200, t=80, b=80)
+                )
+                
+                # Експортиране на фигурата с висока резолюция
+                img_bytes = pio.to_image(fig_pdf, format="png", width=1200, height=800, scale=4, engine="kaleido")
+                
+                pil_img = PILImage.open(BytesIO(img_bytes))
+                img_buffer = io.BytesIO()
+                pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
+                img_buffer.seek(0)
+                
+                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                story.append(Spacer(1, 15))
+                
         except Exception as e:
             error_style = ParagraphStyle(
                 'ErrorStyle',
