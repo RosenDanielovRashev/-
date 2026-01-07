@@ -513,17 +513,20 @@ if layer_idx in st.session_state.layer_results:
                 fig.update_layout(
                     title=dict(
                         text='Графика на изолинии',
-                        font=dict(size=14, color='black')
+                        font=dict(size=16, color='black', family='Arial')
                     ),
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 1]
+                        range=[0, 1],
+                        tickmode='linear',
+                        tick0=0,
+                        dtick=0.1
                     ),
                     xaxis2=dict(
                         overlaying='x',
@@ -534,52 +537,55 @@ if layer_idx in st.session_state.layer_results:
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
                         ticktext=['0', '0.25', '0.5', '0.75', '1'],
                         title='σr',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black')
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black')
                     ),
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 2.7]
+                        range=[0, 2.7],
+                        tickmode='linear',
+                        tick0=0,
+                        dtick=0.2
                     ),
                     legend=dict(
                         title=dict(
                             text='Легенда:',
-                            font=dict(size=10, color='black')
+                            font=dict(size=12, color='black')
                         ),
-                        bgcolor='rgba(255,255,255,0.9)',
+                        bgcolor='rgba(255,255,255,0.95)',
                         bordercolor='black',
                         borderwidth=1,
-                        font=dict(size=8, color='black'),
-                        x=1.02,
-                        y=1.0,
+                        font=dict(size=10, color='black'),
+                        x=1.05,  # Отместване надясно
+                        y=0.95,  # Позициониране в горната част
                         xanchor='left',
                         yanchor='top',
                         traceorder='normal',
                         itemsizing='constant',
-                        orientation='v'
+                        orientation='v',
+                        itemwidth=30
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    # НАМАЛЯВАМЕ РАЗМЕРИТЕ ЗНАЧИТЕЛНО
-                    width=700,    # вместо 1200
-                    height=400,   # вместо 700
-                    margin=dict(l=40, r=120, t=40, b=40),  # по-малки маржове
-                )
-
-                fig.update_layout(
-                    width=1000,    # Увеличаваме ширината на графиката
-                    height=600,    # Увеличаваме височината на графиката
-                    margin=dict(l=40, r=120, t=40, b=40),  # Запазваме по-малките маржове
+                    width=1000,     # Оптимална ширина
+                    height=550,     # Оптимална височина
+                    margin=dict(l=50, r=150, t=50, b=50),  # Достатъчно място за легендата
+                    autosize=False  # Забраняваме автоматичното мащабиране
                 )
                 
-                # Визуализираме графиката в Streamlit с новите размери
-                st.plotly_chart(fig, use_container_width=True)  # Използваме автоматично мащабиране в контейнера
+                # Виждане в Streamlit с responsive настройки
+                st.plotly_chart(fig, use_container_width=True, config={
+                    'responsive': True,
+                    'displayModeBar': True,
+                    'displaylogo': False,
+                    'modeBarButtonsToRemove': ['lasso2d', 'select2d']
+                })
 
                 # Try to find the image in different locations
                 image_paths = [
