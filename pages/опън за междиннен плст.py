@@ -566,13 +566,14 @@ if layer_idx in st.session_state.layer_results:
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    # АВТОМАТИЧНО МАЩАБИРАНЕ - НЯМА ФИКСИРАНИ РАЗМЕРИ
-                    autosize=True,
-                    margin=dict(l=50, r=150, t=50, b=50, pad=0),
+                    # НАМАЛЯВАМЕ РАЗМЕРИТЕ ЗНАЧИТЕЛНО
+                    width=700,    # вместо 1200
+                    height=400,   # вместо 700
+                    margin=dict(l=40, r=120, t=40, b=40),  # по-малки маржове
                 )
 
-                # Използваме контейнера с автоматично мащабиране
-                st.plotly_chart(fig, use_container_width=True)
+                # Променяме показването на графиката
+                st.plotly_chart(fig, use_container_width=False)  # изключваме автоматичното мащабиране
 
                 # Try to find the image in different locations
                 image_paths = [
