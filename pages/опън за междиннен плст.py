@@ -982,11 +982,24 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                     margin=dict(l=50, r=150, t=50, b=50)
                 )
           
+                # Увеличаваме размерите на графиката (ширина и височина)
+                fig.update_layout(
+                    width=2000,    # Ширина на графиката
+                    height=1500,   # Височина на графиката
+                    margin=dict(l=60, r=60, t=60, b=60),  # По-големи маржове, за да има повече пространство за графиката
+                    title=dict(font=dict(size=24)),  # Увеличаваме шрифта на заглавието
+                    xaxis=dict(tickfont=dict(size=14), title_font=dict(size=16)),  # Увеличаваме шрифта на осите
+                    yaxis=dict(tickfont=dict(size=14), title_font=dict(size=16))  # Увеличаваме шрифта на осите
+                )
+                
+                # Променяме мащаба на всички трасета (линии) в графиката
+                fig.update_traces(line=dict(width=4))  # Увеличаваме ширината на линиите
+                
                 # Генерираме графиката с висока резолюция за PDF
                 img_bytes = pio.to_image(fig, format="png", width=2000, height=1500, scale=6, engine="kaleido")
                 pil_img = PILImage.open(BytesIO(img_bytes))
                 img_buffer = io.BytesIO()
-                pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
+                pil_img.save(img_buffer, format="PNG", dpi=(300, 300))  # Поддържаме висока резолюция
                 img_buffer.seek(0)
                 
                 # Добавяме изображението към отчета
