@@ -508,7 +508,7 @@ if layer_idx in st.session_state.layer_results:
                     hoverinfo='skip',
                     xaxis='x2'  # Свързваме с втората ос
                 ))
-
+                
                 # Обновяване на оформлението с цветна легенда
                 fig.update_layout(
                     title=dict(
@@ -547,37 +547,6 @@ if layer_idx in st.session_state.layer_results:
                         showgrid=True,
                         range=[0, 2.7]
                     ),
-                    legend=dict(
-                        title=dict(
-                            text='Легенда:',
-                            font=dict(size=10, color='black')
-                        ),
-                        bgcolor='rgba(255,255,255,0.9)',
-                        bordercolor='black',
-                        borderwidth=1,
-                        font=dict(size=8, color='black'),
-                        x=1.02,
-                        y=1.0,
-                        xanchor='left',
-                        yanchor='top',
-                        traceorder='normal',
-                        itemsizing='constant',
-                        orientation='v'
-                    ),
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    # НАМАЛЯВАМЕ РАЗМЕРИТЕ ЗНАЧИТЕЛНО
-                    width=700,    # вместо 1200
-                    height=400,   # вместо 700
-                    margin=dict(l=40, r=120, t=40, b=40),  # по-малки маржове
-                )
-
-                fig.update_layout(
-                    width=1000,    # Увеличаваме ширината на графиката
-                    height=600,    # Увеличаваме височината на графиката
-                    margin=dict(l=40, r=120, t=40, b=40),  # Запазваме по-малките маржове
-                ),
-                    # НОВА ЛЕГЕНДА ПОД ГРАФИКАТА
                     legend=dict(
                         title=dict(
                             text='Легенда:',
