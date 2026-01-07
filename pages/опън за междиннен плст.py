@@ -553,39 +553,35 @@ if layer_idx in st.session_state.layer_results:
                         tick0=0,
                         dtick=0.2
                     ),
+                    # НОВА ЛЕГЕНДА ПОД ГРАФИКАТА
                     legend=dict(
                         title=dict(
                             text='Легенда:',
-                            font=dict(size=12, color='black')
+                            font=dict(size=14, color='black', family='Arial, bold')
                         ),
-                        bgcolor='rgba(255,255,255,0.95)',
+                        bgcolor='rgba(240, 240, 240, 0.95)',  # Светлосив фон
                         bordercolor='black',
-                        borderwidth=1,
-                        font=dict(size=10, color='black'),
-                        x=1.05,  # Отместване надясно
-                        y=0.95,  # Позициониране в горната част
-                        xanchor='left',
+                        borderwidth=1.5,
+                        font=dict(size=11, color='black'),
+                        x=0.5,      # Центриране хоризонтално
+                        y=-0.25,    # Позиция ПОД графиката (отрицателна стойност)
+                        xanchor='center',
                         yanchor='top',
                         traceorder='normal',
                         itemsizing='constant',
-                        orientation='v',
-                        itemwidth=30
+                        orientation='h',  # Хоризонтално подреждане
+                        itemwidth=80,     # Ширина на всеки елемент
+                        itemclick='toggleothers',
+                        itemdoubleclick='toggle',
+                        groupclick='togglegroup'
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    width=1000,     # Оптимална ширина
-                    height=550,     # Оптимална височина
-                    margin=dict(l=50, r=150, t=50, b=50),  # Достатъчно място за легендата
-                    autosize=False  # Забраняваме автоматичното мащабиране
+                    width=1000,
+                    height=650,     # Увеличаваме височината за легендата
+                    margin=dict(l=50, r=50, t=50, b=150),  # Увеличаваме долния марж за легендата
+                    autosize=False
                 )
-                
-                # Виждане в Streamlit с responsive настройки
-                st.plotly_chart(fig, use_container_width=True, config={
-                    'responsive': True,
-                    'displayModeBar': True,
-                    'displaylogo': False,
-                    'modeBarButtonsToRemove': ['lasso2d', 'select2d']
-                })
 
                 # Try to find the image in different locations
                 image_paths = [
