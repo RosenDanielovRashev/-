@@ -572,8 +572,14 @@ if layer_idx in st.session_state.layer_results:
                     margin=dict(l=40, r=120, t=40, b=40),  # по-малки маржове
                 )
 
-                # Променяме показването на графиката
-                st.plotly_chart(fig, use_container_width=False)  # изключваме автоматичното мащабиране
+                fig.update_layout(
+                    width=1000,    # Увеличаваме ширината на графиката
+                    height=600,    # Увеличаваме височината на графиката
+                    margin=dict(l=40, r=120, t=40, b=40),  # Запазваме по-малките маржове
+                )
+                
+                # Визуализираме графиката в Streamlit с новите размери
+                st.plotly_chart(fig, use_container_width=True)  # Използваме автоматично мащабиране в контейнера
 
                 # Try to find the image in different locations
                 image_paths = [
@@ -976,13 +982,13 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                     margin=dict(l=50, r=150, t=50, b=50)
                 )
                 # Експортиране на фигурата с висока резолюция
-                img_bytes = pio.to_image(fig_pdf, format="png", width=1200, height=800, scale=4, engine="kaleido")
-                
+                img_bytes = pio.to_image(fig, format="png", width=1500, height=1000, scale=5, engine="kaleido")
                 pil_img = PILImage.open(BytesIO(img_bytes))
                 img_buffer = io.BytesIO()
                 pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
                 img_buffer.seek(0)
                 
+                # Добавяме изображението към отчета
                 story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
                 story.append(Spacer(1, 15))
                 
