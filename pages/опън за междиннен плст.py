@@ -37,14 +37,14 @@ st.markdown("""
     <style>
         /* Намаляване на ширината на цялото приложение */
         .main .block-container {
-            max-width: 700px !important;  # Направете по-малко (например 700px, 800px)
-            padding-left: 2rem;
-            padding-right: 2rem;
+            max-width: 500px !important;  # Направете по-малко (например 700px, 800px)
+            padding-left: 1rem;
+            padding-right: 1rem;
         }
         
         /* Намаляване на ширината на секциите */
         section.main {
-            max-width: 800px !important;
+            max-width: 500px !important;
         }
         
         /* Промяна на ширината на колоните за входни данни */
