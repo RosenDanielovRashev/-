@@ -14,7 +14,7 @@ from datetime import datetime
 import plotly.io as pio
 
 # ReportLab импорти за новия стил
-from reportlab.lib.pagesizes import A4
+
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import (
