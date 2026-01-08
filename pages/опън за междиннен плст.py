@@ -39,20 +39,11 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 1200px !important;
-            padding-left: 2rem !important;
-            padding-right: 2rem !important;
+            max-width: 1000px;
         }
         .stPlotlyChart {
             width: 100% !important;
-            height: 750px !important;
-        }
-        .js-plotly-plot .plotly {
-            width: 100% !important;
-            height: 100% !important;
-        }
-        div[data-testid="stVerticalBlock"] {
-            gap: 0.5rem;
+            height: 600px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -602,15 +593,16 @@ if layer_idx in st.session_state.layer_results:
                 ))
                 
                 # Обновяване на оформлението с цветна легенда
+                # Обновяване на оформлението с цветна легенда
                 fig.update_layout(
                     title=dict(
                         text='Графика на изолинии',
-                        font=dict(size=16, color='black')
+                        font=dict(size=14, color='black')
                     ),
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=14, color='black'),
-                        tickfont=dict(size=12, color='black'),
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -626,13 +618,13 @@ if layer_idx in st.session_state.layer_results:
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
                         ticktext=['0', '0.25', '0.5', '0.75', '1'],
                         title='σr',
-                        title_font=dict(size=14, color='black'),
-                        tickfont=dict(size=12, color='black')
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black')
                     ),
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=14, color='black'),
-                        tickfont=dict(size=12, color='black'),
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -642,44 +634,39 @@ if layer_idx in st.session_state.layer_results:
                     legend=dict(
                         title=dict(
                             text='Легенда:',
-                            font=dict(size=14, color='black', family='Arial, bold')
+                            font=dict(size=12, color='black')
                         ),
-                        bgcolor='rgba(240, 240, 240, 0.95)',  # Светлосив фон
+                        bgcolor='rgba(240, 240, 240, 0.95)',
                         bordercolor='black',
-                        borderwidth=1.5,
-                        font=dict(size=11, color='black'),
+                        borderwidth=1,
+                        font=dict(size=10, color='black'),
                         x=0.5,      # Центриране хоризонтално
-                        y=-0.35,    # По-ниско ПОД графиката
+                        y=-0.45,    # Много по-ниско под графиката
                         xanchor='center',
                         yanchor='top',
                         traceorder='normal',
                         itemsizing='constant',
                         orientation='h',  # Хоризонтално подреждане
-                        itemwidth=80,     # Ширина на всеки елемент
+                        itemwidth=60,     # По-малка ширина
                         itemclick='toggleothers',
                         itemdoubleclick='toggle',
                         groupclick='togglegroup'
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    width=950,  # ФИКСИРАНА ширина която се побира
-                    height=650,  # ФИКСИРАНА височина
-                    margin=dict(l=50, r=50, t=50, b=180),  # Голям долен марж за легендата
-                    autosize=False  # ИЗКЛЮЧВАМЕ autosize
+                    # ПРЕМАХВАМЕ фиксираните width и height
+                    margin=dict(l=50, r=50, t=50, b=200),  # Още по-голям долен марж
+                    autosize=True  # ВКЛЮЧВАМЕ autosize
                 )
                 
-                # Създаваме контейнер за графиката
-                col1, col2, col3 = st.columns([1, 12, 1])
-                with col2:
-                    # Виждане в Streamlit
-                    st.plotly_chart(fig, use_container_width=True, config={
-                        'responsive': True,
-                        'displayModeBar': True,
-                        'displaylogo': False,
-                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                        'scrollZoom': True,
-                        'autosizable': False
-                    })
+                # Виждане в Streamlit
+                st.plotly_chart(fig, use_container_width=True, config={
+                    'responsive': True,
+                    'displayModeBar': True,
+                    'displaylogo': False,
+                    'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                    'scrollZoom': True
+                })
 
                 # Try to find the image in different locations
                 image_paths = [
@@ -1025,15 +1012,16 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             
             if pdf_fig is not None:
                 # Настройки за PDF
+                # Настройки за PDF
                 pdf_fig.update_layout(
                     title=dict(
                         text='Номограма: σR в междинен пласт',
-                        font=dict(size=18, color='black', family="Arial")
+                        font=dict(size=14, color='black', family="Arial")
                     ),
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=14, color='black'),
-                        tickfont=dict(size=12, color='black'),
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -1049,13 +1037,13 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
                         ticktext=['0', '0.25', '0.5', '0.75', '1'],
                         title='σr',
-                        title_font=dict(size=14, color='black'),
-                        tickfont=dict(size=12, color='black')
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black')
                     ),
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=14, color='black'),
-                        tickfont=dict(size=12, color='black'),
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -1068,23 +1056,26 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         bgcolor='rgba(255,255,255,0.9)',
                         bordercolor='black',
                         borderwidth=1,
-                        font=dict(size=10, color='black'),
-                        x=1.05,
-                        y=0.5,
-                        xanchor='left',
-                        yanchor='middle'
+                        font=dict(size=8, color='black'),  # По-малък шрифт
+                        x=0.5,
+                        y=-0.3,  # Легендата под графиката
+                        xanchor='center',
+                        yanchor='top',
+                        traceorder='normal',
+                        itemsizing='constant',
+                        orientation='h'  # Хоризонтално за PDF
                     ),
-                    width=1000,
-                    height=700,
-                    margin=dict(l=50, r=150, t=50, b=50)
+                    width=800,  # По-малък размер за PDF
+                    height=600,  # По-малък размер за PDF
+                    margin=dict(l=50, r=50, t=50, b=150)  # Маржове за легендата
                 )
                 
                 img_bytes = pio.to_image(
                     pdf_fig, 
                     format="png", 
-                    width=1000, 
-                    height=700,
-                    scale=4,
+                    width=800,  # Същия размер
+                    height=600,
+                    scale=3,
                     engine="kaleido"
                 )
                 
