@@ -1039,7 +1039,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                     'ErrorStyle',
                     parent=styles['Normal'],
                     fontSize=11,
-                    spaceAfter=5.5,
+                    spaceAfter=1.5,
                     fontName=font_name,
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
