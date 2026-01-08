@@ -43,7 +43,7 @@ st.markdown("""
     <style>
         /* Основен контейнер - ограничаване на ширината */
         .main .block-container {
-            max-width: 900px !important;
+            max-width: 600px !important;
             padding-top: 1rem !important;
             padding-left: 2rem !important;
             padding-right: 2rem !important;
