@@ -359,7 +359,7 @@ if layer_idx in st.session_state.layer_results:
                             mode='text',
                             text=[f'{round(sr_Ei,2)}'],
                             textposition='middle left',
-                            textfont=dict(size=14, color=color),
+                            textfont=dict(size=14, color='black'),
                             showlegend=False,
                             hoverinfo='skip'
                         ))
