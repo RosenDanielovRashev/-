@@ -910,7 +910,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         story.append(Spacer(1, 15))
 
         # НОВ ЛИСТ ЗА ГРАФИКАТА
-        story.append(PageBreak())
+        
 
         # ГРАФИКА НА НОМОГРАМАТА
         graph_title_style = ParagraphStyle(
