@@ -603,7 +603,7 @@ if layer_idx in st.session_state.layer_results:
                         tickfont=dict(size=11, color='black'),
                         showgrid=True,
                         zeroline=False,
-                        range=[0, 2.5],  # фиксиран диапазон
+                        range=[0, 2.2],  # фиксиран диапазон
                         tickmode='linear',
                         dtick=0.2,
                         gridcolor='lightgray',
@@ -630,7 +630,7 @@ if layer_idx in st.session_state.layer_results:
                         title='y',
                         title_font=dict(size=12, color='black'),
                         tickfont=dict(size=11, color='black'),
-                        range=[-0.1, 2.8],
+                        range=[-0.1, 2.5],
                         tickmode='linear',
                         dtick=0.5,
                         gridcolor='lightgray',
