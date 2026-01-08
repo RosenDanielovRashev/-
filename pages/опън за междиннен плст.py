@@ -711,6 +711,32 @@ if layer_idx in st.session_state.layer_results:
                         }
                     }
                 )
+                
+                # Добавете това след графиката
+                st.markdown("""
+                <script>
+                // Функция за автоматично преоразмеряване на Plotly графиката
+                function resizePlotly() {
+                    const plotlyDiv = window.parent.document.querySelector('[data-testid="stPlotlyChart"]');
+                    if (plotlyDiv) {
+                        const containerWidth = plotlyDiv.parentElement.offsetWidth;
+                        Plotly.relayout(plotlyDiv, {
+                            'width': containerWidth,
+                            'height': containerWidth * 0.5 // aspect ratio 2:1
+                        });
+                    }
+                }
+                
+                // Изпълни при зареждане и при промяна на размера
+                window.addEventListener('load', resizePlotly);
+                window.addEventListener('resize', resizePlotly);
+                
+                // Провери за Plotly и релоудвай
+                if (window.Plotly) {
+                    setInterval(resizePlotly, 1000);
+                }
+                </script>
+                """, unsafe_allow_html=True)
                                                 
                 # Try to find the image in different locations
                 image_paths = [
