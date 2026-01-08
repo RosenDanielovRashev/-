@@ -45,15 +45,23 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 600px;
+            max-width: 900px;  <!-- Увеличена ширина -->
             padding-top: 2rem;
             padding-right: 2rem;
             padding-left: 2rem;
             padding-bottom: 2rem;
         }
-        .stPlotlyChart {
+        /* ФИКСИРАН РАЗМЕР ЗА ГРАФИКАТА */
+        div[data-testid="stPlotlyChart"] > div {
             width: 100% !important;
-            height: 600px !important;
+            min-width: 700px !important;
+            max-width: 900px !important;
+            height: 550px !important;
+            margin: 0 auto !important;
+        }
+        .js-plotly-plot .plotly .main-svg {
+            width: 100% !important;
+            height: 100% !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -606,20 +614,22 @@ if layer_idx in st.session_state.layer_results:
                 fig.update_layout(
                     title=dict(
                         text='Графика на изолинии',
-                        font=dict(size=14, color='black')
+                        font=dict(size=16, color='black'),
+                        y=0.95  # Позициониране на заглавието
                     ),
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
                         range=[0, 1],
-                        constrain='domain',
-                        scaleanchor='y',
-                        scaleratio=1,
+                        # ПРЕМАХНАТИ ПРОБЛЕМНИ ПАРАМЕТРИ
+                        # constrain='domain',  # ПРЕМАХНАТО
+                        # scaleanchor='y',     # ПРЕМАХНАТО
+                        # scaleratio=1,       # ПРЕМАХНАТО
                     ),
                     xaxis2=dict(
                         overlaying='x',
@@ -630,45 +640,55 @@ if layer_idx in st.session_state.layer_results:
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
                         ticktext=['0', '0.25', '0.5', '0.75', '1'],
                         title='σr',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
                         matches='x',
                     ),
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
                         range=[0, 2.7],
-                        scaleanchor='x',
-                        scaleratio=0.5,
+                        # ПРЕМАХНАТИ ПРОБЛЕМНИ ПАРАМЕТРИ
+                        # scaleanchor='x',    # ПРЕМАХНАТО
+                        # scaleratio=0.5,    # ПРЕМАХНАТО
                     ),
-                    # ПРЕМАХНАТА ЛЕГЕНДА
-                    showlegend=False,  # Това премахва цялата легенда
+                    showlegend=False,
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    autosize=True,
-                    margin=dict(l=50, r=50, t=50, b=50),  # Намалено b от 150 на 50
+                    # ФИКСИРАНИ РАЗМЕРИ ЗА СТАБИЛНОСТ
+                    autosize=False,  # ВАЖНО: Изключено!
+                    width=850,       # Фиксирана ширина
+                    height=550,      # Фиксирана височина
+                    margin=dict(l=60, r=60, t=80, b=60, pad=10),
                     hovermode='closest',
-                    dragmode='zoom',
                 )
                 # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
-                    use_container_width=True,
+                    use_container_width=False,  # ВАЖНО: Изключено!
                     config={
-                        'responsive': True,
+                        'responsive': False,     # ВАЖНО: Изключено!
                         'displayModeBar': True,
                         'displaylogo': False,
                         'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
                         'scrollZoom': True,
-                        'autosizable': True,
-                        'fillFrame': True,
+                        # ПРЕМАХНАТИ ПРОБЛЕМНИ ПАРАМЕТРИ
+                        # 'autosizable': True,  # ПРЕМАХНАТО
+                        # 'fillFrame': True,    # ПРЕМАХНАТО
+                        'toImageButtonOptions': {
+                            'format': 'png',
+                            'filename': 'графика_изолинии',
+                            'height': 550,
+                            'width': 850,
+                            'scale': 2
+                        }
                     }
                 )
-                
+                                
                 # Try to find the image in different locations
                 image_paths = [
                     "Допустими опънни напрежения.png",
