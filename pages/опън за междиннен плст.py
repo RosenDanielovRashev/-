@@ -716,23 +716,7 @@ if layer_idx in st.session_state.layer_results:
                 )
         
                 # Виждане в Streamlit с responsive настройки
-                st.plotly_chart(fig, 
-                    use_container_width=True,  # ТОВА Е КЛЮЧОВОТО!
-                    config={
-                        'responsive': True,
-                        'displayModeBar': True,
-                        'displaylogo': False,
-                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                        'scrollZoom': True,
-                        'toImageButtonOptions': {
-                            'format': 'png',
-                            'filename': 'графика_изолинии',
-                            'height': 600,
-                            'width': 1200,
-                            'scale': 2
-                        }
-                    }
-                )
+                st.plotly_chart(fig, use_container_width=True)
                 
 
                                                 
