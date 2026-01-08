@@ -357,7 +357,7 @@ if layer_idx in st.session_state.layer_results:
                         fig.add_trace(go.Scatter(
                             x=[x_mid], y=[y_mid],
                             mode='text',
-                            text=[f'{round(sr_Ei,2)}'],
+                            text=[f'Esr/Ei={round(sr_Ei,2)}'],
                             textposition='middle left',
                             textfont=dict(size=14, color='black'),
                             showlegend=False,
