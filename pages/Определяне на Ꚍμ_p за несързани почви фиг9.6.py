@@ -862,8 +862,8 @@ def generate_pdf_report():
                 f"{Fi_values[i]}"
             ])
         
-        layer_table = Table(layer_table_data, colWidths=[25*mm, 30*mm, 30*mm, 30*mm, 30*mm])
-        layer_table.setStyle(TableStyle([
+        # СЪЗДАВАНЕ НА СПИСЪК СЪС СТИЛОВЕ ДИНАМИЧНО
+        layer_table_style_commands = [
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C8E6C9')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1B5E20')),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
@@ -872,11 +872,8 @@ def generate_pdf_report():
             ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
             ('TOPPADDING', (0, 0), (-1, 0), 6),
             
-            # Редуващи се цветове на редовете
+            # Основен фон за всички редове (бял)
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#FFFFFF')),
-            ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#F5F5F5')),
-            ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#F5F5F5')),
-            ('BACKGROUND', (0, 6), (-1, 6), colors.HexColor('#F5F5F5')),
             
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
             ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
@@ -887,7 +884,18 @@ def generate_pdf_report():
             
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#BDBDBD')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
-        ]))
+        ]
+
+# ДОБАВЯНЕ НА АЛТЕРНИРАЩИ ЦВЕТОВЕ САМО ЗА СЪЩЕСТВУВАЩИТЕ РЕДОВЕ
+# Добавяме светлосиви редове за всеки четен ред (след заглавния)
+for row in range(2, len(layer_table_data), 2):  # Започваме от ред 2 (първи данни ред е 1)
+    if row < len(layer_table_data):  # Проверка за безопасност
+        layer_table_style_commands.append(
+            ('BACKGROUND', (0, row), (-1, row), colors.HexColor('#F5F5F5'))
+        )
+
+layer_table = Table(layer_table_data, colWidths=[25*mm, 30*mm, 30*mm, 30*mm, 30*mm])
+layer_table.setStyle(TableStyle(layer_table_style_commands))
         
         # Добавяне на заглавие за таблицата на пластовете
         layer_title_style = ParagraphStyle(
