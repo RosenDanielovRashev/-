@@ -331,24 +331,46 @@ if denominator != 0:
             ))
             
             # Надпис за изолинията
-            last_x = group["H_over_D"].iloc[-1]
-            last_y = group["sigma_R"].iloc[-1]
+            # АВТОМАТИЧНО ПОЗИЦИОНИРАНЕ НА НАДПИСА
+            # Намираме оптимална позиция в средата на кривата
+            optimal_idx = len(group) // 3  # 1/3 от пътя
+            label_x = group["H_over_D"].iloc[optimal_idx]
+            label_y = group["sigma_R"].iloc[optimal_idx]
             
-            if last_x < 0.9:  # Ако не е твърде близо до края
-                fig.add_trace(go.Scatter(
-                    x=[last_x + 0.01],
-                    y=[last_y],
-                    mode='text',
-                    text=[f"{val:.1f}"],
-                    textposition="middle right",
-                    textfont=dict(
-                        size=10,
-                        color=colors_streamlit[i % len(colors_streamlit)]
-                    ),
-                    showlegend=False,
-                    hoverinfo='skip'
-                ))
-
+            # Проверяваме за припокриване с други изолинии
+            
+            # Избираме позиция спрямо наклона
+            if optimal_idx + 1 < len(group):
+                dy = group["sigma_R"].iloc[optimal_idx + 1] - label_y
+                dx = group["H_over_D"].iloc[optimal_idx + 1] - label_x
+                
+                if abs(dy/dx if dx != 0 else 0) < 0.5:  # Пласка крива
+                    text_position = "top center"
+                    y_offset = 0.02
+                    x_offset = 0
+                else:  # Стръмна крива
+                    text_position = "middle right"
+                    y_offset = 0
+                    x_offset = 0.01
+            else:
+                text_position = "middle right"
+                y_offset = 0
+                x_offset = 0.01
+            
+            fig.add_trace(go.Scatter(
+                x=[label_x + x_offset],
+                y=[label_y + y_offset],
+                mode='text',
+                text=[f"{val:.1f}"],
+                textposition=text_position,
+                textfont=dict(
+                    size=10,
+                    color=colors_streamlit[i % len(colors_streamlit)],
+                    family="Arial"
+                ),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
         # Добавяне на точката на потребителя
         hD_val = H / D
         
