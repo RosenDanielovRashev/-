@@ -45,7 +45,7 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 1000px;  <!-- ОЩЕ ПО-ШИРОКО -->
+            max-width: 1500px;  <!-- ОЩЕ ПО-ШИРОКО -->
             padding-top: 1rem;
             padding-right: 1rem;
             padding-left: 1rem;
