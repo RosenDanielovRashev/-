@@ -815,7 +815,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         ]))
         
         story.append(formula_table)
-        story.append(Spacer(1, 22))
+        story.append(Spacer(1, 15))
 
         # 3. ИЗЧИСЛЕНИЯ
         calculations_title_style = ParagraphStyle(
@@ -907,7 +907,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         ]))
         
         story.append(calc_table)
-        story.append(Spacer(1, 22))
+        story.append(Spacer(1, 15))
 
         # НОВ ЛИСТ ЗА ГРАФИКАТА
         story.append(PageBreak())
