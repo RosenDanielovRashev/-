@@ -847,35 +847,63 @@ def generate_pdf_report():
         story.append(info_table)
         story.append(Spacer(1, 16.5))
 
-        # ТАБЛИЦА ЗА ПЛАСТОВЕТЕ
-        pdf.set_font('DejaVu', 'B', 12)
-        pdf.cell(0, 10, 'Параметри на пластовете:', ln=True)
+        # ТАБЛИЦА ЗА ПЛАСТОВЕТЕ (Коригирано - използване на ReportLab Table)
+        layer_table_data = [
+            ["Пласт", "h (cm)", "Ei (MPa)", "Ed (MPa)", "Fi (°)"]
+        ]
         
-        # Заглавен ред
-        pdf.set_font('DejaVu', 'B', 10)
-        pdf.set_fill_color(200, 220, 255)
-        pdf.cell(25, 8, 'Пласт', border=1, align='C', fill=True)
-        pdf.cell(30, 8, 'h (cm)', border=1, align='C', fill=True)
-        pdf.cell(30, 8, 'Ei (MPa)', border=1, align='C', fill=True)
-        pdf.cell(30, 8, 'Ed (MPa)', border=1, align='C', fill=True)
-        pdf.cell(30, 8, 'Fi (°)', border=1, align='C', fill=True)
-        pdf.ln(8)
-
-        # Данни за пластовете
-        pdf.set_font('DejaVu', '', 9)
-        fill = False
+        # Добавяне на данните за пластовете
         for i in range(n):
-            pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
-            pdf.cell(25, 8, f"{i+1}", border=1, align='C', fill=True)
-            pdf.cell(30, 8, f"{h_values[i]}", border=1, align='C', fill=True)
-            pdf.cell(30, 8, f"{Ei_values[i]}", border=1, align='C', fill=True)
-            pdf.cell(30, 8, f"{Ed_values[i]}", border=1, align='C', fill=True)
-            pdf.cell(30, 8, f"{Fi_values[i]}", border=1, align='C', fill=True)
-            pdf.ln(8)
-            fill = not fill
+            layer_table_data.append([
+                f"{i+1}",
+                f"{h_values[i]}",
+                f"{Ei_values[i]}",
+                f"{Ed_values[i]}",
+                f"{Fi_values[i]}"
+            ])
+        
+        layer_table = Table(layer_table_data, colWidths=[25*mm, 30*mm, 30*mm, 30*mm, 30*mm])
+        layer_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C8E6C9')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1B5E20')),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+            ('TOPPADDING', (0, 0), (-1, 0), 6),
+            
+            # Редуващи се цветове на редовете
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#FFFFFF')),
+            ('BACKGROUND', (0, 2), (-1, 2), colors.HexColor('#F5F5F5')),
+            ('BACKGROUND', (0, 4), (-1, 4), colors.HexColor('#F5F5F5')),
+            ('BACKGROUND', (0, 6), (-1, 6), colors.HexColor('#F5F5F5')),
+            
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
+            ('TOPPADDING', (0, 1), (-1, -1), 4),
+            
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#BDBDBD')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+        ]))
+        
+        # Добавяне на заглавие за таблицата на пластовете
+        layer_title_style = ParagraphStyle(
+            'LayerTitle',
+            fontName=font_name,
+            fontSize=12,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=8,
+            alignment=0
+        )
+        story.append(Paragraph("Параметри на пластовете:", layer_title_style))
+        story.append(layer_table)
+        story.append(Spacer(1, 10))
 
-        pdf.ln(10)
-
+        # ... (останалата част от кода остава същата до края на функцията) ...
+        
         # ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
         formulas_title_style = ParagraphStyle(
             'FormulasTitle',
@@ -924,6 +952,8 @@ def generate_pdf_report():
         
         story.append(formula_table)
         story.append(Spacer(1, 22))
+
+        # ... (продължавате с останалия код както е в оригиналната функция) ...
 
         # ИЗЧИСЛЕНИЯ
         calculations_title_style = ParagraphStyle(
