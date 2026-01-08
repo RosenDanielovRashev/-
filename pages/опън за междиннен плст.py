@@ -39,15 +39,26 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 600px;  # Променете от 1000px на 800px (или по-малко)
-            padding-top: 2rem;
-            padding-right: 2rem;
-            padding-left: 2rem;
-            padding-bottom: 2rem;
+            padding-top: 1rem;
+            padding-right: 1rem;
+            padding-left: 1rem;
+            padding-bottom: 1rem;
         }
         .stPlotlyChart {
-            width: 100% !important;
-            height: 600px !important;
+            height: 500px !important;
+        }
+        
+        /* Опционално: намаляване на размера на някои елементи */
+        .stNumberInput, .stSelectbox {
+            font-size: 14px !important;
+        }
+        
+        h1 {
+            font-size: 28px !important;
+        }
+        
+        h3 {
+            font-size: 18px !important;
         }
     </style>
 """, unsafe_allow_html=True)
