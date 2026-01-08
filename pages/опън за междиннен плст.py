@@ -1014,12 +1014,12 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 1]
+                        range=[0, 2.2]
                     ),
                     xaxis2=dict(
                         overlaying='x',
                         side='top',
-                        range=[0, 1],
+                        range=[0, 2.2],
                         showgrid=False,
                         zeroline=False,
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
@@ -1036,7 +1036,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 2.7]
+                        range=[0, 2.5]
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
