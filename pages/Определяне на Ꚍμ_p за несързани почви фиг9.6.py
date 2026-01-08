@@ -11,9 +11,9 @@ import tempfile
 import base64
 from io import BytesIO
 from datetime import datetime
+from fpdf import FPDF  # Това е ключовият импорт, който липсва
 from PIL import Image
 import plotly.io as pio
-import io
 
 # ReportLab импорти за новия стил
 from reportlab.lib.pagesizes import A4
@@ -26,6 +26,9 @@ from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.lib.utils import ImageReader
+import io
+from PIL import Image as PILImage
+from matplotlib import mathtext
 
 st.markdown("""
     <style>
@@ -607,6 +610,8 @@ fig.update_layout(
     margin=dict(l=50, r=50, t=50, b=50)  # Допълнителни margin за labels
 )
 
+
+
 st.plotly_chart(fig, use_container_width=True)
 
 # Изчисление на σr от x на оранжевата точка (ако съществува)
@@ -738,11 +743,11 @@ else:
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
 
 # -------------------------------------------------
-# Функция за рендиране на формули (както в Опън в покритието.py)
+# Функции за PDF отчет със стила от Опън в покритието.py
 # -------------------------------------------------
+
 def render_formula_to_image(formula_text, fontsize=26, dpi=150):
     """Рендва формула като изображение чрез matplotlib mathtext"""
-    import matplotlib.pyplot as plt
     plt.rcParams['text.usetex'] = False
     plt.rcParams['mathtext.fontset'] = 'cm'
     plt.rcParams['font.family'] = 'serif'
@@ -763,28 +768,11 @@ def render_formula_to_image(formula_text, fontsize=26, dpi=150):
     buf.seek(0)
     return buf
 
-# -------------------------------------------------
-# Клас за номериране на страници (както в Опън в покритието.py)
-# -------------------------------------------------
-class NumberedDocTemplate(SimpleDocTemplate):
-    def __init__(self, filename, start_page=1, **kwargs):
-        self.start_page = start_page
-        super().__init__(filename, **kwargs)
-        
-    def afterPage(self):
-        """Override to add page numbers with offset"""
-        self._pageNumber = self.start_page + self.page - 1
-        super().afterPage()
-
-# -------------------------------------------------
-# Функция за генериране на PDF отчет със същия стил
-# -------------------------------------------------
-def generate_taumu_pdf_report():
+def generate_pdf_report():
     try:
         buffer = io.BytesIO()
-        doc = NumberedDocTemplate(
+        doc = SimpleDocTemplate(
             buffer,
-            start_page=1,
             pagesize=A4,
             leftMargin=15 * mm,
             rightMargin=15 * mm,
@@ -813,39 +801,26 @@ def generate_taumu_pdf_report():
         )
         
         story.append(Paragraph("ОПРЕДЕЛЯНЕ НА Ꚍμ/p ЗА НЕСЪРЗАНИ ПОЧВИ", title_style))
-        story.append(Paragraph("Фигура 9.6 - maxH/D=1.5", title_style))
+        subtitle_style = ParagraphStyle(
+            'Subtitle',
+            fontSize=14,
+            spaceAfter=10,
+            alignment=1,
+            textColor=colors.HexColor('#2C5530'),
+            fontName=font_name
+        )
+        story.append(Paragraph("Фигура 9.6 - maxH/D=1.5", subtitle_style))
         story.append(Spacer(1, 16.5))
 
-        # 1. ВХОДНИ ПАРАМЕТРИ
-        section_title_style = ParagraphStyle(
-            'SectionTitle',
-            fontName=font_name,
-            fontSize=16,
-            textColor=colors.HexColor('#2C5530'),
-            spaceAfter=11,
-            alignment=0
-        )
-        story.append(Paragraph("1. Входни параметри", section_title_style))
-        
-        # Таблица с основни параметри
+        # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
         table_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ", "ЕДИНИЦА"],
-            ["Диаметър D", f"{D:.2f}", "cm"],
+            ["Диаметър D", f"{st.session_state.get('fig9_6_D', D):.2f}", "cm"],
             ["Брой пластове", f"{n}", ""],
-            ["Осова товарност", f"{axle_load}", "kN"],
+            ["Осова тежест", f"{st.session_state.get('axle_load', axle_load)}", "kN"],
             ["Избран пласт", f"{layer_idx + 1}", ""],
-            ["Осова тежест p", f"{p_value:.3f}", "MPa"]
+            ["p", f"{p_value:.3f}", "MPa"],
         ]
-
-        # Добавяне на коефициенти
-        table_data.extend([
-            ["K₁", f"{K1:.2f}", ""],
-            ["K₂", f"{K2:.2f}", ""],
-            ["K₃", f"{K3:.2f}", ""],
-            ["C", f"{C:.3f}", ""],
-            ["d", "1.15", ""],
-            ["f", "0.65", ""]
-        ])
 
         info_table = Table(table_data, colWidths=[66*mm, 55*mm, 33*mm], hAlign='LEFT')
         info_table.setStyle(TableStyle([
@@ -872,89 +847,74 @@ def generate_taumu_pdf_report():
         story.append(info_table)
         story.append(Spacer(1, 16.5))
 
-        # 2. ПАРАМЕТРИ НА ПЛАСТОВЕТЕ
-        story.append(Paragraph("2. Параметри на пластовете", section_title_style))
+        # ТАБЛИЦА ЗА ПЛАСТОВЕТЕ
+        pdf.set_font('DejaVu', 'B', 12)
+        pdf.cell(0, 10, 'Параметри на пластовете:', ln=True)
         
-        layers_table_data = [["Пласт", "h (cm)", "Ei (MPa)", "Ed (MPa)", "Fi (°)"]]
-        
+        # Заглавен ред
+        pdf.set_font('DejaVu', 'B', 10)
+        pdf.set_fill_color(200, 220, 255)
+        pdf.cell(25, 8, 'Пласт', border=1, align='C', fill=True)
+        pdf.cell(30, 8, 'h (cm)', border=1, align='C', fill=True)
+        pdf.cell(30, 8, 'Ei (MPa)', border=1, align='C', fill=True)
+        pdf.cell(30, 8, 'Ed (MPa)', border=1, align='C', fill=True)
+        pdf.cell(30, 8, 'Fi (°)', border=1, align='C', fill=True)
+        pdf.ln(8)
+
+        # Данни за пластовете
+        pdf.set_font('DejaVu', '', 9)
+        fill = False
         for i in range(n):
-            layers_table_data.append([
-                f"{i+1}",
-                f"{h_values[i]}",
-                f"{Ei_values[i]}",
-                f"{Ed_values[i]}",
-                f"{Fi_values[i]}"
-            ])
+            pdf.set_fill_color(245, 245, 245) if fill else pdf.set_fill_color(255, 255, 255)
+            pdf.cell(25, 8, f"{i+1}", border=1, align='C', fill=True)
+            pdf.cell(30, 8, f"{h_values[i]}", border=1, align='C', fill=True)
+            pdf.cell(30, 8, f"{Ei_values[i]}", border=1, align='C', fill=True)
+            pdf.cell(30, 8, f"{Ed_values[i]}", border=1, align='C', fill=True)
+            pdf.cell(30, 8, f"{Fi_values[i]}", border=1, align='C', fill=True)
+            pdf.ln(8)
+            fill = not fill
 
-        layers_table = Table(layers_table_data, colWidths=[25*mm, 30*mm, 35*mm, 35*mm, 30*mm], hAlign='CENTER')
-        layers_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
-            ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 9.9),
-            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 5.5),
-            ('TOPPADDING', (0, 0), (-1, 0), 5.5),
-            
-            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
-            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
-            ('FONTNAME', (0, 1), (-1, -1), font_name),
-            ('FONTSIZE', (0, 1), (-1, -1), 8.8),
-            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 3.3),
-            ('TOPPADDING', (0, 1), (-1, -1), 3.3),
-            
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
-        ]))
-        
-        story.append(layers_table)
-        story.append(Spacer(1, 22))
+        pdf.ln(10)
 
-        # 3. ИЗЧИСЛЕНИЯ
-        story.append(Paragraph("3. Изчисления", section_title_style))
-        
-        # Формули за изчисление
+        # ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
+        formulas_title_style = ParagraphStyle(
+            'FormulasTitle',
+            fontName=font_name,
+            fontSize=14.08,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=11,
+            alignment=0
+        )
+        story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
+
         formulas = [
             r"H = \sum_{i=1}^n h_i",
-            r"E_{sr} = \frac{\sum (E_i \cdot h_i)}{H}",
-            r"\frac{H}{D} = \frac{H}{D}",
-            r"\frac{E_{sr}}{E_o} = \frac{E_{sr}}{E_d}"
+            r"Esr = \frac{\sum (E_i h_i)}{\sum h_i}",
+            r"E_o = Ed_i", 
+            r"\frac{H}{D}",
+            r"\frac{Esr}{E_o}",
+            r"\tau_\mu = \left(\frac{\tau_\mu}{p}\right) \times p",
+            r"\tau_{dop} = K \times C",
+            r"K = \frac{K_1 \cdot K_2}{d \cdot f} \cdot \frac{1}{K_3}",
+            r"\tau_\mu + \tau_b \leq K \cdot C"
         ]
 
-        if 'x_orange' in locals() and x_orange is not None:
-            formulas.extend([
-                r"\tau_\mu = \left(\frac{\tau_\mu}{p}\right) \cdot p",
-                r"\tau_\mu + \tau_b \leq K \cdot C"
-            ])
-
-        # Създаване на формули като изображения
         formula_table_data = []
-        for i in range(0, len(formulas), 2):
+        for i in range(0, len(formulas), 3):
             row = []
-            if i < len(formulas):
-                try:
-                    img_buf1 = render_formula_to_image(formulas[i], fontsize=23.76, dpi=150)
-                    row.append(RLImage(img_buf1, width=99*mm, height=19.8*mm))
-                except:
-                    row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), 
-                                        ParagraphStyle('FormulaStyle', fontName=font_name, fontSize=11)))
-            else:
-                row.append('')
-            
-            if i + 1 < len(formulas):
-                try:
-                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=23.76, dpi=150)
-                    row.append(RLImage(img_buf2, width=99*mm, height=19.8*mm))
-                except:
-                    row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), 
-                                        ParagraphStyle('FormulaStyle', fontName=font_name, fontSize=11)))
-            else:
-                row.append('')
-            
+            for j in range(3):
+                idx = i + j
+                if idx < len(formulas):
+                    try:
+                        img_buf = render_formula_to_image(formulas[idx], fontsize=23.76, dpi=150)
+                        row.append(RLImage(img_buf, width=66*mm, height=19.8*mm))
+                    except:
+                        row.append(Paragraph(formulas[idx].replace('_', '').replace('^', ''), formulas_title_style))
+                else:
+                    row.append('')
             formula_table_data.append(row)
 
-        formula_table = Table(formula_table_data, colWidths=[105.6*mm, 105.6*mm])
+        formula_table = Table(formula_table_data, colWidths=[70*mm, 70*mm, 70*mm])
         formula_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
@@ -963,50 +923,73 @@ def generate_taumu_pdf_report():
         ]))
         
         story.append(formula_table)
-        story.append(Spacer(1, 16.5))
+        story.append(Spacer(1, 22))
 
-        # Изчисления с числови стойности
-        calc_formulas = [
-            fr"H = {h_array.sum():.2f} \ \mathrm{{cm}}",
-            fr"E_{{sr}} = {Esr:.0f} \ \mathrm{{MPa}}",
-            fr"E_o = E_d = {Eo} \ \mathrm{{MPa}}",
+        # ИЗЧИСЛЕНИЯ
+        calculations_title_style = ParagraphStyle(
+            'CalculationsTitle',
+            fontName=font_name,
+            fontSize=14.08,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=11,
+            alignment=0
+        )
+        story.append(Paragraph("3. Изчисления", calculations_title_style))
+
+        calculation_formulas = [
+            fr"H = {H:.2f} \ \mathrm{{cm}}",
+            fr"Esr = {Esr:.0f} \ \mathrm{{MPa}}",
+            fr"E_o = Ed_{{{layer_idx+1}}} = {Eo} \ \mathrm{{MPa}}",
             fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D}}} = {ratio:.3f}",
-            fr"\frac{{E_{{sr}}}}{{E_o}} = \frac{{{Esr}}}{{{Eo}}} = {Esr_over_Eo:.3f}"
+            fr"\frac{{Esr}}{{E_o}} = \frac{{{Esr}}}{{{Eo}}} = {Esr_over_Eo:.3f}",
         ]
 
         if 'x_orange' in locals() and x_orange is not None:
-            calc_formulas.extend([
+            calculation_formulas.extend([
+                fr"\frac{{\tau_\mu}}{{p}} = {sigma_r:.3f}",
                 fr"\tau_\mu = {sigma_r:.3f} \times {p_value:.3f} = {tau_mu:.6f} \ \mathrm{{MPa}}",
-                fr"\tau_b = {tau_b:.6f} \ \mathrm{{MPa}}"
+            ])
+        else:
+            calculation_formulas.extend([
+                r"\frac{\tau_\mu}{p} = -",
+                r"\tau_\mu = -",
             ])
 
-        # Добавяне на изчисления с формула за K
-        calc_formulas.extend([
+        if tau_b is not None:
+            calculation_formulas.extend([
+                fr"\tau_b = {tau_b:.6f} \ \mathrm{{MPa}}",
+            ])
+
+        calculation_formulas.extend([
             fr"K = \frac{{{K1:.2f} \times {K2:.2f}}}{{1.15 \times 0.65}} \times \frac{{1}}{{{K3:.2f}}} = {K:.3f}",
             fr"\tau_{{dop}} = {K:.3f} \times {C:.3f} = {tau_dop:.6f} \ \mathrm{{MPa}}",
-            fr"\tau_\mu + \tau_b = {tau_mu:.6f} + {tau_b:.6f} = {left_side:.6f} \ \mathrm{{MPa}}"
         ])
 
+        if 'tau_mu' in locals() and tau_b is not None:
+            calculation_formulas.extend([
+                fr"\tau_\mu + \tau_b = {tau_mu:.6f} + {tau_b:.6f} = {left_side:.6f} \ \mathrm{{MPa}}",
+            ])
+
         calc_table_data = []
-        for i in range(0, len(calc_formulas), 2):
+        for i in range(0, len(calculation_formulas), 2):
             row = []
-            if i < len(calc_formulas):
+            if i < len(calculation_formulas):
                 try:
-                    img_buf1 = render_formula_to_image(calc_formulas[i], fontsize=21.12, dpi=150)
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=21.12, dpi=150)
                     row.append(RLImage(img_buf1, width=99*mm, height=18.48*mm))
                 except:
-                    simple_text = calc_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
-                    row.append(Paragraph(simple_text, ParagraphStyle('CalcStyle', fontName=font_name, fontSize=10)))
+                    simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
             else:
                 row.append('')
             
-            if i + 1 < len(calc_formulas):
+            if i + 1 < len(calculation_formulas):
                 try:
-                    img_buf2 = render_formula_to_image(calc_formulas[i + 1], fontsize=21.12, dpi=150)
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=21.12, dpi=150)
                     row.append(RLImage(img_buf2, width=99*mm, height=18.48*mm))
                 except:
-                    simple_text = calc_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
-                    row.append(Paragraph(simple_text, ParagraphStyle('CalcStyle', fontName=font_name, fontSize=10)))
+                    simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
             else:
                 row.append('')
             
@@ -1021,9 +1004,9 @@ def generate_taumu_pdf_report():
         ]))
         
         story.append(calc_table)
-        story.append(Spacer(1, 16.5))
+        story.append(Spacer(1, 22))
 
-        # 4. РЕЗУЛТАТИ И ПРОВЕРКА
+        # РЕЗУЛТАТ И ПРОВЕРКА
         results_title_style = ParagraphStyle(
             'ResultsTitle',
             fontName=font_name,
@@ -1032,19 +1015,13 @@ def generate_taumu_pdf_report():
             spaceAfter=16.5,
             alignment=1
         )
-        story.append(PageBreak())
-        story.append(Paragraph("РЕЗУЛТАТИ И ПРОВЕРКА", results_title_style))
+        story.append(Paragraph("РЕЗУЛТАТ И ПРОВЕРКА", results_title_style))
 
-        # Таблица с резултати
+        check_passed = left_side <= right_side
         results_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ"],
-            ["Ꚍμ/p", f"{sigma_r:.3f}" if 'x_orange' in locals() and x_orange is not None else "-"],
-            ["τμ [MPa]", f"{tau_mu:.6f}" if 'tau_mu' in locals() else "-"],
-            ["τb [MPa]", f"{tau_b:.6f}" if tau_b is not None else "-"],
-            ["K", f"{K:.3f}"],
-            ["C", f"{C:.3f}"],
-            ["τμ + τb [MPa]", f"{left_side:.6f}"],
-            ["τdop [MPa]", f"{right_side:.6f}"]
+            ["τμ + τb", f"{left_side:.6f} MPa"],
+            ["K × C", f"{right_side:.6f} MPa"]
         ]
 
         results_table = Table(results_data, colWidths=[88*mm, 66*mm], hAlign='CENTER')
@@ -1071,8 +1048,7 @@ def generate_taumu_pdf_report():
         story.append(results_table)
         story.append(Spacer(1, 16.5))
 
-        # Статус на проверката
-        if left_side <= right_side:
+        if check_passed:
             status_style = ParagraphStyle(
                 'StatusOK',
                 fontName=font_name,
@@ -1082,7 +1058,7 @@ def generate_taumu_pdf_report():
                 alignment=1,
                 backColor=colors.HexColor('#e8f5e9')
             )
-            story.append(Paragraph("ПРОВЕРКАТА Е УДОВЛЕТВОРЕНА", status_style))
+            story.append(Paragraph("УСЛОВИЕТО Е ИЗПЪЛНЕНО", status_style))
             subtitle_style = ParagraphStyle(
                 'SubtitleStyle',
                 parent=styles['Normal'],
@@ -1092,7 +1068,7 @@ def generate_taumu_pdf_report():
                 textColor=colors.HexColor('#5D4037'),
                 alignment=1
             )
-            story.append(Paragraph(f"τμ + τb = {left_side:.6f} ≤ τdop = {right_side:.6f}", subtitle_style))
+            story.append(Paragraph("τμ + τb ≤ K × C", subtitle_style))
         else:
             status_style = ParagraphStyle(
                 'StatusFail',
@@ -1103,7 +1079,7 @@ def generate_taumu_pdf_report():
                 alignment=1,
                 backColor=colors.HexColor('#ffebee')
             )
-            story.append(Paragraph("ПРОВЕРКАТА НЕ Е УДОВЛЕТВОРЕНА", status_style))
+            story.append(Paragraph("УСЛОВИЕТО НЕ Е ИЗПЪЛНЕНО", status_style))
             subtitle_style = ParagraphStyle(
                 'SubtitleStyle',
                 parent=styles['Normal'],
@@ -1113,10 +1089,12 @@ def generate_taumu_pdf_report():
                 textColor=colors.HexColor('#5D4037'),
                 alignment=1
             )
-            story.append(Paragraph(f"τμ + τb = {left_side:.6f} > τdop = {right_side:.6f}", subtitle_style))
+            story.append(Paragraph("τμ + τb > K × C", subtitle_style))
 
-        # 5. ГРАФИКИ
+        # НОВ ЛИСТ ЗА ГРАФИКИ
         story.append(PageBreak())
+
+        # ГРАФИКА НА ИЗОЛИНИИТЕ
         graph_title_style = ParagraphStyle(
             'GraphTitle',
             fontName=font_name,
@@ -1125,36 +1103,126 @@ def generate_taumu_pdf_report():
             spaceAfter=16.5,
             alignment=1
         )
-        story.append(Paragraph("ГРАФИКИ", graph_title_style))
-        
-        # Графика на изолинии (Plotly фигура)
-        story.append(Paragraph("Графика на изолинии", ParagraphStyle(
-            'GraphSubtitle',
-            fontName=font_name,
-            fontSize=14,
-            textColor=colors.HexColor('#333333'),
-            spaceAfter=11,
-            alignment=0
-        )))
+        story.append(Paragraph("ГРАФИКА НА ИЗОЛИНИИТЕ", graph_title_style))
         
         try:
-            # Конвертиране на Plotly фигура към изображение
-            img_bytes = pio.to_image(
-                fig,
-                format="png",
+            # Оптимизирана версия на графиката за PDF
+            pdf_fig = go.Figure()
+            
+            # Добавяне на изолиниите
+            for fi_val in unique_fi:
+                df_level = df_fi[df_fi['fi'] == fi_val].sort_values(by='H/D')
+                pdf_fig.add_trace(go.Scatter(
+                    x=df_level['H/D'],
+                    y=df_level['y'],
+                    mode='lines',
+                    name=f'ϕ = {fi_val}',
+                    line=dict(width=2)
+                ))
+
+            for val in unique_esr_eo:
+                df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
+                pdf_fig.add_trace(go.Scatter(
+                    x=df_level['H/D'],
+                    y=df_level['y'],
+                    mode='lines',
+                    name=f'Esr/Eo = {val}',
+                    line=dict(width=2)
+                ))
+
+            # Добавяне на точките и линиите (ако има изчисление)
+            if point_on_esr_eo is not None:
+                pdf_fig.add_trace(go.Scatter(
+                    x=[point_on_esr_eo[0]],
+                    y=[point_on_esr_eo[1]],
+                    mode='markers',
+                    marker=dict(color='red', size=10),
+                    name='Червена точка'
+                ))
+                
+                pdf_fig.add_trace(go.Scatter(
+                    x=[ratio, ratio],
+                    y=[0, point_on_esr_eo[1]],
+                    mode='lines',
+                    line=dict(color='red', dash='dash'),
+                    name='Вертикална линия'
+                ))
+
+                if 'x_orange' in locals() and x_orange is not None:
+                    pdf_fig.add_trace(go.Scatter(
+                        x=[x_orange],
+                        y=[y_red],
+                        mode='markers',
+                        marker=dict(color='orange', size=10),
+                        name='Оранжева точка'
+                    ))
+                    
+                    pdf_fig.add_trace(go.Scatter(
+                        x=[point_on_esr_eo[0], x_orange],
+                        y=[y_red, y_red],
+                        mode='lines',
+                        line=dict(color='orange', dash='dash'),
+                        name='Хоризонтална линия'
+                    ))
+
+            # Настройки за PDF
+            pdf_fig.update_layout(
+                title=dict(
+                    text="Номограма: Ꚍμ/p за несързани почви (фиг. 9.6)",
+                    font=dict(size=19.8, color='black', family="Arial")
+                ),
+                xaxis=dict(
+                    title="H/D",
+                    title_font=dict(size=15.4, color='black'),
+                    tickfont=dict(size=13.2, color='black'),
+                    linecolor='black',
+                    gridcolor='lightgray',
+                    mirror=True,
+                    showgrid=True
+                ),
+                yaxis=dict(
+                    title="y",
+                    title_font=dict(size=15.4, color='black'),
+                    tickfont=dict(size=13.2, color='black'),
+                    linecolor='black',
+                    gridcolor='lightgray',
+                    mirror=True,
+                    showgrid=True
+                ),
+                plot_bgcolor='white',
+                paper_bgcolor='white',
+                legend=dict(
+                    bgcolor='rgba(255,255,255,0.9)',
+                    bordercolor='black',
+                    borderwidth=1,
+                    font=dict(size=11, color='black'),
+                    x=1.05,
+                    y=0.5,
+                    xanchor='left',
+                    yanchor='middle'
+                ),
                 width=1200,
+                height=800,
+                margin=dict(r=150)
+            )
+            
+            img_bytes = pio.to_image(
+                pdf_fig, 
+                format="png", 
+                width=1200, 
                 height=800,
                 scale=4,
                 engine="kaleido"
             )
             
-            pil_img = Image.open(BytesIO(img_bytes))
+            pil_img = PILImage.open(BytesIO(img_bytes))
             img_buffer = io.BytesIO()
             pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
             img_buffer.seek(0)
             
-            story.append(RLImage(img_buffer, width=170 * mm, height=120 * mm))
+            story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
             story.append(Spacer(1, 15))
+            
         except Exception as e:
             error_style = ParagraphStyle(
                 'ErrorStyle',
@@ -1167,26 +1235,17 @@ def generate_taumu_pdf_report():
             )
             story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
 
-        # Графика за τb (Matplotlib фигура)
+        # ГРАФИКА ЗА τb
         if tau_b_fig is not None:
-            story.append(PageBreak())
-            story.append(Paragraph("Номограма за активно напрежение на срязване (τb)", ParagraphStyle(
-                'GraphSubtitle',
-                fontName=font_name,
-                fontSize=14,
-                textColor=colors.HexColor('#333333'),
-                spaceAfter=11,
-                alignment=0
-            )))
-            
             try:
-                # Запазване на Matplotlib фигурата
-                fig_buffer = BytesIO()
-                tau_b_fig.savefig(fig_buffer, format='png', dpi=300, bbox_inches='tight')
-                fig_buffer.seek(0)
+                # Конвертиране на Matplotlib фигурата
+                img_buffer_tau = io.BytesIO()
+                tau_b_fig.savefig(img_buffer_tau, format='png', dpi=300, bbox_inches='tight')
+                img_buffer_tau.seek(0)
                 
-                story.append(RLImage(fig_buffer, width=170 * mm, height=120 * mm))
-                story.append(Spacer(1, 15))
+                story.append(PageBreak())
+                story.append(Paragraph("ГРАФИКА ЗА τb", graph_title_style))
+                story.append(RLImage(img_buffer_tau, width=170 * mm, height=130 * mm))
             except Exception as e:
                 error_style = ParagraphStyle(
                     'ErrorStyle',
@@ -1197,20 +1256,28 @@ def generate_taumu_pdf_report():
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
                 )
-                story.append(Paragraph(f"Грешка при генериране на τb графика: {e}", error_style))
+                story.append(Paragraph(f"Грешка при добавяне на τb графика: {e}", error_style))
 
-        # 6. ТАБЛИЦА 9.8
+        # ТАБЛИЦА 9.8
         img_path_9_8 = "9.8 Таблица.png"
         if os.path.exists(img_path_9_8):
             story.append(PageBreak())
-            story.append(Paragraph("ТАБЛИЦА 9.8", graph_title_style))
+            table_title_style = ParagraphStyle(
+                'TableTitle',
+                fontName=font_name,
+                fontSize=15.4,
+                textColor=colors.HexColor('#2C5530'),
+                spaceAfter=11,
+                alignment=1
+            )
+            story.append(Paragraph("ТАБЛИЦА 9.8", table_title_style))
             
             try:
-                pil_img = Image.open(img_path_9_8)
-                img_buffer = io.BytesIO()
-                pil_img.save(img_buffer, format="PNG")
-                img_buffer.seek(0)
-                story.append(RLImage(img_buffer, width=170 * mm, height=120 * mm))
+                pil_img = PILImage.open(img_path_9_8)
+                img_buffer_table = io.BytesIO()
+                pil_img.save(img_buffer_table, format="PNG")
+                img_buffer_table.seek(0)
+                story.append(RLImage(img_buffer_table, width=170 * mm, height=130 * mm))
                 story.append(Spacer(1, 15))
             except Exception as e:
                 error_style = ParagraphStyle(
@@ -1222,37 +1289,10 @@ def generate_taumu_pdf_report():
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
                 )
-                story.append(Paragraph("Грешка при зареждане на таблицата", error_style))
-
-        # 7. ЗАКЛЮЧЕНИЕ
-        story.append(PageBreak())
-        story.append(Paragraph("ЗАКЛЮЧЕНИЕ", section_title_style))
-        
-        conclusion_text = f"""
-        Настоящият отчет представя изчисление на напреженията на срязване за несързани почви 
-        съгласно Фигура 9.6. Избрани са {n} пласта с дебелини от {', '.join([str(h) for h in h_values])} cm. 
-        Изчисленията са извършени за пласт {layer_idx + 1} при H/D = {ratio:.3f} и Esr/Eo = {Esr_over_Eo:.3f}.
-        
-        {'Стойността на Ꚍμ/p е определена като ' + str(sigma_r) + '.' if 'x_orange' in locals() and x_orange is not None else 'Стойността на Ꚍμ/p не е определена поради липса на точка в диапазона.'}
-        
-        Проверката на условието за напрежение на срязване показва, че 
-        τμ + τb = {left_side:.6f} MPa {'≤' if left_side <= right_side else '>'} τdop = {right_side:.6f} MPa.
-        """
-        
-        conclusion_style = ParagraphStyle(
-            'ConclusionStyle',
-            parent=styles['Normal'],
-            fontSize=11,
-            spaceAfter=5.5,
-            fontName=font_name,
-            textColor=colors.HexColor('#333333'),
-            alignment=3,  # Justify
-            leading=13.2
-        )
-        story.append(Paragraph(conclusion_text, conclusion_style))
-        story.append(Spacer(1, 16.5))
+                story.append(Paragraph(f"Грешка при зареждане на таблицата: {e}", error_style))
 
         # ДАТА И ПОДПИС
+        story.append(Spacer(1, 22))
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         date_style = ParagraphStyle(
             'DateStyle',
@@ -1263,15 +1303,17 @@ def generate_taumu_pdf_report():
         )
         story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
         
-        # Функция за добавяне на номера на страниците
+        # Добавяне на номера на страниците
         def add_page_number(canvas, doc):
             canvas.saveState()
-            canvas.setFont('DejaVuSans', 8)
-            page_num = doc.start_page + canvas.getPageNumber() - 1
+            try:
+                canvas.setFont('DejaVuSans', 8)
+            except:
+                canvas.setFont('Helvetica', 8)
+            page_num = canvas.getPageNumber()
             canvas.drawString(190*mm, 15*mm, f"{page_num}")
             canvas.restoreState()
         
-        # Генериране на PDF
         doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
         buffer.seek(0)
         
@@ -1279,28 +1321,38 @@ def generate_taumu_pdf_report():
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
+        import traceback
+        st.error(traceback.format_exc())
         return None
 
 # -------------------------------------------------
-# Бутон за генериране на PDF
+# UI за генериране на PDF отчет
 # -------------------------------------------------
 st.markdown("---")
 st.subheader("Генериране на PDF отчет")
 
+# Избор на начален номер на страница
+start_page_number = st.number_input(
+    "Начален номер на страница:",
+    min_value=1,
+    max_value=1000,
+    value=1,
+    step=1,
+    help="Задайте от кой номер да започва номерацията на страниците",
+    key="start_page_taumu"
+)
+
 if st.button("📄 Генерирай PDF отчет", type="primary"):
     with st.spinner('Генериране на PDF отчет...'):
         try:
-            pdf_buffer = generate_taumu_pdf_report()
+            pdf_buffer = generate_pdf_report()
             if pdf_buffer:
-                st.success("✅ PDF отчетът е успешно генериран!")
-                
-                # Подготвяне на файл за изтегляне
+                st.success("✅ PDF отчетът с модерно графично оформление е готов!")
                 st.download_button(
-                    label="📥 Изтегли PDF отчет",
-                    data=pdf_buffer,
-                    file_name=f"Определяне_на_τμ_p_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
-                    mime="application/pdf",
-                    type="primary"
+                    "📥 Изтегли PDF отчет",
+                    pdf_buffer,
+                    file_name=f"Ꚍμ_p_несързани_почви_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                    mime="application/pdf"
                 )
             else:
                 st.error("❌ Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
