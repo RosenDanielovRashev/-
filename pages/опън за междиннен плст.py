@@ -45,23 +45,19 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 900px;  <!-- Увеличена ширина -->
-            padding-top: 2rem;
-            padding-right: 2rem;
-            padding-left: 2rem;
-            padding-bottom: 2rem;
+            max-width: 1000px;  <!-- ОЩЕ ПО-ШИРОКО -->
+            padding-top: 1rem;
+            padding-right: 1rem;
+            padding-left: 1rem;
+            padding-bottom: 1rem;
         }
-        /* ФИКСИРАН РАЗМЕР ЗА ГРАФИКАТА */
+        /* ПОЗВОЛЯВА ПО-ГОЛЯМА ГРАФИКА */
+        .stPlotlyChart {
+            min-height: 700px !important;
+        }
+        /* ГАРАНТИРА ЧЕ ГРАФИКАТА ИМА ДОСТАТЪЧНО МЯСТО */
         div[data-testid="stPlotlyChart"] > div {
-            width: 100% !important;
-            min-width: 700px !important;
-            max-width: 900px !important;
-            height: 550px !important;
-            margin: 0 auto !important;
-        }
-        .js-plotly-plot .plotly .main-svg {
-            width: 100% !important;
-            height: 100% !important;
+            min-width: 900px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -615,8 +611,12 @@ if layer_idx in st.session_state.layer_results:
                     title=dict(
                         text='Графика на изолинии',
                         font=dict(size=16, color='black'),
-                        y=0.95  # Позициониране на заглавието
+                        y=0.98,
+                        x=0.5,
+                        xanchor='center'
                     ),
+                    
+                    # X-AXIS - ПО-ГОЛЯМ RANGE ЗА ПО-ДОБЪР МАЩАБ
                     xaxis=dict(
                         title='H/D',
                         title_font=dict(size=13, color='black'),
@@ -625,25 +625,36 @@ if layer_idx in st.session_state.layer_results:
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 1],
-                        # ПРЕМАХНАТИ ПРОБЛЕМНИ ПАРАМЕТРИ
-                        # constrain='domain',  # ПРЕМАХНАТО
-                        # scaleanchor='y',     # ПРЕМАХНАТО
-                        # scaleratio=1,       # ПРЕМАХНАТО
+                        # КЛЮЧОВО: range, който оставя място
+                        range=[-0.05, 1.05],  # ОЩЕ МАЛКО МЯСТО ОТ СТРАНИТЕ
+                        autorange=False,  # ЗАБРАНЯВА АВТОМАТИЧНИЯ RANGE
+                        fixedrange=False,  # ПОЗВОЛЯВА РЪЧНО ПРОМЕНЯНЕ
+                        
+                        # ОПТИМИЗИРАНИ TICKS
+                        tickmode='linear',
+                        dtick=0.2,
+                        tick0=0,
+                        
+                        # ОТСТЪПИ ОТ КРАЙНИТЕ ТОЧКИ
+                        constrain='domain',
                     ),
+                    
+                    # ВТОРА X ОС
                     xaxis2=dict(
                         overlaying='x',
                         side='top',
-                        range=[0, 1],
+                        range=[-0.05, 1.05],
                         showgrid=False,
                         zeroline=False,
-                        tickvals=[0, 0.25, 0.5, 0.75, 1],
-                        ticktext=['0', '0.25', '0.5', '0.75', '1'],
+                        tickmode='linear',
+                        dtick=0.25,
                         title='σr',
                         title_font=dict(size=13, color='black'),
                         tickfont=dict(size=11, color='black'),
-                        matches='x',
+                        title_standoff=10,
                     ),
+                    
+                    # Y-AXIS - ПО-ГОЛЯМ RANGE ЗА ПО-ДОБЪР МАЩАБ
                     yaxis=dict(
                         title='y',
                         title_font=dict(size=13, color='black'),
@@ -652,21 +663,57 @@ if layer_idx in st.session_state.layer_results:
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 2.7],
-                        # ПРЕМАХНАТИ ПРОБЛЕМНИ ПАРАМЕТРИ
-                        # scaleanchor='x',    # ПРЕМАХНАТО
-                        # scaleratio=0.5,    # ПРЕМАХНАТО
+                        # КЛЮЧОВО: range, който включва всички изолинии
+                        range=[-0.1, 2.8],  # ОЩЕ МАЛКО МЯСТО ОТГОРЕ И ОТДОЛУ
+                        autorange=False,
+                        fixedrange=False,
+                        
+                        # ОПТИМИЗИРАНИ TICKS
+                        tickmode='linear',
+                        dtick=0.5,
+                        tick0=0,
+                        
+                        # ВАЖНО: СКАЛИРАНЕ СПРЯМО Х
+                        scaleanchor='x',
+                        scaleratio=2.7,  # aspect ratio = 2.7/1 = 2.7
                     ),
+                    
                     showlegend=False,
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    # ФИКСИРАНИ РАЗМЕРИ ЗА СТАБИЛНОСТ
-                    autosize=False,  # ВАЖНО: Изключено!
-                    width=850,       # Фиксирана ширина
-                    height=550,      # Фиксирана височина
-                    margin=dict(l=60, r=60, t=80, b=60, pad=10),
+                    
+                    # НАЙ-ВАЖНАТА НАСТРОЙКА: autoscale=False, НО С ГОЛЕМИ РАЗМЕРИ
+                    autosize=True,  # ВКЛЮЧЕНО!
+                    width=None,     # НЕ ФИКСИРАМЕ - ще се определи от контейнера
+                    height=None,    # НЕ ФИКСИРАМЕ
+                    
+                    # ГОЛЕМИ MARGINS ЗА ПО-ДОБЪР МАЩАБ
+                    margin=dict(l=80, r=80, t=100, b=80, pad=15),
                     hovermode='closest',
+                    
+                    # ДОПЪЛНИТЕЛНИ НАСТРОЙКИ ЗА ДОБЪР МАЩАБ
+                    dragmode='zoom',
+                    uirevision='constant',  # Запазва потребителски настройки
                 )
+
+                # АВТОМАТИЧНО ПРИЛАГАНЕ НА AUTOSCALE НАСТРОЙКИ ПРИ ЗАРЕЖДАНЕ
+                if 'autoscale_applied' not in st.session_state:
+                    st.session_state.autoscale_applied = False
+                
+                if not st.session_state.autoscale_applied:
+                    # ПРИЛАГАМЕ НАСТРОЙКИТЕ НА AUTOSCALE РЪЧНО
+                    fig.update_layout(
+                        xaxis=dict(
+                            range=[-0.02, 1.02],  # МАЛКО ПО-ТИСНАТ МАЩАБ
+                            autorange=False
+                        ),
+                        yaxis=dict(
+                            range=[-0.05, 2.75],  # МАЛКО ПО-ТИСНАТ МАЩАБ
+                            autorange=False
+                        )
+                    )
+                    st.session_state.autoscale_applied = True
+                    st.rerun()  # ПРЕЗАРЕЖДАНЕ С НОВИТЕ НАСТРОЙКИ
                 # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
                     use_container_width=False,  # ВАЖНО: Изключено!
