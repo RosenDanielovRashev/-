@@ -594,87 +594,49 @@ if layer_idx in st.session_state.layer_results:
                     xaxis='x2'  # Свързваме с втората ос
                 ))
              
-                # Обновяване на оформлението с responsive настройки
-                # --- ШАБЛОН ЗА ДВЕ ОСИ X ---
-                # Определи фиксиран мащаб
-                xaxis_min = 0
-                xaxis_max = 1
-                
-                # Добави невидим trace за втората ос x
-                fig.add_trace(go.Scatter(
-                    x=[xaxis_min, xaxis_max],
-                    y=[None, None],
-                    mode='lines',
-                    line=dict(color='rgba(0,0,0,0)'),
-                    showlegend=False,
-                    hoverinfo='skip',
-                    xaxis='x2'
-                ))
-                
-                # Обнови оформлението със шаблонните настройки
+                # Обновяване на оформлението (подобно на втория файл)
                 fig.update_layout(
-                    title=dict(
-                        text='Графика на изолинии',
-                        font=dict(size=16, color='black'),
-                        y=0.98,
-                        x=0.5,
-                        xanchor='center'
-                    ),
-                    
-                    # ОСНОВНА ОС X (долна) - за H/D
+                    title='Графика на изолинии',
                     xaxis=dict(
                         title='H/D',
                         title_font=dict(size=12, color='black'),
                         tickfont=dict(size=11, color='black'),
-                        linecolor='black',
-                        gridcolor='lightgray',
-                        mirror=True,
                         showgrid=True,
-                        range=[xaxis_min, xaxis_max],
-                        autorange=False,
+                        zeroline=False,
+                        range=[0, 1],  # фиксиран диапазон
                         tickmode='linear',
                         dtick=0.2,
-                        tick0=0,
-                        constrain='domain',
+                        gridcolor='lightgray',
+                        linecolor='black',
                     ),
-                    
-                    # ВТОРА ОС X (горна) - за σr
                     xaxis2=dict(
                         overlaying='x',
                         side='top',
-                        range=[xaxis_min, xaxis_max],
+                        range=[0, 1],  # същия диапазон
                         showgrid=False,
                         zeroline=False,
-                        tickmode='linear',
-                        dtick=0.2,
-                        # Тикчетата за горната ос (преизчислени)
-                        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
-                        ticktext=[f"{(x/2):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],
+                        ticks="outside",
+                        tickvals=np.linspace(0, 1, 11),
+                        ticktext=[f"{(x/2):.3f}" for x in np.linspace(0, 1, 11)],
+                        ticklabeloverflow="allow",
                         title='σr',
                         title_font=dict(size=12, color='black'),
                         tickfont=dict(size=11, color='black'),
+                        fixedrange=True,
+                        showticklabels=True,
                         title_standoff=10,
                     ),
-                    
-                    # ОС Y
                     yaxis=dict(
                         title='y',
                         title_font=dict(size=12, color='black'),
                         tickfont=dict(size=11, color='black'),
-                        linecolor='black',
-                        gridcolor='lightgray',
-                        mirror=True,
-                        showgrid=True,
                         range=[-0.1, 2.8],
-                        autorange=False,
                         tickmode='linear',
                         dtick=0.5,
-                        tick0=0,
-                        scaleanchor='x',
-                        scaleratio=2.7,
+                        gridcolor='lightgray',
+                        linecolor='black',
                     ),
-                    
-                    # ЛЕГЕНДА
+                    showlegend=True,  # Променете на False ако не искате легенда
                     legend=dict(
                         yanchor="top",
                         y=0.99,
@@ -685,17 +647,12 @@ if layer_idx in st.session_state.layer_results:
                         borderwidth=1,
                         font=dict(size=10)
                     ),
-                    
-                    showlegend=True,
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    
-                    # РАЗМЕРИ И МАРЖИНИ
-                    autosize=False,  # Важно! Трябва да е False за фиксирани размери
-                    margin=dict(l=50, r=50, t=100, b=50),
-                    width=1200,
                     height=600,
-                    hovermode='closest',
+                    width=900,
+                    margin=dict(l=50, r=50, t=50, b=50),
+                    hovermode='closest'
                 )
         
                 # Виждане в Streamlit с responsive настройки
