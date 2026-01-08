@@ -696,24 +696,6 @@ if layer_idx in st.session_state.layer_results:
                     uirevision='constant',  # Запазва потребителски настройки
                 )
 
-                # АВТОМАТИЧНО ПРИЛАГАНЕ НА AUTOSCALE НАСТРОЙКИ ПРИ ЗАРЕЖДАНЕ
-                if 'autoscale_applied' not in st.session_state:
-                    st.session_state.autoscale_applied = False
-                
-                if not st.session_state.autoscale_applied:
-                    # ПРИЛАГАМЕ НАСТРОЙКИТЕ НА AUTOSCALE РЪЧНО
-                    fig.update_layout(
-                        xaxis=dict(
-                            range=[-0.02, 1.02],  # МАЛКО ПО-ТИСНАТ МАЩАБ
-                            autorange=False
-                        ),
-                        yaxis=dict(
-                            range=[-0.05, 2.75],  # МАЛКО ПО-ТИСНАТ МАЩАБ
-                            autorange=False
-                        )
-                    )
-                    st.session_state.autoscale_applied = True
-                    st.rerun()  # ПРЕЗАРЕЖДАНЕ С НОВИТЕ НАСТРОЙКИ
                 # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
                     use_container_width=False,  # ВАЖНО: Изключено!
