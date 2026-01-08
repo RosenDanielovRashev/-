@@ -1168,25 +1168,32 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         st.error(traceback.format_exc())
         return None
 
+# ... [останалата част на кода остава същата до края] ...
+
 # -------------------------------------------------
 # ДОБАВЕНО: Секция за настройки на PDF преди бутона за генериране
 # -------------------------------------------------
 st.markdown("---")
 st.subheader("Настройки за PDF отчет")
 
+# Инициализиране на pdf_start_page в session_state, ако не съществува
+if "pdf_start_page" not in st.session_state:
+    st.session_state.pdf_start_page = 1
+
 # Поле за въвеждане на начален номер на страница
 pdf_start_page = st.number_input(
     "Начален номер на страница:",
     min_value=1,
     max_value=1000,
-    value=1,
+    value=st.session_state.pdf_start_page,  # Използваме стойността от session_state
     step=1,
     help="Задайте от кой номер да започва номерацията на страниците",
-    key="pdf_start_page"
+    key="pdf_start_page_input"  # Различен ключ от session_state ключа
 )
 
-# Запазване в session_state
-st.session_state["pdf_start_page"] = pdf_start_page
+# Актуализираме session_state при промяна
+if pdf_start_page != st.session_state.pdf_start_page:
+    st.session_state.pdf_start_page = pdf_start_page
 
 # -------------------------------------------------
 # ПРОМЕНЕТЕ БУТОНА ЗА ГЕНЕРИРАНЕ НА PDF
