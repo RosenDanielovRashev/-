@@ -607,54 +607,117 @@ if layer_idx in st.session_state.layer_results:
                 ))
                 
                 # Обновяване на оформлението с responsive настройки
-
-                # Настройки за мащабиране на осите в графиката
                 fig.update_layout(
+                    title=dict(
+                        text='Графика на изолинии',
+                        font=dict(size=16, color='black'),
+                        y=0.98,
+                        x=0.5,
+                        xanchor='center'
+                    ),
+                    
+                    # X-AXIS - ПО-ГОЛЯМ RANGE ЗА ПО-ДОБЪР МАЩАБ
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[-0.05, 1.05],  # Оставяме малко място отстрани за да може да се вижда графиката
-                        autorange=False,  # Не позволявайте автоматично увеличаване
-                        fixedrange=True,  # Ограничаваме мащабирането
+                        # КЛЮЧОВО: range, който оставя място
+                        range=[-0.05, 1.05],  # ОЩЕ МАЛКО МЯСТО ОТ СТРАНИТЕ
+                        autorange=False,  # ЗАБРАНЯВА АВТОМАТИЧНИЯ RANGE
+                        fixedrange=False,  # ПОЗВОЛЯВА РЪЧНО ПРОМЕНЯНЕ
+                        
+                        # ОПТИМИЗИРАНИ TICKS
+                        tickmode='linear',
+                        dtick=0.2,
+                        tick0=0,
+                        
+                        # ОТСТЪПИ ОТ КРАЙНИТЕ ТОЧКИ
+                        constrain='domain',
                     ),
+                    
+                    # ВТОРА X ОС
+                    xaxis2=dict(
+                        overlaying='x',
+                        side='top',
+                        range=[-0.05, 1.05],
+                        showgrid=False,
+                        zeroline=False,
+                        tickmode='linear',
+                        dtick=0.25,
+                        title='σr',
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
+                        title_standoff=10,
+                    ),
+                    
+                    # Y-AXIS - ПО-ГОЛЯМ RANGE ЗА ПО-ДОБЪР МАЩАБ
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=13, color='black'),
+                        tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[-0.1, 2.8],  # Можете да настроите този диапазон спрямо вашата графика
-                        autorange=False,  # Задаваме собствен диапазон
-                        fixedrange=True,  # Ограничаваме мащабирането
+                        # КЛЮЧОВО: range, който включва всички изолинии
+                        range=[-0.1, 2.8],  # ОЩЕ МАЛКО МЯСТО ОТГОРЕ И ОТДОЛУ
+                        autorange=False,
+                        fixedrange=False,
+                        
+                        # ОПТИМИЗИРАНИ TICKS
+                        tickmode='linear',
+                        dtick=0.5,
+                        tick0=0,
+                        
+                        # ВАЖНО: СКАЛИРАНЕ СПРЯМО Х
+                        scaleanchor='x',
+                        scaleratio=2.7,  # aspect ratio = 2.7/1 = 2.7
                     ),
+                    
+                    showlegend=False,
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    autosize=True,  # Позволява автоматично променяне на размера спрямо съдържанието
-                    width=None,     # Няма да фиксираме ширината
-                    height=None,    # Няма да фиксираме височината
-                    margin=dict(l=80, r=80, t=100, b=80, pad=15),  # Дадохме малко отстояния
+                    
+                    # НАЙ-ВАЖНАТА НАСТРОЙКА: autoscale=False, НО С ГОЛЕМИ РАЗМЕРИ
+                    autosize=True,  # ВКЛЮЧЕНО!
+                    width=None,     # НЕ ФИКСИРАМЕ - ще се определи от контейнера
+                    height=None,    # НЕ ФИКСИРАМЕ
+                    
+                    # ГОЛЕМИ MARGINS ЗА ПО-ДОБЪР МАЩАБ
+                    margin=dict(l=80, r=80, t=100, b=80, pad=15),
+                    hovermode='closest',
+                    
+                    # ДОПЪЛНИТЕЛНИ НАСТРОЙКИ ЗА ДОБЪР МАЩАБ
+                    dragmode='zoom',
+                    uirevision='constant',  # Запазва потребителски настройки
                 )
-                
+
+                # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
-                    use_container_width=True,  # Това ще накара графиката да се адаптира към размера на контейнера
+                    use_container_width=False,  # ВАЖНО: Изключено!
                     config={
-                        'responsive': True,      # Активирай мащабиране, така че графиката да се променя в зависимост от размерите
+                        'responsive': False,     # ВАЖНО: Изключено!
                         'displayModeBar': True,
                         'displaylogo': False,
                         'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                        'scrollZoom': False,     # Спираме зумирането с мишка
-                        'autosizable': True,      # Автоматично адаптиране на размерите спрямо съдържанието
+                        'scrollZoom': True,
+                        # ПРЕМАХНАТИ ПРОБЛЕМНИ ПАРАМЕТРИ
+                        # 'autosizable': True,  # ПРЕМАХНАТО
+                        # 'fillFrame': True,    # ПРЕМАХНАТО
+                        'toImageButtonOptions': {
+                            'format': 'png',
+                            'filename': 'графика_изолинии',
+                            'height': 550,
+                            'width': 850,
+                            'scale': 2
+                        }
                     }
                 )
-                
-                                                
+                                
                 # Try to find the image in different locations
                 image_paths = [
                     "Допустими опънни напрежения.png",
