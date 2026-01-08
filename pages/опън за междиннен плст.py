@@ -49,7 +49,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
 
 # Функции за рендиране на математически формули
@@ -207,92 +206,8 @@ if st.button(f"Изчисли за пласт {layer_idx+1}"):
     results = calculate_layer(layer_idx)
     st.success(f"Изчисленията за пласт {layer_idx+1} са запазени!")
 
-# Функция за създаване на оптимизирана графика за PDF
-def create_optimized_pdf_figure_intermediate():
-    """Създава оптимизирана версия на графиката за междинен пласт за PDF"""
-    try:
-        # Try to find the CSV files in different locations
-        csv_paths = [
-            "danni_1.csv",
-            "./danni_1.csv",
-            "pages/danni_1.csv",
-            "../danni_1.csv"
-        ]
-        
-        df_original = None
-        for path in csv_paths:
-            try:
-                df_original = pd.read_csv(path)
-                break
-            except:
-                continue
-                
-        if df_original is None:
-            return None
-        
-        csv_paths2 = [
-            "Оразмеряване на опън за междиннен плстH_D_1.csv",
-            "./Оразмеряване на опън за междиннен плстH_D_1.csv",
-            "pages/Оразмеряване на опън за междиннен плстH_D_1.csv",
-            "../Оразмеряване на опън за междиннен плстH_D_1.csv"
-        ]
-        
-        df_new = None
-        for path in csv_paths2:
-            try:
-                df_new = pd.read_csv(path)
-                break
-            except:
-                continue
-                
-        if df_new is None:
-            return None
-        
-        df_new.rename(columns={'Esr/Ei': 'sr_Ei'}, inplace=True)
-        
-        fig = go.Figure()
-        
-        # Цветова палитра за изолиниите
-        colors_isolines = [
-            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
-            '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
-        ]
-        
-        # Add isolines from original df (Ei/Ed) - СИНИ изолинии
-        if 'Ei/Ed' in df_original.columns:
-            levels = sorted(df_original['Ei/Ed'].unique())
-            for i, level in enumerate(levels):
-                df_level = df_original[df_original['Ei/Ed'] == level].sort_values(by='H/D')
-                fig.add_trace(go.Scatter(
-                    x=df_level['H/D'], y=df_level['y'],
-                    mode='lines', 
-                    name=f'Ei/Ed = {round(level,2)}',
-                    line=dict(color=colors_isolines[i % len(colors_isolines)], width=1.5),
-                    showlegend=True
-                ))
-        
-        # Add isolines from new df (Esr/Ei) - ЧЕРВЕНИ изолинии
-        if 'sr_Ei' in df_new.columns:
-            sr_Ei_levels = sorted(df_new['sr_Ei'].unique())
-            offset = len(levels) if 'levels' in locals() else 0
-            
-            for i, sr_Ei in enumerate(sr_Ei_levels):
-                df_level = df_new[df_new['sr_Ei'] == sr_Ei].sort_values(by='H/D')
-                color_idx = (offset + i) % len(colors_isolines)
-                color = colors_isolines[color_idx]
-                
-                fig.add_trace(go.Scatter(
-                    x=df_level['H/D'], y=df_level['y'],
-                    mode='lines', 
-                    name=f'Esr/Ei = {round(sr_Ei,2)}',
-                    line=dict(color=color, width=1.5, dash='dash'),
-                    showlegend=True
-                ))
-        
-        return fig
-    except Exception as e:
-        print(f"Грешка при създаване на PDF графика: {e}")
-        return None
+# Глобална променлива за фигурата
+fig = None
 
 # Display results
 if layer_idx in st.session_state.layer_results:
@@ -593,73 +508,72 @@ if layer_idx in st.session_state.layer_results:
                     hoverinfo='skip',
                     xaxis='x2'  # Свързваме с втората ос
                 ))
-             
-                # Обновяване на оформлението (подобно на втория файл)
+
+                # Обновяване на оформлението с цветна легенда
                 fig.update_layout(
-                    title='Графика на изолинии',
+                    title=dict(
+                        text='Графика на изолинии',
+                        font=dict(size=16, color='black')
+                    ),
                     xaxis=dict(
                         title='H/D',
                         title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=11, color='black'),
-                        showgrid=True,
-                        zeroline=False,
-                        range=[0, 2.2],  # фиксиран диапазон
-                        tickmode='linear',
-                        dtick=0.2,
-                        gridcolor='lightgray',
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
+                        showgrid=True,
+                        range=[0, 1]
                     ),
                     xaxis2=dict(
                         overlaying='x',
                         side='top',
-                        range=[0, 1],  # същия диапазон
+                        range=[0, 1],
                         showgrid=False,
                         zeroline=False,
-                        ticks="outside",
-                        tickvals=np.linspace(0, 1, 11),
-                        ticktext=[f"{(x/2):.3f}" for x in np.linspace(0, 1, 11)],
-                        ticklabeloverflow="allow",
+                        tickvals=[0, 0.25, 0.5, 0.75, 1],
+                        ticktext=['0', '0.25', '0.5', '0.75', '1'],
                         title='σr',
                         title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=11, color='black'),
-                        fixedrange=True,
-                        showticklabels=True,
-                        title_standoff=10,
+                        tickfont=dict(size=10, color='black')
                     ),
                     yaxis=dict(
                         title='y',
                         title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=11, color='black'),
-                        range=[-0.1, 2.5],
-                        tickmode='linear',
-                        dtick=0.5,
-                        gridcolor='lightgray',
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
+                        showgrid=True,
+                        range=[0, 2.7]
                     ),
-                    showlegend=True,  # Променете на False ако не искате легенда
                     legend=dict(
-                        yanchor="top",
-                        y=0.99,
-                        xanchor="left",
-                        x=1.02,
+                        title=dict(
+                            text='Легенда:',
+                            font=dict(size=10, color='black')
+                        ),
                         bgcolor='rgba(255,255,255,0.9)',
                         bordercolor='black',
                         borderwidth=1,
-                        font=dict(size=10)
+                        font=dict(size=8, color='black'),
+                        x=1.02,
+                        y=1.0,
+                        xanchor='left',
+                        yanchor='top',
+                        traceorder='normal',
+                        itemsizing='constant',
+                        orientation='v'
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    height=600,
-                    width=900,
-                    margin=dict(l=50, r=50, t=50, b=50),
-                    hovermode='closest'
+                    width=800,
+                    height=500,
+                    margin=dict(l=50, r=150, t=50, b=50),
+                    autosize=True
                 )
-        
-                # Виждане в Streamlit с responsive настройки
-                st.plotly_chart(fig, use_container_width=True)
-                
 
-                                                
+                st.plotly_chart(fig, use_container_width=True, config={'responsive': True})
+
                 # Try to find the image in different locations
                 image_paths = [
                     "Допустими опънни напрежения.png",
@@ -671,8 +585,7 @@ if layer_idx in st.session_state.layer_results:
                 img_found = False
                 for path in image_paths:
                     try:
-                        # Използваме use_container_width за автоматично скалиране
-                        st.image(path, caption="Допустими опънни напрежения", use_container_width=True)
+                        st.image(path, caption="Допустими опънни напрежения", width=600)
                         img_found = True
                         break
                     except:
@@ -996,12 +909,12 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
         
         try:
-            # Използвайте новата функция за оптимизирана графика
-            pdf_fig = create_optimized_pdf_figure_intermediate()
-            
-            if pdf_fig is not None:
+            if fig is not None:
+                # Обновяване на оформлението за PDF с по-добра легенда
+                fig_pdf = go.Figure(fig)
+                
                 # Настройки за PDF
-                pdf_fig.update_layout(
+                fig_pdf.update_layout(
                     title=dict(
                         text='Номограма: σR в междинен пласт',
                         font=dict(size=14, color='black', family="Arial")
@@ -1014,12 +927,12 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 2.2]
+                        range=[0, 1]
                     ),
                     xaxis2=dict(
                         overlaying='x',
                         side='top',
-                        range=[0, 2.2],
+                        range=[0, 1],
                         showgrid=False,
                         zeroline=False,
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
@@ -1036,43 +949,40 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[0, 2.5]
+                        range=[0, 2.7]
                     ),
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
                     legend=dict(
+                        title=dict(
+                            text='Легенда:',
+                            font=dict(size=10, color='black')
+                        ),
                         bgcolor='rgba(255,255,255,0.9)',
                         bordercolor='black',
                         borderwidth=1,
                         font=dict(size=8, color='black'),
-                        x=0.5,
-                        y=-0.3,
-                        xanchor='center',
+                        x=1.02,
+                        y=1.0,
+                        xanchor='left',
                         yanchor='top',
                         traceorder='normal',
                         itemsizing='constant',
-                        orientation='h'
+                        orientation='v'
                     ),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
                     width=800,
-                    height=600,
-                    margin=dict(l=50, r=50, t=50, b=150)
+                    height=500,
+                    margin=dict(l=50, r=150, t=50, b=50)
                 )
-                
-                img_bytes = pio.to_image(
-                    pdf_fig, 
-                    format="png", 
-                    width=800,
-                    height=600,
-                    scale=3,
-                    engine="kaleido"
-                )
+                # Експортиране на фигурата с висока резолюция
+                img_bytes = pio.to_image(fig_pdf, format="png", width=1200, height=800, scale=4, engine="kaleido")
                 
                 pil_img = PILImage.open(BytesIO(img_bytes))
                 img_buffer = io.BytesIO()
                 pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
                 img_buffer.seek(0)
                 
-                story.append(RLImage(img_buffer, width=170 * mm, height=120 * mm))
+                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
                 story.append(Spacer(1, 15))
                 
         except Exception as e:
