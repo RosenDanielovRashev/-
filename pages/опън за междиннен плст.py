@@ -33,6 +33,12 @@ try:
 except Exception:
     _HAS_CAIROSVG = False
 
+st.set_page_config(
+    layout="centered",  # или "wide" за по-широко, но "centered" е по-тясно
+    initial_sidebar_state="collapsed",  # скриване на sidebar
+    page_title="Опън в междинен пласт"
+)
+
 st.markdown("""
     <style>
         /* Основен контейнер - ограничаване на ширината */
