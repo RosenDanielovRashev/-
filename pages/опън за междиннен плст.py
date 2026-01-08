@@ -607,6 +607,7 @@ if layer_idx in st.session_state.layer_results:
                 ))
                 
                 # Обновяване на оформлението с responsive настройки
+                # Обновяване на оформлението с responsive настройки
                 fig.update_layout(
                     title=dict(
                         text='Графика на изолинии',
@@ -616,7 +617,7 @@ if layer_idx in st.session_state.layer_results:
                         xanchor='center'
                     ),
                     
-                    # X-AXIS - ПО-ГОЛЯМ RANGE ЗА ПО-ДОБЪР МАЩАБ
+                    # X-AXIS
                     xaxis=dict(
                         title='H/D',
                         title_font=dict(size=13, color='black'),
@@ -625,17 +626,12 @@ if layer_idx in st.session_state.layer_results:
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        # КЛЮЧОВО: range, който оставя място
-                        range=[-0.05, 1.05],  # ОЩЕ МАЛКО МЯСТО ОТ СТРАНИТЕ
-                        autorange=False,  # ЗАБРАНЯВА АВТОМАТИЧНИЯ RANGE
-                        fixedrange=False,  # ПОЗВОЛЯВА РЪЧНО ПРОМЕНЯНЕ
-                        
-                        # ОПТИМИЗИРАНИ TICKS
+                        range=[-0.05, 1.05],
+                        autorange=False,
+                        fixedrange=False,
                         tickmode='linear',
                         dtick=0.2,
                         tick0=0,
-                        
-                        # ОТСТЪПИ ОТ КРАЙНИТЕ ТОЧКИ
                         constrain='domain',
                     ),
                     
@@ -654,7 +650,7 @@ if layer_idx in st.session_state.layer_results:
                         title_standoff=10,
                     ),
                     
-                    # Y-AXIS - ПО-ГОЛЯМ RANGE ЗА ПО-ДОБЪР МАЩАБ
+                    # Y-AXIS
                     yaxis=dict(
                         title='y',
                         title_font=dict(size=13, color='black'),
@@ -663,29 +659,22 @@ if layer_idx in st.session_state.layer_results:
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        # КЛЮЧОВО: range, който включва всички изолинии
-                        range=[-0.1, 2.8],  # ОЩЕ МАЛКО МЯСТО ОТГОРЕ И ОТДОЛУ
+                        range=[-0.1, 2.8],
                         autorange=False,
                         fixedrange=False,
-                        
-                        # ОПТИМИЗИРАНИ TICKS
                         tickmode='linear',
                         dtick=0.5,
                         tick0=0,
-                        
-                        # ВАЖНО: СКАЛИРАНЕ СПРЯМО Х
                         scaleanchor='x',
-                        scaleratio=2.7,  # aspect ratio = 2.7/1 = 2.7
+                        scaleratio=2.7,
                     ),
                     
                     showlegend=False,
                     plot_bgcolor='white',
                     paper_bgcolor='white',
                     
-                    # НАЙ-ВАЖНАТА НАСТРОЙКА: autoscale=False, НО С ГОЛЕМИ РАЗМЕРИ
-                    autosize=True,  # ВКЛЮЧЕНО!
-                    width=None,     # НЕ ФИКСИРАМЕ - ще се определи от контейнера
-                    height=None,    # НЕ ФИКСИРАМЕ
+                    # НЕ задавай width и height, за да се autosize-не спрямо контейнера
+                    autosize=True,
                     
                     # ГОЛЕМИ MARGINS ЗА ПО-ДОБЪР МАЩАБ
                     margin=dict(l=80, r=80, t=100, b=80, pad=15),
@@ -693,28 +682,17 @@ if layer_idx in st.session_state.layer_results:
                     
                     # ДОПЪЛНИТЕЛНИ НАСТРОЙКИ ЗА ДОБЪР МАЩАБ
                     dragmode='zoom',
-                    uirevision='constant',  # Запазва потребителски настройки
+                    uirevision='constant',
                 )
 
                 # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
-                    use_container_width=False,  # ВАЖНО: Изключено!
+                    use_container_width=True,  # Това ще направи графиката responsive
                     config={
-                        'responsive': False,     # ВАЖНО: Изключено!
                         'displayModeBar': True,
                         'displaylogo': False,
                         'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
                         'scrollZoom': True,
-                        # ПРЕМАХНАТИ ПРОБЛЕМНИ ПАРАМЕТРИ
-                        # 'autosizable': True,  # ПРЕМАХНАТО
-                        # 'fillFrame': True,    # ПРЕМАХНАТО
-                        'toImageButtonOptions': {
-                            'format': 'png',
-                            'filename': 'графика_изолинии',
-                            'height': 550,
-                            'width': 850,
-                            'scale': 2
-                        }
                     }
                 )
                                 
