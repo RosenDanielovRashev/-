@@ -87,25 +87,72 @@ def create_optimized_pdf_figure():
     colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
               '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
     
-    # Добавяне на всички изолинии от данните
+    # Добавяне на всички изолинии от данните С НАДПИСИ
     for i, (val, group) in enumerate(data.groupby("Esr_over_Ed")):
+        # Добавяме основната линия
         fig.add_trace(go.Scatter(
             x=group["H_over_D"],
             y=group["sigma_R"],
             mode='lines',
             name=f"Esr/Ed = {val:.1f}",
-            line=dict(color=colors[i % len(colors)], width=2)
+            line=dict(color=colors[i % len(colors)], width=2),
+            showlegend=True
         ))
+        
+        # Добавяме текст (надпис) в края на всяка изолиния
+        # Намираме последната точка за надписа
+        last_x = group["H_over_D"].iloc[-1]
+        last_y = group["sigma_R"].iloc[-1]
+        
+        # Проверяваме дали има достатъчно място за надписа
+        if last_x < 0.9:  # Ако не е твърде близо до края
+            fig.add_trace(go.Scatter(
+                x=[last_x + 0.01],  # Малко изместване надясно
+                y=[last_y],
+                mode='text',
+                text=[f"{val:.1f}"],
+                textposition="middle right",
+                textfont=dict(
+                    size=10,
+                    color=colors[i % len(colors)]
+                ),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
     
     # Добавяне на точката на потребителя (ако има изчисление)
     if 'final_hD' in st.session_state and 'final_sigma' in st.session_state:
+        hD = st.session_state.final_hD
+        sigma = st.session_state.final_sigma
+        
+        # Точката
         fig.add_trace(go.Scatter(
-            x=[st.session_state.final_hD], 
-            y=[st.session_state.final_sigma],
+            x=[hD], 
+            y=[sigma],
             mode='markers',
             marker=dict(size=12, color='red', symbol='circle', 
                        line=dict(color='darkred', width=2)),
             name="Изчислена точка"
+        ))
+        
+        # ВЕРТИКАЛНА ПУНКТИРНА ЛИНИЯ (синя)
+        fig.add_trace(go.Scatter(
+            x=[hD, hD],
+            y=[data['sigma_R'].min() * 0.95, sigma],
+            mode='lines',
+            line=dict(color='blue', width=1.5, dash='dash'),
+            name=f"H/D = {hD:.3f}",
+            showlegend=True
+        ))
+        
+        # ХОРИЗОНТАЛНА ПУНКТИРНА ЛИНИЯ (червена)
+        fig.add_trace(go.Scatter(
+            x=[data['H_over_D'].min(), hD],
+            y=[sigma, sigma],
+            mode='lines',
+            line=dict(color='red', width=1.5, dash='dash'),
+            name=f"σR = {sigma:.3f}",
+            showlegend=True
         ))
     
     # Настройки за PDF
@@ -121,7 +168,8 @@ def create_optimized_pdf_figure():
             linecolor='black',
             gridcolor='lightgray',
             mirror=True,
-            showgrid=True
+            showgrid=True,
+            range=[data['H_over_D'].min(), data['H_over_D'].max() * 1.05]
         ),
         yaxis=dict(
             title="σR [MPa]",
@@ -130,7 +178,8 @@ def create_optimized_pdf_figure():
             linecolor='black',
             gridcolor='lightgray',
             mirror=True,
-            showgrid=True
+            showgrid=True,
+            range=[data['sigma_R'].min() * 0.95, data['sigma_R'].max() * 1.05]
         ),
         plot_bgcolor='white',
         paper_bgcolor='white',
@@ -139,11 +188,14 @@ def create_optimized_pdf_figure():
             bordercolor='black',
             borderwidth=1,
             font=dict(size=10, color='black'),
-            x=0.02,
-            y=0.98
+            x=1.05,
+            y=0.5,
+            xanchor='left',
+            yanchor='middle'
         ),
         width=1200,
-        height=800
+        height=800,
+        margin=dict(r=150)  # Добавяме място за легендата
     )
     
     return fig
@@ -258,28 +310,89 @@ if denominator != 0:
         st.info(f"Интерполация между изолинии: Esr/Ed = {low:.2f} и {high:.2f}")
 
         # Графика
+        # Графика с надписи и пунктирни линии
         fig = go.Figure()
-        for val, group in data.groupby("Esr_over_Ed"):
+        
+        # Добавяне на всички изолинии от данните С НАДПИСИ
+        for i, (val, group) in enumerate(data.groupby("Esr_over_Ed")):
+            # Основна линия
             fig.add_trace(go.Scatter(
                 x=group["H_over_D"],
                 y=group["sigma_R"],
                 mode='lines',
-                name=f"Esr/Ed = {val:.1f}"
+                name=f"Esr/Ed = {val:.1f}",
+                line=dict(color=f'hsl({i*30}, 70%, 50%)', width=2)
             ))
+            
+            # Надпис за изолинията
+            last_x = group["H_over_D"].iloc[-1]
+            last_y = group["sigma_R"].iloc[-1]
+            
+            if last_x < 0.9:  # Ако не е твърде близо до края
+                fig.add_trace(go.Scatter(
+                    x=[last_x + 0.01],
+                    y=[last_y],
+                    mode='text',
+                    text=[f"{val:.1f}"],
+                    textposition="middle right",
+                    textfont=dict(
+                        size=10,
+                        color=f'hsl({i*30}, 70%, 50%)'
+                    ),
+                    showlegend=False,
+                    hoverinfo='skip'
+                ))
+
+        # Добавяне на точката на потребителя
+        hD_val = H / D
+        
+        # Точката
         fig.add_trace(go.Scatter(
-            x=[H / D], y=[sigma],
+            x=[hD_val], 
+            y=[sigma],
             mode='markers',
-            marker=dict(size=8, color='red'),
-            name="Твоята точка"
+            marker=dict(size=10, color='red', symbol='circle',
+                       line=dict(color='darkred', width=2)),
+            name="Изчислена точка"
         ))
+        
+        # ВЕРТИКАЛНА ПУНКТИРНА ЛИНИЯ (синя)
+        y_min = data['sigma_R'].min()
+        y_max = data['sigma_R'].max()
+        
+        fig.add_trace(go.Scatter(
+            x=[hD_val, hD_val],
+            y=[y_min, sigma],
+            mode='lines',
+            line=dict(color='blue', width=1.5, dash='dash'),
+            name=f"H/D = {hD_val:.3f}",
+            showlegend=True
+        ))
+        
+        # ХОРИЗОНТАЛНА ПУНКТИРНА ЛИНИЯ (червена)
+        x_min = data['H_over_D'].min()
+        x_max = data['H_over_D'].max()
+        
+        fig.add_trace(go.Scatter(
+            x=[x_min, hD_val],
+            y=[sigma, sigma],
+            mode='lines',
+            line=dict(color='red', width=1.5, dash='dash'),
+            name=f"σR = {sigma:.3f}",
+            showlegend=True
+        ))
+
         fig.update_layout(
             title="Номограма: σR срещу H/D",
             xaxis_title="H / D",
             yaxis_title="σR",
             height=700,
             plot_bgcolor='white',
-            paper_bgcolor='white'
+            paper_bgcolor='white',
+            xaxis_range=[data['H_over_D'].min(), data['H_over_D'].max() * 1.05],
+            yaxis_range=[data['sigma_R'].min() * 0.95, data['sigma_R'].max() * 1.05]
         )
+        
         st.plotly_chart(fig, use_container_width=True)
         st.session_state["fig"] = fig
     else:
