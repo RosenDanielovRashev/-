@@ -39,7 +39,7 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 800px;  # Променете от 1000px на 800px (или по-малко)
+            max-width: 600px;  # Променете от 1000px на 800px (или по-малко)
             padding-top: 2rem;
             padding-right: 2rem;
             padding-left: 2rem;
