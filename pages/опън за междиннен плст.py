@@ -33,38 +33,21 @@ try:
 except Exception:
     _HAS_CAIROSVG = False
 
-st.set_page_config(layout="wide")
-
-st.markdown(
-    """
+st.markdown("""
     <style>
-    .block-container {
-        max-width: 1000px;
-        padding-left: 2rem;
-        padding-right: 2rem;
-    }
-    .layer-card {
-        position: relative;
-        width: 400px;
-        height: 80px;
-        background-color: #e0f7fa;
-        border: 2px solid #26c6da;
-        border-radius: 8px;
-        margin: 15px auto 40px auto;
-        padding: 10px;
-        font-family: Arial, sans-serif;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .warning-box {
-        background-color: #fff8e1;
-        border-left: 4px solid #ffc107;
-        padding: 10px;
-        margin: 10px 0;
-    }
+        .streamlit-expanderHeader {
+            font-size: 18px !important;
+        }
+        .block-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .css-1lcbmi9 {
+            max-width: 800px !important;
+            margin: 0 auto !important;
+        }
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 
 st.title("Определяне опънното напрежение в междиен пласт от пътнатата конструкция фиг.9.3")
