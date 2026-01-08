@@ -646,35 +646,15 @@ if layer_idx in st.session_state.layer_results:
                         scaleanchor='x',
                         scaleratio=0.5,
                     ),
-                    legend=dict(
-                        title=dict(
-                            text='Легенда:',
-                            font=dict(size=12, color='black')
-                        ),
-                        bgcolor='rgba(240, 240, 240, 0.95)',
-                        bordercolor='black',
-                        borderwidth=1,
-                        font=dict(size=10, color='black'),
-                        x=0.5,
-                        y=-0.25,
-                        xanchor='center',
-                        yanchor='top',
-                        traceorder='normal',
-                        itemsizing='constant',
-                        orientation='h',
-                        itemwidth=60,
-                        itemclick='toggleothers',
-                        itemdoubleclick='toggle',
-                        groupclick='togglegroup'
-                    ),
+                    # ПРЕМАХНАТА ЛЕГЕНДА
+                    showlegend=False,  # Това премахва цялата легенда
                     plot_bgcolor='white',
                     paper_bgcolor='white',
                     autosize=True,
-                    margin=dict(l=50, r=50, t=50, b=150),
+                    margin=dict(l=50, r=50, t=50, b=50),  # Намалено b от 150 на 50
                     hovermode='closest',
                     dragmode='zoom',
                 )
-                
                 # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
                     use_container_width=True,
