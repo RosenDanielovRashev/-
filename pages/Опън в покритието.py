@@ -310,13 +310,14 @@ if denominator != 0:
         st.info(f"Интерполация между изолинии: Esr/Ed = {low:.2f} и {high:.2f}")
 
         # Графика
+        # Графика
         # Графика с надписи и пунктирни линии
         fig = go.Figure()
-        
-        # Цветова схема за Streamlit
+
+        # Цветова схема за Streamlit (същата като за PDF)
         colors_streamlit = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
                            '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
-        
+
         # Добавяне на всички изолинии от данните С НАДПИСИ
         for i, (val, group) in enumerate(data.groupby("Esr_over_Ed")):
             # Основна линия
