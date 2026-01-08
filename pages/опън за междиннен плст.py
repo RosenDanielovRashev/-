@@ -35,15 +35,43 @@ except Exception:
 
 st.markdown("""
     <style>
+        /* Намаляване на ширината на цялото приложение */
+        .main .block-container {
+            max-width: 800px !important;  # Направете по-малко (например 700px, 800px)
+            padding-left: 2rem;
+            padding-right: 2rem;
+        }
+        
+        /* Намаляване на ширината на секциите */
+        section.main {
+            max-width: 800px !important;
+        }
+        
+        /* Промяна на ширината на колоните за входни данни */
+        div[data-testid="column"] {
+            width: calc(33.3333% - 1rem) !important;
+            min-width: 150px !important;
+        }
+        
+        /* Намаляване на разстоянието между елементите */
+        .stNumberInput, .stSelectbox {
+            width: 100% !important;
+        }
+        
         .streamlit-expanderHeader {
             font-size: 18px !important;
         }
-        .main .block-container {
-            max-width: 1000px;
-        }
+        
+        /* Промяна на големината на графиките */
         .stPlotlyChart {
             width: 100% !important;
-            height: 600px !important;
+            height: 500px !important;  /* Намалете височината ако е нужно */
+        }
+        
+        /* Намаляване на ширината на таблиците */
+        table {
+            width: 100% !important;
+            font-size: 0.9em !important;
         }
     </style>
 """, unsafe_allow_html=True)
