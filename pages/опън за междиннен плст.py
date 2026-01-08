@@ -45,7 +45,7 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 1500px;  <!-- ОЩЕ ПО-ШИРОКО -->
+            max-width: 1500px;  /* ОЩЕ ПО-ШИРОКО */
             padding-top: 1rem;
             padding-right: 1rem;
             padding-left: 1rem;
@@ -53,11 +53,11 @@ st.markdown("""
         }
         /* ПОЗВОЛЯВА ПО-ГОЛЯМА ГРАФИКА */
         .stPlotlyChart {
-            min-height: 1500px !important;
+            min-height: 600px !important;
         }
         /* ГАРАНТИРА ЧЕ ГРАФИКАТА ИМА ДОСТАТЪЧНО МЯСТО */
         div[data-testid="stPlotlyChart"] > div {
-            min-width: 1500px !important;
+            min-width: 1200px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -605,8 +605,7 @@ if layer_idx in st.session_state.layer_results:
                     hoverinfo='skip',
                     xaxis='x2'  # Свързваме с втората ос
                 ))
-                
-                # Обновяване на оформлението с responsive настройки
+             
                 # Обновяване на оформлението с responsive настройки
                 fig.update_layout(
                     title=dict(
@@ -617,7 +616,7 @@ if layer_idx in st.session_state.layer_results:
                         xanchor='center'
                     ),
                     
-                    # X-AXIS
+                    # X-AXIS - ОПТИМИЗИРАН
                     xaxis=dict(
                         title='H/D',
                         title_font=dict(size=13, color='black'),
@@ -628,7 +627,6 @@ if layer_idx in st.session_state.layer_results:
                         showgrid=True,
                         range=[-0.05, 1.05],
                         autorange=False,
-                        fixedrange=False,
                         tickmode='linear',
                         dtick=0.2,
                         tick0=0,
@@ -650,7 +648,7 @@ if layer_idx in st.session_state.layer_results:
                         title_standoff=10,
                     ),
                     
-                    # Y-AXIS
+                    # Y-AXIS - ОПТИМИЗИРАН
                     yaxis=dict(
                         title='y',
                         title_font=dict(size=13, color='black'),
@@ -661,7 +659,6 @@ if layer_idx in st.session_state.layer_results:
                         showgrid=True,
                         range=[-0.1, 2.8],
                         autorange=False,
-                        fixedrange=False,
                         tickmode='linear',
                         dtick=0.5,
                         tick0=0,
@@ -669,33 +666,52 @@ if layer_idx in st.session_state.layer_results:
                         scaleratio=2.7,
                     ),
                     
-                    showlegend=False,
+                    # СИМПЛИФИЦИРАН ЛЕГЕНДА
+                    legend=dict(
+                        yanchor="top",
+                        y=0.99,
+                        xanchor="left",
+                        x=1.02,
+                        bgcolor='rgba(255,255,255,0.9)',
+                        bordercolor='black',
+                        borderwidth=1,
+                        font=dict(size=10)
+                    ),
+                    
+                    showlegend=True,
                     plot_bgcolor='white',
                     paper_bgcolor='white',
                     
-                    # НЕ задавай width и height, за да се autosize-не спрямо контейнера
+                    # RESPONSIVE НАСТРОЙКИ
                     autosize=True,
-                    
-                    # ГОЛЕМИ MARGINS ЗА ПО-ДОБЪР МАЩАБ
                     margin=dict(l=80, r=80, t=100, b=80, pad=15),
                     hovermode='closest',
                     
-                    # ДОПЪЛНИТЕЛНИ НАСТРОЙКИ ЗА ДОБЪР МАЩАБ
-                    dragmode='zoom',
-                    uirevision='constant',
+                    # ОПТИМИЗИРАНИ РАЗМЕРИ
+                    width=1200,  # ФИКСИРАНА ШИРОЧИНА
+                    height=600,  # ФИКСИРАНА ВИСОЧИНА
                 )
 
+        
                 # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
-                    use_container_width=True,  # Това ще направи графиката responsive
+                    use_container_width=True,  # ТОВА Е КЛЮЧОВОТО!
                     config={
+                        'responsive': True,
                         'displayModeBar': True,
                         'displaylogo': False,
                         'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
                         'scrollZoom': True,
+                        'toImageButtonOptions': {
+                            'format': 'png',
+                            'filename': 'графика_изолинии',
+                            'height': 600,
+                            'width': 1200,
+                            'scale': 2
+                        }
                     }
                 )
-                                
+                                                
                 # Try to find the image in different locations
                 image_paths = [
                     "Допустими опънни напрежения.png",
