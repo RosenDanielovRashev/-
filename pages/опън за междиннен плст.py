@@ -604,104 +604,90 @@ if layer_idx in st.session_state.layer_results:
                 
                 # Обновяване на оформлението с цветна легенда
                 fig.update_layout(
-                    title=dict(
-                        text='Графика на изолинии',
-                        font=dict(size=14, color='black')
-                    ),
-                    xaxis=dict(
-                        title='H/D',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
-                        linecolor='black',
-                        gridcolor='lightgray',
-                        mirror=True,
-                        showgrid=True,
-                        range=[0, 1],  # ИЛИ autorange=True за напълно автоматично
-                        # autorange=True,  # Разкоментирайте за напълно автоматично мащабиране
-                        constrain='domain',  # Ограничава мащабирането в домейна
-                        scaleanchor='y',  # Свързва мащаба на x с y (аспектно съотношение)
-                        scaleratio=1,  # Съотношение 1:1 за равни мащаби
-                    ),
-                    xaxis2=dict(
-                        overlaying='x',
-                        side='top',
-                        range=[0, 1],  # Същия диапазон като основната ос
-                        showgrid=False,
-                        zeroline=False,
-                        tickvals=[0, 0.25, 0.5, 0.75, 1],
-                        ticktext=['0', '0.25', '0.5', '0.75', '1'],
-                        title='σr',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
-                        matches='x',  # Следва мащаба на основната x ос
-                    ),
-                    yaxis=dict(
-                        title='y',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
-                        linecolor='black',
-                        gridcolor='lightgray',
-                        mirror=True,
-                        showgrid=True,
-                        range=[0, 2.7],  # ИЛИ autorange=True за напълно автоматично
-                        # autorange=True,  # Разкоментирайте за напълно автоматично мащабиране
-                        scaleanchor='x',  # Свързва мащаба на y с x
-                        scaleratio=0.5,  # Аспектно съотношение (y:x = 0.5)
-                    ),
-                    legend=dict(
                         title=dict(
-                            text='Легенда:',
-                            font=dict(size=12, color='black')
+                            text='Графика на изолинии',
+                            font=dict(size=14, color='black')
                         ),
-                        bgcolor='rgba(240, 240, 240, 0.95)',
-                        bordercolor='black',
-                        borderwidth=1,
-                        font=dict(size=10, color='black'),
-                        x=0.5,
-                        y=-0.45,
-                        xanchor='center',
-                        yanchor='top',
-                        traceorder='normal',
-                        itemsizing='constant',
-                        orientation='h',
-                        itemwidth=60,
-                        itemclick='toggleothers',
-                        itemdoubleclick='toggle',
-                        groupclick='togglegroup'
-                    ),
-                    plot_bgcolor='white',
-                    paper_bgcolor='white',
-                    # КЛЮЧОВИ НАСТРОЙКИ ЗА АВТОМАТИЧНО МАЩАБИРАНЕ:
-                    autosize=True,  # АКТИВИРА АВТОМАТИЧНО МАЩАБИРАНЕ
-                    # ПРЕМАХНЕТЕ width и height или ги оставете като None
-                    width=None,  # Plotly ще определи оптималната ширина
-                    height=None,  # Plotly ще определи оптималната височина
-                    margin=dict(l=50, r=50, t=50, b=200),
-                    # Опция за фиксиране на аспектното съотношение:
-                    # autosize=True презаписва това, но е добре да се зададе
-                    uniformtext=dict(
-                        mode=False,
-                        minsize=8
-                    ),
-                    # Допълнителни настройки за responsive дизайн:
-                    hovermode='closest',
-                    dragmode='zoom',
-                )
-                                
-                # Виждане в Streamlit
-                st.plotly_chart(fig, 
-                    use_container_width=True,  # Използва цялата ширина на контейнера
-                    config={
-                        'responsive': True,  # ВАЖНО: Прави графиката responsive
-                        'displayModeBar': True,
-                        'displaylogo': False,
-                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                        'scrollZoom': True,
-                        # Допълнителни опции за auto scale:
-                        'autosizable': True,  # Позволява автоматично преоразмеряване
-                        'fillFrame': True,  # Запълва наличния frame
-                    }
-                )
+                        xaxis=dict(
+                            title='H/D',
+                            title_font=dict(size=12, color='black'),
+                            tickfont=dict(size=10, color='black'),
+                            linecolor='black',
+                            gridcolor='lightgray',
+                            mirror=True,
+                            showgrid=True,
+                            range=[0, 1],
+                            constrain='domain',
+                            scaleanchor='y',
+                            scaleratio=1,
+                        ),
+                        xaxis2=dict(
+                            overlaying='x',
+                            side='top',
+                            range=[0, 1],
+                            showgrid=False,
+                            zeroline=False,
+                            tickvals=[0, 0.25, 0.5, 0.75, 1],
+                            ticktext=['0', '0.25', '0.5', '0.75', '1'],
+                            title='σr',
+                            title_font=dict(size=12, color='black'),
+                            tickfont=dict(size=10, color='black'),
+                            matches='x',
+                        ),
+                        yaxis=dict(
+                            title='y',
+                            title_font=dict(size=12, color='black'),
+                            tickfont=dict(size=10, color='black'),
+                            linecolor='black',
+                            gridcolor='lightgray',
+                            mirror=True,
+                            showgrid=True,
+                            range=[0, 2.7],
+                            scaleanchor='x',
+                            scaleratio=0.5,
+                        ),
+                        legend=dict(
+                            title=dict(
+                                text='Легенда:',
+                                font=dict(size=12, color='black')
+                            ),
+                            bgcolor='rgba(240, 240, 240, 0.95)',
+                            bordercolor='black',
+                            borderwidth=1,
+                            font=dict(size=10, color='black'),
+                            x=0.5,
+                            y=-0.25,
+                            xanchor='center',
+                            yanchor='top',
+                            traceorder='normal',
+                            itemsizing='constant',
+                            orientation='h',
+                            itemwidth=60,
+                            itemclick='toggleothers',
+                            itemdoubleclick='toggle',
+                            groupclick='togglegroup'
+                        ),
+                        plot_bgcolor='white',
+                        paper_bgcolor='white',
+                        autosize=True,  # КЛЮЧОВО ЗА RESPONSIVE
+                        margin=dict(l=50, r=50, t=50, b=150),
+                        hovermode='closest',
+                        dragmode='zoom',
+                    )
+                
+                    # Виждане в Streamlit с responsive настройки
+                    st.plotly_chart(fig, 
+                        use_container_width=True,
+                        config={
+                            'responsive': True,
+                            'displayModeBar': True,
+                            'displaylogo': False,
+                            'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                            'scrollZoom': True,
+                            'autosizable': True,
+                            'fillFrame': True,
+                        }
+                    )
                                 # Try to find the image in different locations
                 image_paths = [
                     "Допустими опънни напрежения.png",
