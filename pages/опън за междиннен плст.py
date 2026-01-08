@@ -53,7 +53,7 @@ st.markdown("""
         }
         /* ПОЗВОЛЯВА ПО-ГОЛЯМА ГРАФИКА */
         .stPlotlyChart {
-            min-height: 700px !important;
+            min-height: 1500px !important;
         }
         /* ГАРАНТИРА ЧЕ ГРАФИКАТА ИМА ДОСТАТЪЧНО МЯСТО */
         div[data-testid="stPlotlyChart"] > div {
