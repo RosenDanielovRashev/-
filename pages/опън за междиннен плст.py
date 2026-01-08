@@ -759,7 +759,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         ]))
 
         story.append(info_table)
-        story.append(Spacer(1, 27.5))
+        story.append(Spacer(1, 15))
 
         # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
         formulas_title_style = ParagraphStyle(
@@ -1039,7 +1039,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                     'ErrorStyle',
                     parent=styles['Normal'],
                     fontSize=11,
-                    spaceAfter=1.5,
+                    spaceAfter=5.5,
                     fontName=font_name,
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
