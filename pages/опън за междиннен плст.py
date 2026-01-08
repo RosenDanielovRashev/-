@@ -35,30 +35,84 @@ except Exception:
 
 st.markdown("""
     <style>
-        .streamlit-expanderHeader {
-            font-size: 18px !important;
-        }
+        /* Основен контейнер - ограничаване на ширината */
         .main .block-container {
-            padding-top: 1rem;
-            padding-right: 1rem;
-            padding-left: 1rem;
-            padding-bottom: 1rem;
+            max-width: 900px !important;
+            padding-top: 1rem !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            padding-bottom: 1rem !important;
         }
+        
+        /* Намаляване на височината на графиката */
         .stPlotlyChart {
-            height: 500px !important;
+            height: 450px !important;
         }
         
-        /* Опционално: намаляване на размера на някои елементи */
-        .stNumberInput, .stSelectbox {
-            font-size: 14px !important;
-        }
-        
+        /* Компактни заглавия */
         h1 {
-            font-size: 28px !important;
+            font-size: 24px !important;
+            margin-bottom: 0.5rem !important;
         }
         
         h3 {
-            font-size: 18px !important;
+            font-size: 16px !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        /* Компактни полета за въвеждане */
+        .stNumberInput, .stSelectbox {
+            margin-bottom: 0.1rem !important;
+        }
+        
+        .stNumberInput label, .stSelectbox label {
+            font-size: 13px !important;
+            margin-bottom: 0.05rem !important;
+        }
+        
+        /* По-малки бутони */
+        .stButton > button {
+            font-size: 14px !important;
+            padding: 0.25rem 0.75rem !important;
+            margin-top: 0.25rem !important;
+            margin-bottom: 0.25rem !important;
+        }
+        
+        /* По-малки разстояния между елементите */
+        div[data-testid="stVerticalBlock"] > div {
+            padding-top: 0.1rem !important;
+            padding-bottom: 0.1rem !important;
+        }
+        
+        /* Намаляване на разстоянията в expander */
+        .streamlit-expanderHeader {
+            font-size: 16px !important;
+            padding: 0.5rem !important;
+        }
+        
+        .streamlit-expanderContent {
+            padding: 0.5rem 1rem !important;
+        }
+        
+        /* Компактни колони */
+        [data-testid="column"] {
+            padding: 0.25rem !important;
+        }
+        
+        /* Намаляване на padding на latex формули */
+        .stLatex {
+            padding: 0.25rem 0 !important;
+            margin: 0.1rem 0 !important;
+        }
+        
+        /* Компактни markdown блокове */
+        .stMarkdown {
+            margin-bottom: 0.25rem !important;
+        }
+        
+        /* Намаляване на разстоянията в tables */
+        .dataframe {
+            margin: 0.25rem 0 !important;
         }
     </style>
 """, unsafe_allow_html=True)
