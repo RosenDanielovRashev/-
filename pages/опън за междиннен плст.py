@@ -41,84 +41,19 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-        /* Основен контейнер - ограничаване на ширината */
-        .main .block-container {
-            max-width: 600px !important;
-            padding-top: 1rem !important;
-            padding-left: 2rem !important;
-            padding-right: 2rem !important;
-            padding-bottom: 1rem !important;
-        }
-        
-        /* Намаляване на височината на графиката */
-        .stPlotlyChart {
-            height: 450px !important;
-        }
-        
-        /* Компактни заглавия */
-        h1 {
-            font-size: 24px !important;
-            margin-bottom: 0.5rem !important;
-        }
-        
-        h3 {
-            font-size: 16px !important;
-            margin-bottom: 0.25rem !important;
-        }
-        
-        /* Компактни полета за въвеждане */
-        .stNumberInput, .stSelectbox {
-            margin-bottom: 0.1rem !important;
-        }
-        
-        .stNumberInput label, .stSelectbox label {
-            font-size: 13px !important;
-            margin-bottom: 0.05rem !important;
-        }
-        
-        /* По-малки бутони */
-        .stButton > button {
-            font-size: 14px !important;
-            padding: 0.25rem 0.75rem !important;
-            margin-top: 0.25rem !important;
-            margin-bottom: 0.25rem !important;
-        }
-        
-        /* По-малки разстояния между елементите */
-        div[data-testid="stVerticalBlock"] > div {
-            padding-top: 0.1rem !important;
-            padding-bottom: 0.1rem !important;
-        }
-        
-        /* Намаляване на разстоянията в expander */
         .streamlit-expanderHeader {
-            font-size: 16px !important;
-            padding: 0.5rem !important;
+            font-size: 18px !important;
         }
-        
-        .streamlit-expanderContent {
-            padding: 0.5rem 1rem !important;
+        .main .block-container {
+            max-width: 600px;  # Променете от 1000px на 800px (или по-малко)
+            padding-top: 2rem;
+            padding-right: 2rem;
+            padding-left: 2rem;
+            padding-bottom: 2rem;
         }
-        
-        /* Компактни колони */
-        [data-testid="column"] {
-            padding: 0.25rem !important;
-        }
-        
-        /* Намаляване на padding на latex формули */
-        .stLatex {
-            padding: 0.25rem 0 !important;
-            margin: 0.1rem 0 !important;
-        }
-        
-        /* Компактни markdown блокове */
-        .stMarkdown {
-            margin-bottom: 0.25rem !important;
-        }
-        
-        /* Намаляване на разстоянията в tables */
-        .dataframe {
-            margin: 0.25rem 0 !important;
+        .stPlotlyChart {
+            width: 100% !important;
+            height: 600px !important;
         }
     </style>
 """, unsafe_allow_html=True)
