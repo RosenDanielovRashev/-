@@ -37,7 +37,7 @@ st.markdown("""
     <style>
         /* Намаляване на ширината на цялото приложение */
         .main .block-container {
-            max-width: 800px !important;  # Направете по-малко (например 700px, 800px)
+            max-width: 700px !important;  # Направете по-малко (например 700px, 800px)
             padding-left: 2rem;
             padding-right: 2rem;
         }
