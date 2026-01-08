@@ -38,20 +38,21 @@ st.markdown("""
         .streamlit-expanderHeader {
             font-size: 18px !important;
         }
-        .block-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        .css-1lcbmi9 {
-            max-width: 1000px !important;
-            margin: 0 auto !important;
+        .main .block-container {
+            max-width: 1200px !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
         }
         .stPlotlyChart {
             width: 100% !important;
-            height: 700px !important;
+            height: 750px !important;
         }
         .js-plotly-plot .plotly {
             width: 100% !important;
+            height: 100% !important;
+        }
+        div[data-testid="stVerticalBlock"] {
+            gap: 0.5rem;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -648,7 +649,7 @@ if layer_idx in st.session_state.layer_results:
                         borderwidth=1.5,
                         font=dict(size=11, color='black'),
                         x=0.5,      # Центриране хоризонтално
-                        y=-0.25,    # Позиция ПОД графиката (отрицателна стойност)
+                        y=-0.35,    # По-ниско ПОД графиката
                         xanchor='center',
                         yanchor='top',
                         traceorder='normal',
@@ -661,21 +662,24 @@ if layer_idx in st.session_state.layer_results:
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    width=None,  # Автоматично определяне на ширина
-                    height=700,  # Фиксирана височина
-                    margin=dict(l=50, r=50, t=50, b=180),  # Увеличаваме долния марж за легендата
-                    autosize=True  # Автоматично настройване на размера
+                    width=950,  # ФИКСИРАНА ширина която се побира
+                    height=650,  # ФИКСИРАНА височина
+                    margin=dict(l=50, r=50, t=50, b=180),  # Голям долен марж за легендата
+                    autosize=False  # ИЗКЛЮЧВАМЕ autosize
                 )
                 
-                # Виждане в Streamlit с responsive настройки
-                st.plotly_chart(fig, use_container_width=True, config={
-                    'responsive': True,
-                    'displayModeBar': True,
-                    'displaylogo': False,
-                    'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                    'scrollZoom': False,
-                    'autosizable': True
-                })
+                # Създаваме контейнер за графиката
+                col1, col2, col3 = st.columns([1, 12, 1])
+                with col2:
+                    # Виждане в Streamlit
+                    st.plotly_chart(fig, use_container_width=True, config={
+                        'responsive': True,
+                        'displayModeBar': True,
+                        'displaylogo': False,
+                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                        'scrollZoom': True,
+                        'autosizable': False
+                    })
 
                 # Try to find the image in different locations
                 image_paths = [
@@ -756,6 +760,9 @@ if layer_idx in st.session_state.layer_results:
         st.error(f"Грешка при визуализацията: {e}")
         import traceback
         st.error(traceback.format_exc())
+
+# Останалата част от кода остава същата...
+# [ТУК СЛЕДВА ОСТАНАЛИЯТ КОД ОТ ПРЕДИШНИЯ ОТГОВОР]
 
 # КОРИГИРАН NumberedDocTemplate клас
 class NumberedDocTemplate(SimpleDocTemplate):
