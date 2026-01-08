@@ -34,8 +34,8 @@ except Exception:
     _HAS_CAIROSVG = False
 
 st.set_page_config(
-    layout="centered",  # или "wide" за по-широко, но "centered" е по-тясно
-    initial_sidebar_state="collapsed",  # скриване на sidebar
+    layout="centered",
+    initial_sidebar_state="collapsed",
     page_title="Опън в междинен пласт"
 )
 
@@ -45,7 +45,7 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 600px;  # Променете от 1000px на 800px (или по-малко)
+            max-width: 600px;
             padding-top: 2rem;
             padding-right: 2rem;
             padding-left: 2rem;
@@ -602,93 +602,94 @@ if layer_idx in st.session_state.layer_results:
                     xaxis='x2'  # Свързваме с втората ос
                 ))
                 
-                # Обновяване на оформлението с цветна легенда
+                # Обновяване на оформлението с responsive настройки
                 fig.update_layout(
+                    title=dict(
+                        text='Графика на изолинии',
+                        font=dict(size=14, color='black')
+                    ),
+                    xaxis=dict(
+                        title='H/D',
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
+                        linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
+                        showgrid=True,
+                        range=[0, 1],
+                        constrain='domain',
+                        scaleanchor='y',
+                        scaleratio=1,
+                    ),
+                    xaxis2=dict(
+                        overlaying='x',
+                        side='top',
+                        range=[0, 1],
+                        showgrid=False,
+                        zeroline=False,
+                        tickvals=[0, 0.25, 0.5, 0.75, 1],
+                        ticktext=['0', '0.25', '0.5', '0.75', '1'],
+                        title='σr',
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
+                        matches='x',
+                    ),
+                    yaxis=dict(
+                        title='y',
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
+                        linecolor='black',
+                        gridcolor='lightgray',
+                        mirror=True,
+                        showgrid=True,
+                        range=[0, 2.7],
+                        scaleanchor='x',
+                        scaleratio=0.5,
+                    ),
+                    legend=dict(
                         title=dict(
-                            text='Графика на изолинии',
-                            font=dict(size=14, color='black')
+                            text='Легенда:',
+                            font=dict(size=12, color='black')
                         ),
-                        xaxis=dict(
-                            title='H/D',
-                            title_font=dict(size=12, color='black'),
-                            tickfont=dict(size=10, color='black'),
-                            linecolor='black',
-                            gridcolor='lightgray',
-                            mirror=True,
-                            showgrid=True,
-                            range=[0, 1],
-                            constrain='domain',
-                            scaleanchor='y',
-                            scaleratio=1,
-                        ),
-                        xaxis2=dict(
-                            overlaying='x',
-                            side='top',
-                            range=[0, 1],
-                            showgrid=False,
-                            zeroline=False,
-                            tickvals=[0, 0.25, 0.5, 0.75, 1],
-                            ticktext=['0', '0.25', '0.5', '0.75', '1'],
-                            title='σr',
-                            title_font=dict(size=12, color='black'),
-                            tickfont=dict(size=10, color='black'),
-                            matches='x',
-                        ),
-                        yaxis=dict(
-                            title='y',
-                            title_font=dict(size=12, color='black'),
-                            tickfont=dict(size=10, color='black'),
-                            linecolor='black',
-                            gridcolor='lightgray',
-                            mirror=True,
-                            showgrid=True,
-                            range=[0, 2.7],
-                            scaleanchor='x',
-                            scaleratio=0.5,
-                        ),
-                        legend=dict(
-                            title=dict(
-                                text='Легенда:',
-                                font=dict(size=12, color='black')
-                            ),
-                            bgcolor='rgba(240, 240, 240, 0.95)',
-                            bordercolor='black',
-                            borderwidth=1,
-                            font=dict(size=10, color='black'),
-                            x=0.5,
-                            y=-0.25,
-                            xanchor='center',
-                            yanchor='top',
-                            traceorder='normal',
-                            itemsizing='constant',
-                            orientation='h',
-                            itemwidth=60,
-                            itemclick='toggleothers',
-                            itemdoubleclick='toggle',
-                            groupclick='togglegroup'
-                        ),
-                        plot_bgcolor='white',
-                        paper_bgcolor='white',
-                        autosize=True,  # КЛЮЧОВО ЗА RESPONSIVE
-                        margin=dict(l=50, r=50, t=50, b=150),
-                        hovermode='closest',
-                        dragmode='zoom',
-                    )
+                        bgcolor='rgba(240, 240, 240, 0.95)',
+                        bordercolor='black',
+                        borderwidth=1,
+                        font=dict(size=10, color='black'),
+                        x=0.5,
+                        y=-0.25,
+                        xanchor='center',
+                        yanchor='top',
+                        traceorder='normal',
+                        itemsizing='constant',
+                        orientation='h',
+                        itemwidth=60,
+                        itemclick='toggleothers',
+                        itemdoubleclick='toggle',
+                        groupclick='togglegroup'
+                    ),
+                    plot_bgcolor='white',
+                    paper_bgcolor='white',
+                    autosize=True,
+                    margin=dict(l=50, r=50, t=50, b=150),
+                    hovermode='closest',
+                    dragmode='zoom',
+                )
                 
-                    # Виждане в Streamlit с responsive настройки
-                    st.plotly_chart(fig, 
-                        use_container_width=True,
-                        config={
-                            'responsive': True,
-                            'displayModeBar': True,
-                            'displaylogo': False,
-                            'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                            'scrollZoom': True,
-                            'autosizable': True,
-                            'fillFrame': True,
-                        }
-                    )
-                                # Try to find the image in different locations
+                # Виждане в Streamlit с responsive настройки
+                st.plotly_chart(fig, 
+                    use_container_width=True,
+                    config={
+                        'responsive': True,
+                        'displayModeBar': True,
+                        'displaylogo': False,
+                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                        'scrollZoom': True,
+                        'autosizable': True,
+                        'fillFrame': True,
+                    }
+                )
+                
+                # Try to find the image in different locations
                 image_paths = [
                     "Допустими опънни напрежения.png",
                     "./Допустими опънни напрежения.png",
@@ -767,9 +768,6 @@ if layer_idx in st.session_state.layer_results:
         st.error(f"Грешка при визуализацията: {e}")
         import traceback
         st.error(traceback.format_exc())
-
-# Останалата част от кода остава същата...
-# [ТУК СЛЕДВА ОСТАНАЛИЯТ КОД ОТ ПРЕДИШНИЯ ОТГОВОР]
 
 # КОРИГИРАН NumberedDocTemplate клас
 class NumberedDocTemplate(SimpleDocTemplate):
@@ -1032,7 +1030,6 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             
             if pdf_fig is not None:
                 # Настройки за PDF
-                # Настройки за PDF
                 pdf_fig.update_layout(
                     title=dict(
                         text='Номограма: σR в междинен пласт',
@@ -1076,24 +1073,24 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         bgcolor='rgba(255,255,255,0.9)',
                         bordercolor='black',
                         borderwidth=1,
-                        font=dict(size=8, color='black'),  # По-малък шрифт
+                        font=dict(size=8, color='black'),
                         x=0.5,
-                        y=-0.3,  # Легендата под графиката
+                        y=-0.3,
                         xanchor='center',
                         yanchor='top',
                         traceorder='normal',
                         itemsizing='constant',
-                        orientation='h'  # Хоризонтално за PDF
+                        orientation='h'
                     ),
-                    width=800,  # По-малък размер за PDF
-                    height=600,  # По-малък размер за PDF
-                    margin=dict(l=50, r=50, t=50, b=150)  # Маржове за легендата
+                    width=800,
+                    height=600,
+                    margin=dict(l=50, r=50, t=50, b=150)
                 )
                 
                 img_bytes = pio.to_image(
                     pdf_fig, 
                     format="png", 
-                    width=800,  # Същия размер
+                    width=800,
                     height=600,
                     scale=3,
                     engine="kaleido"
