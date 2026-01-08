@@ -309,10 +309,15 @@ if denominator != 0:
         st.success(f"✅ σR = {sigma:.3f}")
         st.info(f"Интерполация между изолинии: Esr/Ed = {low:.2f} и {high:.2f}")
 
-        # Графика
+ 
         # Графика с надписи и пунктирни линии
-        fig = go.Figure()
         
+        fig = go.Figure()
+
+        # Цветова схема за Streamlit (същата като за PDF)
+        colors_streamlit = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', 
+                           '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+
         # Добавяне на всички изолинии от данните С НАДПИСИ
         for i, (val, group) in enumerate(data.groupby("Esr_over_Ed")):
             # Основна линия
@@ -321,7 +326,8 @@ if denominator != 0:
                 y=group["sigma_R"],
                 mode='lines',
                 name=f"Esr/Ed = {val:.1f}",
-                line=dict(color=f'hsl({i*30}, 70%, 50%)', width=2)
+                line=dict(color=colors_streamlit[i % len(colors_streamlit)], width=2),
+                showlegend=True  # Важно: показване в легендата
             ))
             
             # Надпис за изолинията
@@ -337,7 +343,7 @@ if denominator != 0:
                     textposition="middle right",
                     textfont=dict(
                         size=10,
-                        color=f'hsl({i*30}, 70%, 50%)'
+                        color=colors_streamlit[i % len(colors_streamlit)]
                     ),
                     showlegend=False,
                     hoverinfo='skip'
@@ -382,15 +388,46 @@ if denominator != 0:
             showlegend=True
         ))
 
+        # Настройки на оформлението за Streamlit
         fig.update_layout(
-            title="Номограма: σR срещу H/D",
-            xaxis_title="H / D",
-            yaxis_title="σR",
-            height=700,
+            title=dict(
+                text="Номограма: σR в долния пласт на покритието",
+                font=dict(size=18, color='black', family="Arial")
+            ),
+            xaxis=dict(
+                title="H / D",
+                title_font=dict(size=14, color='black'),
+                tickfont=dict(size=12, color='black'),
+                linecolor='black',
+                gridcolor='lightgray',
+                mirror=True,
+                showgrid=True,
+                range=[data['H_over_D'].min(), data['H_over_D'].max() * 1.05]
+            ),
+            yaxis=dict(
+                title="σR [MPa]",
+                title_font=dict(size=14, color='black'),
+                tickfont=dict(size=12, color='black'),
+                linecolor='black',
+                gridcolor='lightgray',
+                mirror=True,
+                showgrid=True,
+                range=[data['sigma_R'].min() * 0.95, data['sigma_R'].max() * 1.05]
+            ),
             plot_bgcolor='white',
             paper_bgcolor='white',
-            xaxis_range=[data['H_over_D'].min(), data['H_over_D'].max() * 1.05],
-            yaxis_range=[data['sigma_R'].min() * 0.95, data['sigma_R'].max() * 1.05]
+            legend=dict(
+                bgcolor='rgba(255,255,255,0.9)',
+                bordercolor='black',
+                borderwidth=1,
+                font=dict(size=10, color='black'),
+                x=1.05,
+                y=0.5,
+                xanchor='left',
+                yanchor='middle'
+            ),
+            height=700,
+            margin=dict(r=150)  # Добавяме място за легендата
         )
         
         st.plotly_chart(fig, use_container_width=True)
