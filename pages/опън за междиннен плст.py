@@ -612,6 +612,23 @@ if layer_idx in st.session_state.layer_results:
                 ))
              
                 # Обновяване на оформлението с responsive настройки
+                # --- ШАБЛОН ЗА ДВЕ ОСИ X ---
+                # Определи фиксиран мащаб
+                xaxis_min = 0
+                xaxis_max = 1
+                
+                # Добави невидим trace за втората ос x
+                fig.add_trace(go.Scatter(
+                    x=[xaxis_min, xaxis_max],
+                    y=[None, None],
+                    mode='lines',
+                    line=dict(color='rgba(0,0,0,0)'),
+                    showlegend=False,
+                    hoverinfo='skip',
+                    xaxis='x2'
+                ))
+                
+                # Обнови оформлението със шаблонните настройки
                 fig.update_layout(
                     title=dict(
                         text='Графика на изолинии',
@@ -621,16 +638,16 @@ if layer_idx in st.session_state.layer_results:
                         xanchor='center'
                     ),
                     
-                    # X-AXIS - ОПТИМИЗИРАН
+                    # ОСНОВНА ОС X (долна) - за H/D
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=13, color='black'),
+                        title_font=dict(size=12, color='black'),
                         tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
                         showgrid=True,
-                        range=[-0.05, 1.05],
+                        range=[xaxis_min, xaxis_max],
                         autorange=False,
                         tickmode='linear',
                         dtick=0.2,
@@ -638,25 +655,28 @@ if layer_idx in st.session_state.layer_results:
                         constrain='domain',
                     ),
                     
-                    # ВТОРА X ОС
+                    # ВТОРА ОС X (горна) - за σr
                     xaxis2=dict(
                         overlaying='x',
                         side='top',
-                        range=[-0.05, 1.05],
+                        range=[xaxis_min, xaxis_max],
                         showgrid=False,
                         zeroline=False,
                         tickmode='linear',
-                        dtick=0.25,
+                        dtick=0.2,
+                        # Тикчетата за горната ос (преизчислени)
+                        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
+                        ticktext=[f"{(x/2):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],
                         title='σr',
-                        title_font=dict(size=13, color='black'),
+                        title_font=dict(size=12, color='black'),
                         tickfont=dict(size=11, color='black'),
                         title_standoff=10,
                     ),
                     
-                    # Y-AXIS - ОПТИМИЗИРАН
+                    # ОС Y
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=13, color='black'),
+                        title_font=dict(size=12, color='black'),
                         tickfont=dict(size=11, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
@@ -671,7 +691,7 @@ if layer_idx in st.session_state.layer_results:
                         scaleratio=2.7,
                     ),
                     
-                    # СИМПЛИФИЦИРАН ЛЕГЕНДА
+                    # ЛЕГЕНДА
                     legend=dict(
                         yanchor="top",
                         y=0.99,
@@ -687,16 +707,13 @@ if layer_idx in st.session_state.layer_results:
                     plot_bgcolor='white',
                     paper_bgcolor='white',
                     
-                    # RESPONSIVE НАСТРОЙКИ
-                    autosize=True,
-                    margin=dict(l=80, r=80, t=100, b=80, pad=15),
+                    # РАЗМЕРИ И МАРЖИНИ
+                    autosize=False,  # Важно! Трябва да е False за фиксирани размери
+                    margin=dict(l=50, r=50, t=100, b=50),
+                    width=1200,
+                    height=600,
                     hovermode='closest',
-                    
-                    # ОПТИМИЗИРАНИ РАЗМЕРИ
-                    width=1200,  # ФИКСИРАНА ШИРОЧИНА
-                    height=600,  # ФИКСИРАНА ВИСОЧИНА
                 )
-
         
                 # Виждане в Streamlit с responsive настройки
                 st.plotly_chart(fig, 
