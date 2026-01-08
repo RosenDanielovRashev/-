@@ -917,12 +917,12 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 fig_pdf.update_layout(
                     title=dict(
                         text='Номограма: σR в междинен пласт',
-                        font=dict(size=14, color='black', family="Arial")
+                        font=dict(size=18, color='black', family="Arial")
                     ),
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -938,13 +938,13 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         tickvals=[0, 0.25, 0.5, 0.75, 1, 1.25, 1.50, 1.75, 2],
                         ticktext=['0', '0.25', '0.5', '0.75', '1', '1.25', '1.50', '1.75', '2'],
                         title='σr',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black')
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black')
                     ),
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=12, color='black'),
-                        tickfont=dict(size=10, color='black'),
+                        title_font=dict(size=14, color='black'),
+                        tickfont=dict(size=12, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -954,25 +954,25 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                     legend=dict(
                         title=dict(
                             text='Легенда:',
-                            font=dict(size=10, color='black')
+                            font=dict(size=14, color='black')
                         ),
                         bgcolor='rgba(255,255,255,0.9)',
                         bordercolor='black',
                         borderwidth=1,
-                        font=dict(size=8, color='black'),
-                        x=1.02,
-                        y=1.0,
-                        xanchor='left',
-                        yanchor='top',
+                        font=dict(size=12, color='black'),
+                        x=0.5,
+                        y=-0.3,
+                        xanchor='center',  # ЗАКРЕПЕНЕ В ЦЕНТЪРА
+                        yanchor='top',     # ЗАКРЕПЕНЕ ОТГОРЕ
                         traceorder='normal',
                         itemsizing='constant',
-                        orientation='v'
+                        orientation='h'  # ПРОМЕНЕТЕ НА ХОРИЗОНТАЛНА ОРИЕНТАЦИЯ
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
                     width=800,
-                    height=500,
-                    margin=dict(l=50, r=150, t=50, b=50)
+                    height=600,
+                    margin=dict(l=50, r=50, t=50, b=150)
                 )
                 # Експортиране на фигурата с висока резолюция
                 img_bytes = pio.to_image(fig_pdf, format="png", width=1200, height=800, scale=4, engine="kaleido")
