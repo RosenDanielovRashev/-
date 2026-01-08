@@ -935,8 +935,8 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         range=[0, 2.3],
                         showgrid=False,
                         zeroline=False,
-                        tickvals=[0, 0.25, 0.5, 0.75, 1],
-                        ticktext=['0', '0.25', '0.5', '0.75', '1'],
+                        tickvals=[0, 0.25, 0.5, 0.75, 1, 1.25, 1.50, 1.75, 2],
+                        ticktext=['0', '0.25', '0.5', '0.75', '1', '1.25', '1.50', '1.75', '2'],
                         title='σr',
                         title_font=dict(size=12, color='black'),
                         tickfont=dict(size=10, color='black')
