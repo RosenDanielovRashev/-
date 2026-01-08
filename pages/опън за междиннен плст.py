@@ -311,7 +311,7 @@ if layer_idx in st.session_state.layer_results:
                             mode='lines', 
                             name=f'Ei/Ed = {round(level,2)}',
                             line=dict(color=colors_isolines[i % len(colors_isolines)], width=2),
-                            showlegend=True
+                            showlegend=False
                         ))
                         # Добавяме етикет за изолинията
                         fig.add_trace(go.Scatter(
@@ -351,7 +351,7 @@ if layer_idx in st.session_state.layer_results:
                             mode='lines', 
                             name=f'Esr/Ei = {round(sr_Ei,2)}',
                             line=dict(color=color, width=2, dash='dash'),
-                            showlegend=True
+                            showlegend=False
                         ))
                         # Добавяме етикет за изолинията
                         fig.add_trace(go.Scatter(
@@ -508,7 +508,22 @@ if layer_idx in st.session_state.layer_results:
                     hoverinfo='skip',
                     xaxis='x2'  # Свързваме с втората ос
                 ))
-
+                # Добавяне на два специални елемента само за легендата
+                fig.add_trace(go.Scatter(
+                    x=[None], y=[None],  # Невидими точки
+                    mode='lines',
+                    name='Ei/Ed - плътна линия',
+                    line=dict(color='black', width=2, dash='solid'),
+                    showlegend=True
+                ))
+                
+                fig.add_trace(go.Scatter(
+                    x=[None], y=[None],  # Невидими точки
+                    mode='lines',
+                    name='Esr/Ei - пунктирана линия',
+                    line=dict(color='black', width=2, dash='dash'),
+                    showlegend=True
+                ))
                 # Обновяване на оформлението с цветна легенда
                 fig.update_layout(
                     title=dict(
