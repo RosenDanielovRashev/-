@@ -39,23 +39,11 @@ st.markdown("""
             font-size: 18px !important;
         }
         .main .block-container {
-            max-width: 1200px;
-            padding-top: 1rem;
-            padding-bottom: 1rem;
+            max-width: 1000px;
         }
         .stPlotlyChart {
             width: 100% !important;
-            height: 500px !important;
-        }
-        div[data-testid="stVerticalBlock"] {
-            gap: 0.5rem;
-        }
-        .stButton>button {
-            width: 100%;
-        }
-        .css-1d391kg {
-            padding-top: 0.5rem;
-            padding-bottom: 0.5rem;
+            height: 600px !important;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -147,18 +135,12 @@ if 'layers_data_all' in st.session_state and 'final_D_all' in st.session_state:
     use_auto_data = True
 
 # Input parameters
-st.markdown("### Основни параметри")
-col1, col2 = st.columns(2)
-with col1:
-    if use_auto_data:
-        n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=n_auto, key="n_input")
-    else:
-        n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=4, key="n_input")
-with col2:
-    if use_auto_data:
-        D = st.selectbox("Избери D", options=[32.04, 34.0], index=0 if D_auto == 32.04 else 1, key="D_input")
-    else:
-        D = st.selectbox("Избери D", options=[32.04, 34.0], index=0, key="D_input")
+if use_auto_data:
+    n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=n_auto)
+    D = st.selectbox("Избери D", options=[32.04, 34.0], index=0 if D_auto == 32.04 else 1)
+else:
+    n = st.number_input("Брой пластове (n)", min_value=2, step=1, value=4)
+    D = st.selectbox("Избери D", options=[32.04, 34.0], index=0)
 
 # Input data for all layers
 st.markdown("### Въведи стойности за всички пластове")
@@ -185,8 +167,7 @@ for i in range(n):
 
 # Layer selection
 st.markdown("### Избери пласт за проверка")
-selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(2, n)], 
-                             index=n-3 if n > 2 else 0, key="layer_select")
+selected_layer = st.selectbox("Пласт за проверка", options=[f"Пласт {i+1}" for i in range(2, n)], index=n-3 if n > 2 else 0)
 layer_idx = int(selected_layer.split()[-1]) - 1
 
 # Calculation function
@@ -220,7 +201,7 @@ def calculate_layer(layer_index):
     return results
 
 # Calculate button
-if st.button(f"Изчисли за пласт {layer_idx+1}", key="calc_button"):
+if st.button(f"Изчисли за пласт {layer_idx+1}"):
     results = calculate_layer(layer_idx)
     st.success(f"Изчисленията за пласт {layer_idx+1} са запазени!")
 
@@ -317,35 +298,30 @@ if layer_idx in st.session_state.layer_results:
     
     st.markdown(f"### Резултати за пласт {layer_idx+1}")
     
-    # Създаваме акордеон за формулите
-    with st.expander("Покажи формули за изчисление", expanded=True):
-        col1, col2 = st.columns(2)
-        with col1:
-            st.latex(r"H_{n-1} = \sum_{i=1}^{n-1} h_i")
-            if layer_idx > 0:
-                h_terms = " + ".join([f"h_{to_subscript(i+1)}" for i in range(layer_idx)])
-                st.latex(r"H_{n-1} = " + h_terms)
-            st.write(f"H{to_subscript(layer_idx)} = {results['H_n_1_r']}")
-            
-            st.latex(r"H_n = \sum_{i=1}^n h_i")
-            h_terms_n = " + ".join([f"h_{to_subscript(i+1)}" for i in range(results['n_for_calc'])])
-            st.latex(r"H_n = " + h_terms_n)
-            st.write(f"H{to_subscript(results['n_for_calc'])} = {results['H_n_r']}")
-            
-        with col2:
-            if layer_idx > 0:
-                # КОРИГИРАНА ФОРМУЛА ЗА Esr - вместо точки използваме \cdot
-                st.latex(r"E_{sr} = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}")
-                numerator = " + ".join([f"{results['E_values'][i]} \cdot {results['h_values'][i]}" for i in range(layer_idx)])
-                denominator = " + ".join([f"{results['h_values'][i]}" for i in range(layer_idx)])
-                st.latex(fr"E_{{sr}} = \frac{{{numerator}}}{{{denominator}}} = {round(results['Esr_r'])}")
-            else:
-                st.write("Esr = 0 (няма предишни пластове)")
-                
-            st.latex(fr"\frac{{H_n}}{{D}} = \frac{{{results['H_n_r']}}}{{{D}}} = {results['ratio_r']}")
-            st.latex(fr"E_{{{layer_idx+1}}} = {results['En_r']}")
-            st.latex(fr"\frac{{E_{{sr}}}}{{E_{{{layer_idx+1}}}}} = {results['Esr_over_En_r']}")
-            st.latex(fr"\frac{{E_{{{layer_idx+1}}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']}}}{{{results['Ed_r']}}} = {results['En_over_Ed_r']}")
+    st.latex(r"H_{n-1} = \sum_{i=1}^{n-1} h_i")
+    if layer_idx > 0:
+        h_terms = " + ".join([f"h_{to_subscript(i+1)}" for i in range(layer_idx)])
+        st.latex(r"H_{n-1} = " + h_terms)
+    st.write(f"H{to_subscript(layer_idx)} = {results['H_n_1_r']}")
+
+    st.latex(r"H_n = \sum_{i=1}^n h_i")
+    h_terms_n = " + ".join([f"h_{to_subscript(i+1)}" for i in range(results['n_for_calc'])])
+    st.latex(r"H_n = " + h_terms_n)
+    st.write(f"H{to_subscript(results['n_for_calc'])} = {results['H_n_r']}")
+
+    if layer_idx > 0:
+        # КОРИГИРАНА ФОРМУЛА ЗА Esr - вместо точки използваме \cdot
+        st.latex(r"E_{sr} = \frac{\sum_{i=1}^{n-1} (E_i \cdot h_i)}{\sum_{i=1}^{n-1} h_i}")
+        numerator = " + ".join([f"{results['E_values'][i]} \cdot {results['h_values'][i]}" for i in range(layer_idx)])
+        denominator = " + ".join([f"{results['h_values'][i]}" for i in range(layer_idx)])
+        st.latex(fr"E_{{sr}} = \frac{{{numerator}}}{{{denominator}}} = {round(results['Esr_r'])}")
+    else:
+        st.write("Esr = 0 (няма предишни пластове)")
+
+    st.latex(fr"\frac{{H_n}}{{D}} = \frac{{{results['H_n_r']}}}{{{D}}} = {results['ratio_r']}")
+    st.latex(fr"E_{{{layer_idx+1}}} = {results['En_r']}")
+    st.latex(fr"\frac{{E_{{sr}}}}{{E_{{{layer_idx+1}}}}} = {results['Esr_over_En_r']}")
+    st.latex(fr"\frac{{E_{{{layer_idx+1}}}}}{{Ed_{{{layer_idx+1}}}}} = \frac{{{results['En_r']}}}{{{results['Ed_r']}}} = {results['En_over_Ed_r']}")
 
     # Visualization
     try:
@@ -616,7 +592,8 @@ if layer_idx in st.session_state.layer_results:
                     xaxis='x2'  # Свързваме с втората ос
                 ))
                 
-                # Оптимизирано оформление за по-добро мащабиране
+                # Обновяване на оформлението с цветна легенда
+                # Обновяване на оформлението с цветна легенда
                 fig.update_layout(
                     title=dict(
                         text='Графика на изолинии',
@@ -657,45 +634,38 @@ if layer_idx in st.session_state.layer_results:
                     legend=dict(
                         title=dict(
                             text='Легенда:',
-                            font=dict(size=11, color='black')
+                            font=dict(size=12, color='black')
                         ),
                         bgcolor='rgba(240, 240, 240, 0.95)',
                         bordercolor='black',
                         borderwidth=1,
-                        font=dict(size=9, color='black'),
-                        x=0.5,
-                        y=-0.3,
+                        font=dict(size=10, color='black'),
+                        x=0.5,      # Центриране хоризонтално
+                        y=-0.45,    # Много по-ниско под графиката
                         xanchor='center',
                         yanchor='top',
                         traceorder='normal',
                         itemsizing='constant',
-                        orientation='h',
-                        itemwidth=50,
+                        orientation='h',  # Хоризонтално подреждане
+                        itemwidth=60,     # По-малка ширина
                         itemclick='toggleothers',
                         itemdoubleclick='toggle',
                         groupclick='togglegroup'
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    margin=dict(l=50, r=50, t=50, b=150),  # Редуциран долен марж
-                    height=500,  # Фиксирана височина за по-добро мащабиране
-                    autosize=True
+                    # ПРЕМАХВАМЕ фиксираните width и height
+                    margin=dict(l=50, r=50, t=50, b=200),  # Още по-голям долен марж
+                    autosize=True  # ВКЛЮЧВАМЕ autosize
                 )
                 
-                # Виждане в Streamlit с оптимизирани настройки
+                # Виждане в Streamlit
                 st.plotly_chart(fig, use_container_width=True, config={
                     'responsive': True,
                     'displayModeBar': True,
                     'displaylogo': False,
                     'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                    'scrollZoom': True,
-                    'toImageButtonOptions': {
-                        'format': 'png',
-                        'filename': 'nomogram_intermediate',
-                        'height': 500,
-                        'width': 800,
-                        'scale': 2
-                    }
+                    'scrollZoom': True
                 })
 
                 # Try to find the image in different locations
@@ -709,6 +679,7 @@ if layer_idx in st.session_state.layer_results:
                 img_found = False
                 for path in image_paths:
                     try:
+                        # Използваме use_container_width за автоматично скалиране
                         st.image(path, caption="Допустими опънни напрежения", use_container_width=True)
                         img_found = True
                         break
@@ -721,7 +692,7 @@ if layer_idx in st.session_state.layer_results:
                 # Секция за ръчно въвеждане
                 st.markdown(
                     """
-                    <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px; margin-top: 20px;">
+                    <div style="background-color: #f0f9f0; padding: 10px; border-radius: 5px;">
                         <h3 style="color: #3a6f3a; margin: 0;">Ръчно отчитане σR спрямо Таблица 9.7</h3>
                     </div>
                     """,
@@ -733,17 +704,15 @@ if layer_idx in st.session_state.layer_results:
                     st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = sigma_r if 'sigma_r' in locals() else 0.0
 
                 # Поле за ръчно въвеждане
-                col1, col2 = st.columns([2, 1])
-                with col1:
-                    manual_value = st.number_input(
-                        label="Въведете ръчно отчетена стойност σR [MPa]",
-                        min_value=0.0,
-                        max_value=20.0,
-                        value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r if 'sigma_r' in locals() else 0.0),
-                        step=0.1,
-                        key=f"manual_sigma_input_{layer_idx}",
-                        label_visibility="visible"
-                    )
+                manual_value = st.number_input(
+                    label="Въведете ръчно отчетена стойност σR [MPa]",
+                    min_value=0.0,
+                    max_value=20.0,
+                    value=st.session_state.manual_sigma_values.get(f'manual_sigma_{layer_idx}', sigma_r if 'sigma_r' in locals() else 0.0),
+                    step=0.1,
+                    key=f"manual_sigma_input_{layer_idx}",
+                    label_visibility="visible"
+                )
                 
                 # Запазваме ръчно въведената стойност
                 st.session_state.manual_sigma_values[f'manual_sigma_{layer_idx}'] = manual_value
@@ -761,22 +730,16 @@ if layer_idx in st.session_state.layer_results:
                     st.session_state.check_results[f'check_result_{layer_idx}'] = check_passed
                     
                     # Показваме резултата
-                    with col2:
-                        if check_passed:
-                            st.success("✅ Проверката е удовлетворена")
-                        else:
-                            st.error("❌ Проверката НЕ е удовлетворена")
-                    
-                    # Детайли
-                    with st.expander("Детайли на проверката", expanded=False):
-                        if check_passed:
-                            st.success(
-                                f"Изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
-                            )
-                        else:
-                            st.error(
-                                f"Изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
-                            )
+                    if check_passed:
+                        st.success(
+                            f"✅ Проверката е удовлетворена: "
+                            f"изчисленото σR = {sigma_to_compare:.3f} MPa ≤ {manual_value:.3f} MPa (допустимото σR)"
+                        )
+                    else:
+                        st.error(
+                            f"❌ Проверката НЕ е удовлетворена: "
+                            f"изчисленото σR = {sigma_to_compare:.3f} MPa > {manual_value:.3f} MPa (допустимото σR)"
+                        )
                 else:
                     st.warning("❗ Няма изчислена стойност σR (след коефициенти) за проверка.")
 
@@ -784,6 +747,9 @@ if layer_idx in st.session_state.layer_results:
         st.error(f"Грешка при визуализацията: {e}")
         import traceback
         st.error(traceback.format_exc())
+
+# Останалата част от кода остава същата...
+# [ТУК СЛЕДВА ОСТАНАЛИЯТ КОД ОТ ПРЕДИШНИЯ ОТГОВОР]
 
 # КОРИГИРАН NumberedDocTemplate клас
 class NumberedDocTemplate(SimpleDocTemplate):
@@ -826,7 +792,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
             'CustomTitle',
-            fontSize=18,
+            fontSize=20,
             spaceAfter=5,
             alignment=1,
             textColor=colors.HexColor('#006064'),
@@ -835,7 +801,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         )
         
         story.append(Paragraph("ОПЪН В МЕЖДИНЕН ПЛАСТ", title_style))
-        story.append(Spacer(1, 12))
+        story.append(Spacer(1, 16.5))
 
         # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
         axle_load = st.session_state.get("axle_load", 100)
@@ -853,38 +819,38 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             table_data.append([f"Пласт {i+1} - hi", f"{h_values[i]:.2f}", "cm"])
             table_data.append([f"Пласт {i+1} - Edi", f"{Ed_values[i]:.2f}", "MPa"])
 
-        info_table = Table(table_data, colWidths=[60*mm, 50*mm, 30*mm], hAlign='LEFT')
+        info_table = Table(table_data, colWidths=[66*mm, 55*mm, 33*mm], hAlign='LEFT')
         info_table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
-            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 0), (-1, 0), 9.9),
             ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-            ('TOPPADDING', (0, 0), (-1, 0), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 5.5),
+            ('TOPPADDING', (0, 0), (-1, 0), 5.5),
             
             ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
             ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
             ('FONTNAME', (0, 1), (-1, -1), font_name),
-            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('FONTSIZE', (0, 1), (-1, -1), 8.8),
             ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 1), (-1, -1), 3),
-            ('TOPPADDING', (0, 1), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3.3),
+            ('TOPPADDING', (0, 1), (-1, -1), 3.3),
             
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
         ]))
 
         story.append(info_table)
-        story.append(Spacer(1, 20))
+        story.append(Spacer(1, 27.5))
 
         # 2. ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
         formulas_title_style = ParagraphStyle(
             'FormulasTitle',
             fontName=font_name,
-            fontSize=12,
+            fontSize=14.08,
             textColor=colors.HexColor('#2C5530'),
-            spaceAfter=8,
+            spaceAfter=11,
             alignment=0
         )
         story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
@@ -904,8 +870,8 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             # Първа колона
             if i < len(formulas):
                 try:
-                    img_buf1 = render_formula_to_image(formulas[i], fontsize=20, dpi=120)
-                    row.append(RLImage(img_buf1, width=90*mm, height=15*mm))
+                    img_buf1 = render_formula_to_image(formulas[i], fontsize=23.76, dpi=150)
+                    row.append(RLImage(img_buf1, width=99*mm, height=19.8*mm))
                 except:
                     row.append(Paragraph(formulas[i].replace('_', '').replace('^', ''), formulas_title_style))
             else:
@@ -914,8 +880,8 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             # Втора колона
             if i + 1 < len(formulas):
                 try:
-                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=20, dpi=120)
-                    row.append(RLImage(img_buf2, width=90*mm, height=15*mm))
+                    img_buf2 = render_formula_to_image(formulas[i + 1], fontsize=23.76, dpi=150)
+                    row.append(RLImage(img_buf2, width=99*mm, height=19.8*mm))
                 except:
                     row.append(Paragraph(formulas[i + 1].replace('_', '').replace('^', ''), formulas_title_style))
             else:
@@ -923,24 +889,24 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             
             formula_table_data.append(row)
 
-        formula_table = Table(formula_table_data, colWidths=[90*mm, 90*mm])
+        formula_table = Table(formula_table_data, colWidths=[105.6*mm, 105.6*mm])
         formula_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8.8),
+            ('TOPPADDING', (0, 0), (-1, -1), 8.8),
         ]))
         
         story.append(formula_table)
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 22))
 
         # 3. ИЗЧИСЛЕНИЯ
         calculations_title_style = ParagraphStyle(
             'CalculationsTitle',
             fontName=font_name,
-            fontSize=12,
+            fontSize=14.08,
             textColor=colors.HexColor('#2C5530'),
-            spaceAfter=8,
+            spaceAfter=11,
             alignment=0
         )
         story.append(Paragraph(f"3. Изчисления за пласт {layer_idx+1}", calculations_title_style))
@@ -994,8 +960,8 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             # Първа колона
             if i < len(calculation_formulas):
                 try:
-                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=18, dpi=120)
-                    row.append(RLImage(img_buf1, width=90*mm, height=14*mm))
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=21.12, dpi=150)
+                    row.append(RLImage(img_buf1, width=99*mm, height=18.48*mm))
                 except:
                     simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, calculations_title_style))
@@ -1005,8 +971,8 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             # Втора колона
             if i + 1 < len(calculation_formulas):
                 try:
-                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=18, dpi=120)
-                    row.append(RLImage(img_buf2, width=90*mm, height=14*mm))
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=21.12, dpi=150)
+                    row.append(RLImage(img_buf2, width=99*mm, height=18.48*mm))
                 except:
                     simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, calculations_title_style))
@@ -1015,16 +981,16 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             
             calc_table_data.append(row)
 
-        calc_table = Table(calc_table_data, colWidths=[90*mm, 90*mm])
+        calc_table = Table(calc_table_data, colWidths=[105.6*mm, 105.6*mm])
         calc_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('TOPPADDING', (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6.6),
+            ('TOPPADDING', (0, 0), (-1, -1), 6.6),
         ]))
         
         story.append(calc_table)
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 22))
 
         # НОВ ЛИСТ ЗА ГРАФИКАТА
         story.append(PageBreak())
@@ -1033,9 +999,9 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         graph_title_style = ParagraphStyle(
             'GraphTitle',
             fontName=font_name,
-            fontSize=14,
+            fontSize=17.6,
             textColor=colors.HexColor('#2C5530'),
-            spaceAfter=12,
+            spaceAfter=16.5,
             alignment=1
         )
         story.append(Paragraph("ГРАФИКА НА НОМОГРАМАТА", graph_title_style))
@@ -1046,15 +1012,16 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             
             if pdf_fig is not None:
                 # Настройки за PDF
+                # Настройки за PDF
                 pdf_fig.update_layout(
                     title=dict(
                         text='Номограма: σR в междинен пласт',
-                        font=dict(size=12, color='black', family="Arial")
+                        font=dict(size=14, color='black', family="Arial")
                     ),
                     xaxis=dict(
                         title='H/D',
-                        title_font=dict(size=10, color='black'),
-                        tickfont=dict(size=8, color='black'),
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -1070,13 +1037,13 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         tickvals=[0, 0.25, 0.5, 0.75, 1],
                         ticktext=['0', '0.25', '0.5', '0.75', '1'],
                         title='σr',
-                        title_font=dict(size=10, color='black'),
-                        tickfont=dict(size=8, color='black')
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black')
                     ),
                     yaxis=dict(
                         title='y',
-                        title_font=dict(size=10, color='black'),
-                        tickfont=dict(size=8, color='black'),
+                        title_font=dict(size=12, color='black'),
+                        tickfont=dict(size=10, color='black'),
                         linecolor='black',
                         gridcolor='lightgray',
                         mirror=True,
@@ -1089,26 +1056,26 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         bgcolor='rgba(255,255,255,0.9)',
                         bordercolor='black',
                         borderwidth=1,
-                        font=dict(size=7, color='black'),
+                        font=dict(size=8, color='black'),  # По-малък шрифт
                         x=0.5,
-                        y=-0.25,
+                        y=-0.3,  # Легендата под графиката
                         xanchor='center',
                         yanchor='top',
                         traceorder='normal',
                         itemsizing='constant',
-                        orientation='h'
+                        orientation='h'  # Хоризонтално за PDF
                     ),
-                    width=600,
-                    height=400,
-                    margin=dict(l=40, r=40, t=40, b=100)
+                    width=800,  # По-малък размер за PDF
+                    height=600,  # По-малък размер за PDF
+                    margin=dict(l=50, r=50, t=50, b=150)  # Маржове за легендата
                 )
                 
                 img_bytes = pio.to_image(
                     pdf_fig, 
                     format="png", 
-                    width=600,
-                    height=400,
-                    scale=2,
+                    width=800,  # Същия размер
+                    height=600,
+                    scale=3,
                     engine="kaleido"
                 )
                 
@@ -1117,15 +1084,15 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
                 img_buffer.seek(0)
                 
-                story.append(RLImage(img_buffer, width=150 * mm, height=100 * mm))
-                story.append(Spacer(1, 10))
+                story.append(RLImage(img_buffer, width=170 * mm, height=120 * mm))
+                story.append(Spacer(1, 15))
                 
         except Exception as e:
             error_style = ParagraphStyle(
                 'ErrorStyle',
                 parent=styles['Normal'],
-                fontSize=10,
-                spaceAfter=5,
+                fontSize=11,
+                spaceAfter=5.5,
                 fontName=font_name,
                 textColor=colors.HexColor('#d32f2f'),
                 alignment=1
@@ -1138,12 +1105,12 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             allowable_title_style = ParagraphStyle(
                 'AllowableTitle',
                 fontName=font_name,
-                fontSize=14,
+                fontSize=15.4,
                 textColor=colors.HexColor('#2C5530'),
-                spaceAfter=8,
+                spaceAfter=11,
                 alignment=1
             )
-            story.append(Spacer(1, 15))
+            story.append(Spacer(1, 22))
             story.append(PageBreak())
             story.append(Paragraph("ДОПУСТИМИ ОПЪННИ НАПРЕЖЕНИЯ", allowable_title_style))
             
@@ -1152,14 +1119,14 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 img_buffer = io.BytesIO()
                 pil_img.save(img_buffer, format="PNG")
                 img_buffer.seek(0)
-                story.append(RLImage(img_buffer, width=150 * mm, height=110 * mm))
-                story.append(Spacer(1, 10))
+                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                story.append(Spacer(1, 15))
             except Exception as e:
                 error_style = ParagraphStyle(
                     'ErrorStyle',
                     parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=5,
+                    fontSize=11,
+                    spaceAfter=5.5,
                     fontName=font_name,
                     textColor=colors.HexColor('#d32f2f'),
                     alignment=1
@@ -1171,9 +1138,9 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         results_title_style = ParagraphStyle(
             'ResultsTitle',
             fontName=font_name,
-            fontSize=14,
+            fontSize=17.6,
             textColor=colors.HexColor('#006064'),
-            spaceAfter=12,
+            spaceAfter=16.5,
             alignment=1
         )
         story.append(Paragraph("РЕЗУЛТАТИ И ПРОВЕРКА", results_title_style))
@@ -1188,38 +1155,38 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 ["Допустимо σR", f"{manual_value:.2f} MPa"]
             ]
 
-            results_table = Table(results_data, colWidths=[80*mm, 60*mm], hAlign='CENTER')
+            results_table = Table(results_data, colWidths=[88*mm, 66*mm], hAlign='CENTER')
             results_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('FONTNAME', (0, 0), (-1, 0), font_name),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
                 ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 5),
-                ('TOPPADDING', (0, 0), (-1, 0), 5),
+                ('BOTTOMPADDING', (0, 0), (-1, 0), 6.6),
+                ('TOPPADDING', (0, 0), (-1, 0), 6.6),
                 
                 ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
                 ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
                 ('FONTNAME', (0, 1), (-1, -1), font_name),
-                ('FONTSIZE', (0, 1), (-1, -1), 9),
-                ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
-                ('TOPPADDING', (0, 1), (-1, -1), 4),
+                ('FONTSIZE', (0, 1), (-1, -1), 9.9),
+                ('BOTTOMPADDING', (0, 1), (-1, -1), 4.4),
+                ('TOPPADDING', (0, 1), (-1, -1), 4.4),
                 
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
                 ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
             ]))
 
             story.append(results_table)
-            story.append(Spacer(1, 12))
+            story.append(Spacer(1, 16.5))
 
             # Съобщение за проверка
             if check_passed:
                 status_style = ParagraphStyle(
                     'StatusOK',
                     fontName=font_name,
-                    fontSize=12,
+                    fontSize=13.2,
                     textColor=colors.HexColor('#2e7d32'),
-                    spaceAfter=10,
+                    spaceAfter=13.2,
                     alignment=1,
                     backColor=colors.HexColor('#e8f5e9')
                 )
@@ -1227,8 +1194,8 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 subtitle_style = ParagraphStyle(
                     'SubtitleStyle',
                     parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=5,
+                    fontSize=11,
+                    spaceAfter=5.5,
                     fontName=font_name,
                     textColor=colors.HexColor('#5D4037'),
                     alignment=1
@@ -1238,9 +1205,9 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 status_style = ParagraphStyle(
                     'StatusFail',
                     fontName=font_name,
-                    fontSize=12,
+                    fontSize=13.2,
                     textColor=colors.HexColor('#c62828'),
-                    spaceAfter=10,
+                    spaceAfter=13.2,
                     alignment=1,
                     backColor=colors.HexColor('#ffebee')
                 )
@@ -1248,8 +1215,8 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 subtitle_style = ParagraphStyle(
                     'SubtitleStyle',
                     parent=styles['Normal'],
-                    fontSize=10,
-                    spaceAfter=5,
+                    fontSize=11,
+                    spaceAfter=5.5,
                     fontName=font_name,
                     textColor=colors.HexColor('#5D4037'),
                     alignment=1
@@ -1257,12 +1224,12 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", subtitle_style))
 
         # ДАТА И ПОДПИС
-        story.append(Spacer(1, 15))
+        story.append(Spacer(1, 22))
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
         date_style = ParagraphStyle(
             'DateStyle',
             fontName=font_name,
-            fontSize=9,
+            fontSize=9.9,
             alignment=2,
             textColor=colors.HexColor('#666666')
         )
@@ -1271,7 +1238,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         # Добавяне на номера на страниците
         def add_page_number(canvas, doc):
             canvas.saveState()
-            canvas.setFont('Helvetica', 8)
+            canvas.setFont('DejaVuSans', 8)
             page_num = doc.start_page + canvas.getPageNumber() - 1
             canvas.drawString(190*mm, 15*mm, f"{page_num}")
             canvas.restoreState()
@@ -1296,7 +1263,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
 st.markdown("---")
 st.subheader("Генериране на PDF отчет")
 
-if st.button("📄 Генерирай PDF отчет", type="primary", key="pdf_button"):
+if st.button("📄 Генерирай PDF отчет", type="primary"):
     if layer_idx in st.session_state.layer_results:
         with st.spinner("Генериране на PDF отчет..."):
             # Вземете необходимите данни за отчета
