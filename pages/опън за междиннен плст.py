@@ -931,7 +931,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 # Настройки за PDF
                 fig_pdf.update_layout(
                     title=dict(
-                        text='Номограма: σR в междинен пласт',
+                        text='',
                         font=dict(size=18, color='black', family="Arial")
                     ),
                     xaxis=dict(
