@@ -607,18 +607,7 @@ if layer_idx in st.session_state.layer_results:
                 ))
                 
                 # Обновяване на оформлението с responsive настройки
-                st.plotly_chart(fig, 
-                    use_container_width=True,  # Това ще накара графиката да се адаптира към размера на контейнера
-                    config={
-                        'responsive': True,      # Активирай мащабиране, така че графиката да се променя в зависимост от размерите
-                        'displayModeBar': True,
-                        'displaylogo': False,
-                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
-                        'scrollZoom': False,     # Спираме зумирането с мишка
-                        'autosizable': True,      # Автоматично адаптиране на размерите спрямо съдържанието
-                    }
-                )
-                
+
                 # Настройки за мащабиране на осите в графиката
                 fig.update_layout(
                     xaxis=dict(
@@ -652,6 +641,19 @@ if layer_idx in st.session_state.layer_results:
                     height=None,    # Няма да фиксираме височината
                     margin=dict(l=80, r=80, t=100, b=80, pad=15),  # Дадохме малко отстояния
                 )
+                
+                st.plotly_chart(fig, 
+                    use_container_width=True,  # Това ще накара графиката да се адаптира към размера на контейнера
+                    config={
+                        'responsive': True,      # Активирай мащабиране, така че графиката да се променя в зависимост от размерите
+                        'displayModeBar': True,
+                        'displaylogo': False,
+                        'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                        'scrollZoom': False,     # Спираме зумирането с мишка
+                        'autosizable': True,      # Автоматично адаптиране на размерите спрямо съдържанието
+                    }
+                )
+                
                                                 
                 # Try to find the image in different locations
                 image_paths = [
