@@ -57,7 +57,7 @@ st.markdown("""
         }
         /* ГАРАНТИРА ЧЕ ГРАФИКАТА ИМА ДОСТАТЪЧНО МЯСТО */
         div[data-testid="stPlotlyChart"] > div {
-            min-width: 900px !important;
+            min-width: 1500px !important;
         }
     </style>
 """, unsafe_allow_html=True)
