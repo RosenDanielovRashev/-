@@ -885,17 +885,17 @@ def generate_pdf_report():
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#BDBDBD')),
             ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
         ]
-
-# ДОБАВЯНЕ НА АЛТЕРНИРАЩИ ЦВЕТОВЕ САМО ЗА СЪЩЕСТВУВАЩИТЕ РЕДОВЕ
-# Добавяме светлосиви редове за всеки четен ред (след заглавния)
-for row in range(2, len(layer_table_data), 2):  # Започваме от ред 2 (първи данни ред е 1)
-    if row < len(layer_table_data):  # Проверка за безопасност
-        layer_table_style_commands.append(
-            ('BACKGROUND', (0, row), (-1, row), colors.HexColor('#F5F5F5'))
-        )
-
-layer_table = Table(layer_table_data, colWidths=[25*mm, 30*mm, 30*mm, 30*mm, 30*mm])
-layer_table.setStyle(TableStyle(layer_table_style_commands))
+        
+        # ДОБАВЯНЕ НА АЛТЕРНИРАЩИ ЦВЕТОВЕ САМО ЗА СЪЩЕСТВУВАЩИТЕ РЕДОВЕ
+        # Добавяме светлосиви редове за всеки четен ред (след заглавния)
+        for row in range(2, len(layer_table_data), 2):  # Започваме от ред 2 (първи данни ред е 1)
+            if row < len(layer_table_data):  # Проверка за безопасност
+                layer_table_style_commands.append(
+                    ('BACKGROUND', (0, row), (-1, row), colors.HexColor('#F5F5F5'))
+                )
+        
+        layer_table = Table(layer_table_data, colWidths=[25*mm, 30*mm, 30*mm, 30*mm, 30*mm])
+        layer_table.setStyle(TableStyle(layer_table_style_commands))
         
         # Добавяне на заглавие за таблицата на пластовете
         layer_title_style = ParagraphStyle(
@@ -909,8 +909,8 @@ layer_table.setStyle(TableStyle(layer_table_style_commands))
         story.append(Paragraph("Параметри на пластовете:", layer_title_style))
         story.append(layer_table)
         story.append(Spacer(1, 10))
-
-        # ... (останалата част от кода остава същата до края на функцията) ...
+        
+        # ... останалият код ...
         
         # ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
         formulas_title_style = ParagraphStyle(
