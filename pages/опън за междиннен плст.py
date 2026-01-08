@@ -39,14 +39,18 @@ st.markdown("""
             font-size: 18px !important;
         }
         .block-container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
         }
         .css-1lcbmi9 {
-            max-width: 900px !important;
+            max-width: 1000px !important;
             margin: 0 auto !important;
         }
         .stPlotlyChart {
+            width: 100% !important;
+            height: 700px !important;
+        }
+        .js-plotly-plot .plotly {
             width: 100% !important;
         }
     </style>
@@ -657,10 +661,10 @@ if layer_idx in st.session_state.layer_results:
                     ),
                     plot_bgcolor='white',
                     paper_bgcolor='white',
-                    width=1200,  # УВЕЛИЧЕН РАЗМЕР
-                    height=800,  # УВЕЛИЧЕН РАЗМЕР
-                    margin=dict(l=50, r=50, t=50, b=150),  # Увеличаваме долния марж за легендата
-                    autosize=False
+                    width=None,  # Автоматично определяне на ширина
+                    height=700,  # Фиксирана височина
+                    margin=dict(l=50, r=50, t=50, b=180),  # Увеличаваме долния марж за легендата
+                    autosize=True  # Автоматично настройване на размера
                 )
                 
                 # Виждане в Streamlit с responsive настройки
@@ -668,7 +672,9 @@ if layer_idx in st.session_state.layer_results:
                     'responsive': True,
                     'displayModeBar': True,
                     'displaylogo': False,
-                    'modeBarButtonsToRemove': ['lasso2d', 'select2d']
+                    'modeBarButtonsToRemove': ['lasso2d', 'select2d'],
+                    'scrollZoom': False,
+                    'autosizable': True
                 })
 
                 # Try to find the image in different locations
@@ -682,7 +688,8 @@ if layer_idx in st.session_state.layer_results:
                 img_found = False
                 for path in image_paths:
                     try:
-                        st.image(path, caption="Допустими опънни напрежения", width=800)  # УВЕЛИЧЕНА ШИРИНА
+                        # Използваме use_container_width за автоматично скалиране
+                        st.image(path, caption="Допустими опънни напрежения", use_container_width=True)
                         img_found = True
                         break
                     except:
@@ -1060,16 +1067,16 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                         xanchor='left',
                         yanchor='middle'
                     ),
-                    width=1200,
-                    height=800,
-                    margin=dict(r=150)
+                    width=1000,
+                    height=700,
+                    margin=dict(l=50, r=150, t=50, b=50)
                 )
                 
                 img_bytes = pio.to_image(
                     pdf_fig, 
                     format="png", 
-                    width=1200, 
-                    height=800,
+                    width=1000, 
+                    height=700,
                     scale=4,
                     engine="kaleido"
                 )
@@ -1079,7 +1086,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
                 img_buffer.seek(0)
                 
-                story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+                story.append(RLImage(img_buffer, width=170 * mm, height=120 * mm))
                 story.append(Spacer(1, 15))
                 
         except Exception as e:
