@@ -609,7 +609,7 @@ fig.update_layout(
         ticktext=[f"{(0.150 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" 
                  for x in np.linspace(xaxis_min, xaxis_max, 11)],
         ticklabeloverflow="allow",
-        title='Ꚍμ/p',
+        title='τμ/p',
         fixedrange=True
     ),
     yaxis=dict(
@@ -635,17 +635,17 @@ if 'x_orange' in locals() and x_orange is not None:
     
     # Определяне на p според осовия товар
     p_value = 0.620 if axle_load == 100 else 0.633
-    tau_mu = sigma_r * p_value  # Ꚍμ = (Ꚍμ/p) * p
+    tau_mu = sigma_r * p_value  # τμ = (τμ/p) * p
     
     # Показване на стойността на p преди формулата
     st.markdown(f"**p = {p_value} MPa (за осов товар {axle_load} kN)**")
-    st.markdown(f"**Ꚍμ/p = {sigma_r}**")
-    st.markdown(f"**Ꚍμ = (Ꚍμ/p) × p = {sigma_r} × {p_value} = {tau_mu:.6f} MPa**")
+    st.markdown(f"**τμ/p = {sigma_r}**")
+    st.markdown(f"**τμ = (τμ/p) × p = {sigma_r} × {p_value} = {tau_mu:.6f} MPa**")
 else:
     # Показване на стойността на p преди формулата
     p_value = 0.620 if axle_load == 100 else 0.633
     st.markdown(f"**p = {p_value} MPa (за осов товар {axle_load} kN)**")
-    st.markdown("**Ꚍμ/p = -** (Няма изчислена стойност)")
+    st.markdown("**τμ/p = -** (Няма изчислена стойност)")
     # Задаваме стойности по подразбиране, за да избегнем грешки по-нататък
     sigma_r = 0.0
     tau_mu = 0.0
@@ -814,7 +814,7 @@ def generate_pdf_report():
             leading=20,
         )
         
-        story.append(Paragraph("ОПРЕДЕЛЯНЕ НА Ꚍμ/p ЗА НЕСЪРЗАНИ ПОЧВИ", title_style))
+        story.append(Paragraph("ОПРЕДЕЛЯНЕ НА τμ/p ЗА НЕСЪРЗАНИ ПОЧВИ", title_style))
         subtitle_style = ParagraphStyle(
             'Subtitle',
             fontSize=14,
@@ -1356,12 +1356,12 @@ def generate_pdf_report():
             ax_bottom.set_ylabel('y', fontsize=12)
             ax_bottom.grid(True, alpha=0.3)
             
-            # Създаване на втора x-ос (отгоре) за Ꚍμ/p
+            # Създаване на втора x-ос (отгоре) за τμ/p
             ax_top = ax_bottom.twiny()
             ax_top.set_xlim(ax_bottom.get_xlim())  # Същия диапазон като долната ос
             
-            # Тикчета за Ꚍμ/p (горна ос)
-            # Преобразуване: Ꚍμ/p = 0.150 * (H/D)
+            # Тикчета за τμ/p (горна ос)
+            # Преобразуване: τμ/p = 0.150 * (H/D)
             taumu_p_ticks = [0.150 * (tick / 1.5) for tick in hd_ticks]
             ax_top.set_xticks(hd_ticks)
             ax_top.set_xticklabels([f'{tick:.3f}' for tick in taumu_p_ticks], fontsize=9)
@@ -1540,7 +1540,7 @@ if st.button("📄 Генерирай PDF отчет", type="primary"):
                 st.download_button(
                     "📥 Изтегли PDF отчет",
                     pdf_buffer,
-                    file_name=f"Ꚍμ_p_несързани_почви_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                    file_name=f"τμ_p_несързани_почви_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
                     mime="application/pdf"
                 )
             else:
