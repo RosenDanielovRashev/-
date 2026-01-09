@@ -1298,7 +1298,9 @@ def generate_pdf_report():
                 story.append(Paragraph(f"Грешка при добавяне на τb графика: {e}", error_style))
 
         # ТАБЛИЦА 9.8
-       
+
+        img_path_9_8 = "9.8 Таблица.png"
+        
         if os.path.exists(img_path_9_8):
             story.append(PageBreak())
             table_title_style = ParagraphStyle(
