@@ -8,6 +8,9 @@ import tempfile
 from datetime import datetime
 import base64
 import plotly.io as pio
+# Деактивирайте GPU за plotly
+pio.kaleido.scope.chromium_args = tuple([arg for arg in pio.kaleido.scope.chromium_args 
+                                         if arg != "--disable-gpu"])
 from fpdf import FPDF
 from PIL import Image
 import requests
