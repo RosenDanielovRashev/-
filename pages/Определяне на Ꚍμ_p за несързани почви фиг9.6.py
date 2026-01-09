@@ -983,7 +983,7 @@ def generate_pdf_report():
                 if idx < len(formulas):
                     try:
                         img_buf = render_formula_to_image(formulas[idx], fontsize=23.76, dpi=150)
-                        row.append(RLImage(img_buf, width=66*mm, height=23*mm))
+                        row.append(RLImage(img_buf, width=66*mm, height=28*mm))
                     except:
                         row.append(Paragraph(formulas[idx].replace('_', '').replace('^', ''), formulas_title_style))
                 else:
@@ -1066,7 +1066,7 @@ def generate_pdf_report():
             if i < len(calculation_formulas):
                 try:
                     img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=21.12, dpi=150)
-                    row.append(RLImage(img_buf1, width=99*mm, height=23*mm))
+                    row.append(RLImage(img_buf1, width=99*mm, height=28*mm))
                 except:
                     simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, calculations_title_style))
