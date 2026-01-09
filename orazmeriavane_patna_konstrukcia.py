@@ -1094,11 +1094,50 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 height=800
             )
             # Конвертиране на фигурата в изображение с PILImage
+            # Конвертиране на фигурата в изображение (с резервни опции)
             try:
-                img_bytes = pio.to_image(fig, format="png", width=1200, height=800)
+                # Пробвайте различни engine-и
+                try:
+                    img_bytes = pio.to_image(fig, format="png", width=1200, height=800, engine="orca")
+                except:
+                    try:
+                        img_bytes = pio.to_image(fig, format="png", width=1200, height=800, engine="kaleido")
+                    except Exception as k_err:
+                        # Резервен вариант с matplotlib
+                        st.warning(f"Грешка при генериране на графика за пласт {i+1}: {k_err}")
+                        import matplotlib.pyplot as plt
+                        import matplotlib
+                        matplotlib.use('Agg')
+                        
+                        fig_mat, ax = plt.subplots(figsize=(12, 8))
+                        
+                        # Опитайте да извлечете някои данни от plotly фигурата
+                        if len(fig.data) > 0:
+                            # Ако има данни, пробвайте да ги визуализирате с matplotlib
+                            try:
+                                for trace in fig.data[:5]:  # Вземи първите 5 трасета
+                                    if 'x' in trace and 'y' in trace:
+                                        ax.plot(trace.x, trace.y, label=trace.name if hasattr(trace, 'name') else None)
+                            except:
+                                pass
+                        
+                        ax.set_title(f"Пласт {i + 1}")
+                        ax.set_xlabel("h / D")
+                        ax.set_ylabel("Ed / Ei")
+                        if len(ax.lines) > 0:
+                            ax.legend()
+                        
+                        buf = io.BytesIO()
+                        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+                        plt.close(fig_mat)
+                        buf.seek(0)
+                        img_bytes = buf.read()
+                
                 pil_img = PILImage.open(BytesIO(img_bytes))
+                
             except Exception as e:
-                st.error(f"Грешка при генериране на изображение за пласт {i+1}: {e}")
+                st.error(f"Критична грешка при генериране на изображение за пласт {i+1}: {e}")
+                # Създайте празно изображение
                 pil_img = PILImage.new("RGB", (1200, 800), color=(255, 255, 255))
 
             # Добавяне на изображението към PDF с МАКСИМАЛЕН РАЗМЕР
