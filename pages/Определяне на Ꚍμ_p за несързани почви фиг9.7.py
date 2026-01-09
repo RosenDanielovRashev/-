@@ -560,7 +560,7 @@ if point_on_esr_eo is not None:
             name='Вертикална линия до y=1.30'
         ))
 
-# Настройка на графиката
+# Настройки на графиката
 fig.update_layout(
     title="Графика на изолинии и точки",
     xaxis_title="H/D",
@@ -570,11 +570,11 @@ fig.update_layout(
     height=600
 )
 
-# Определи фиксиран мащаб на основната ос (например 0 до 2)
+# Определяне на фиксиран мащаб
 xaxis_min = 0
 xaxis_max = 2
 
-# Добавяне на невидим trace, за да се покаже втората ос x2
+# Добавяне на невидим trace за втората ос
 fig.add_trace(go.Scatter(
     x=[xaxis_min, xaxis_max],
     y=[None, None],
@@ -585,38 +585,46 @@ fig.add_trace(go.Scatter(
     xaxis='x2'
 ))
 
+# Финални настройки на осите с padding за показване на последните стойности
 fig.update_layout(
     title='Графика на изолинии',
     xaxis=dict(
         title='H/D',
         showgrid=True,
         zeroline=False,
-        range=[xaxis_min, xaxis_max],  # фиксиран диапазон на основната ос
+        range=[xaxis_min, xaxis_max * 1.005],  # Padding за последна стойност
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
+        gridcolor='lightgray',
+        gridwidth=1
     ),
     xaxis2=dict(
         overlaying='x',
         side='top',
-        range=[xaxis_min, xaxis_max],  # същия диапазон, за да са еднакви дължините
+        range=[xaxis_min, xaxis_max * 1.005],  # Padding за последна стойност
         showgrid=False,
         zeroline=False,
         ticks="outside",
-        tickvals=np.linspace(xaxis_min, xaxis_max, 11),  # примерно 11 tick-а
-        ticktext=[f"{(0.040 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" for x in np.linspace(xaxis_min, xaxis_max, 11)],  # мащабирани стойности
+        tickvals=np.linspace(xaxis_min, xaxis_max, 11),
+        ticktext=[f"{(0.040 * (x - xaxis_min) / (xaxis_max - xaxis_min)):.3f}" 
+                 for x in np.linspace(xaxis_min, xaxis_max, 11)],
         ticklabeloverflow="allow",
-        title='Ꚍμ/p',
-        fixedrange=True,
-        showticklabels=True,
-
+        title='τμ/p',
+        fixedrange=True
     ),
     yaxis=dict(
         title='y',
+        showgrid=True,
+        gridcolor='lightgray',
+        gridwidth=1
     ),
     showlegend=False,
     height=600,
-    width=900
+    width=900,
+    margin=dict(l=50, r=50, t=50, b=50)  # Допълнителни margin за labels
 )
 
 st.plotly_chart(fig, use_container_width=True)
+
 
 # Изчисление на σr от x на оранжевата точка (ако съществува)
 if 'x_orange' in locals() and x_orange is not None:
@@ -1167,6 +1175,7 @@ def generate_pdf_report():
         # НОВ ЛИСТ ЗА ГРАФИКИ
         story.append(PageBreak())
 
+       
         # ГРАФИКА НА ИЗОЛИНИИТЕ (ФИГ9.7)
         graph_title_style = ParagraphStyle(
             'GraphTitle',
@@ -1350,16 +1359,16 @@ def generate_pdf_report():
             ax_bottom = plt.gca()
             
             # Задаване на диапазоните за ФИГ9.7
-            x_min, x_max = 0, 2.0  # ПРОМЕНЕНО: от 1.5 на 2.0
+            x_min, x_max = 0, 2.0
             ax_bottom.set_xlim(x_min, x_max)
-            ax_bottom.set_ylim(0, 1.30)  # ПРОМЕНЕНО: от 1.05 на 1.30
+            ax_bottom.set_ylim(0, 1.30)
             
-            # Тикчета за H/D (долна ос) - за ФИГ9.7
+            # Тикчета за H/D (долна ос) - за ФИГ9.7 (с по-малки числа)
             hd_ticks = np.linspace(0, 2.0, 11)  # 0, 0.2, 0.4, ..., 2.0
             ax_bottom.set_xticks(hd_ticks)
             ax_bottom.set_xticklabels([f'{tick:.1f}' for tick in hd_ticks], fontsize=9)
             
-            # Тикчета за y-ос
+            # Тикчета за y-ос (с по-малки числа)
             y_ticks = np.linspace(0, 1.3, 14)  # 0, 0.1, 0.2, ..., 1.3
             ax_bottom.set_yticks(y_ticks)
             ax_bottom.set_yticklabels([f'{tick:.1f}' for tick in y_ticks], fontsize=9)
@@ -1373,7 +1382,7 @@ def generate_pdf_report():
             ax_top.set_xlim(ax_bottom.get_xlim())
             
             # Тикчета за τμ/p (горна ос) - за ФИГ9.7: τμ/p = 0.040 * (H/D)
-            taumu_p_ticks = [0.040 * (tick / 2.0) for tick in hd_ticks]  # ПРОМЕНЕНО: 0.040 вместо 0.150
+            taumu_p_ticks = [0.040 * (tick / 2.0) for tick in hd_ticks]
             ax_top.set_xticks(hd_ticks)
             ax_top.set_xticklabels([f'{tick:.3f}' for tick in taumu_p_ticks], fontsize=9)
             ax_top.set_xlabel('τμ/p', fontsize=12)
