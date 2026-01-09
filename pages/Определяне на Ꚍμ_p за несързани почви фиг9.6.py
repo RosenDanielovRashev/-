@@ -1365,13 +1365,13 @@ def generate_pdf_report():
             taumu_p_ticks = [0.150 * (tick / 1.5) for tick in hd_ticks]
             ax_top.set_xticks(hd_ticks)
             ax_top.set_xticklabels([f'{tick:.3f}' for tick in taumu_p_ticks], fontsize=9)
-            ax_top.set_xlabel('Ꚍμ/p', fontsize=12)
+            ax_top.set_xlabel('τμ/p', fontsize=12)
             
             # Позициониране на горната ос
             ax_top.xaxis.set_ticks_position('top')
             ax_top.xaxis.set_label_position('top')
             
-            plt.title('Номограма: Ꚍμ/p за несързани почви (фиг. 9.6)', fontsize=14)
+            plt.title('Номограма: τμ/p за несързани почви (фиг. 9.6)', fontsize=14)
             
             # Премахни легендата, тъй като вече имаме етикети на линиите
             # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
