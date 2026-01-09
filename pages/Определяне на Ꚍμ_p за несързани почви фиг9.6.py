@@ -983,7 +983,7 @@ def generate_pdf_report():
                 if idx < len(formulas):
                     try:
                         img_buf = render_formula_to_image(formulas[idx], fontsize=23.76, dpi=150)
-                        row.append(RLImage(img_buf, width=77*mm, height=28*mm))
+                        row.append(RLImage(img_buf, width=85*mm, height=28*mm))
                     except:
                         row.append(Paragraph(formulas[idx].replace('_', '').replace('^', ''), formulas_title_style))
                 else:
