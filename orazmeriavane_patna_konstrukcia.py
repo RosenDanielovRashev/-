@@ -1458,8 +1458,29 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle('Date',
             fontSize=9, alignment=2, textColor=colors.grey, fontName=font_name)))
 
+
+
+        # Функция за добавяне на номера на страниците
+        def add_page_number(canvas, doc):
+            """Автоматично добавяне на номера на страниците (започва от 1)"""
+            canvas.saveState()
+            try:
+                # Опитайте да използвате DejaVuSans, ако е зареден
+                canvas.setFont('DejaVuSans', 8)
+            except:
+                # Fallback на Helvetica
+                canvas.setFont('Helvetica', 8)
+            
+            # Номер на текущата страница (започва от 1)
+            page_num = canvas.getPageNumber()
+            
+            # Позициониране на номера (долу вдясно)
+            # 190*mm е хоризонтална позиция, 15*mm е вертикална
+            canvas.drawString(190*mm, 15*mm, f"{page_num}")
+            canvas.restoreState()
+        
         # Финализиране
-        doc.build(story)
+        doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
         buffer.seek(0)
         st.success("✅ PDF отчетът с модерно графично оформление и топлинни изчисления е готов!")
         st.download_button("📥 Изтегли PDF отчет", buffer,
