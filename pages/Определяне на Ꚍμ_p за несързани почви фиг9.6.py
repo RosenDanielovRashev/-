@@ -840,7 +840,7 @@ def generate_pdf_report():
             leading=20,
         )
         
-        story.append(Paragraph("ОПРЕДЕЛЯНЕ НА τμ/p ЗА НЕСЪРЗАНИ ПОЧВИ", title_style))
+        story.append(Paragraph("Определяне на напреженията на срязване за несързани почви", title_style))
         subtitle_style = ParagraphStyle(
             'Subtitle',
             fontSize=10,
