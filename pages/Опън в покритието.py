@@ -783,7 +783,7 @@ def generate_pdf_report():
                 textColor=colors.HexColor('#5D4037'),
                 alignment=0,  # подравняване отляво
                 spaceBefore=8,
-                spaceAfter=12,
+                spaceAfter=2,
                 leftIndent=10,
                 rightIndent=10,
                 borderPadding=5,
@@ -798,7 +798,7 @@ def generate_pdf_report():
                 fontName=font_name,
                 fontSize=11,
                 textColor=colors.HexColor('#2C5530'),
-                spaceBefore=15,
+                spaceBefore=2,
                 spaceAfter=5,
                 alignment=0
             )))
@@ -809,9 +809,9 @@ def generate_pdf_report():
                 if line.strip():  # Добавя само непразни редове
                     story.append(Paragraph(line.strip(), comment_style))
             
-            story.append(Spacer(1, 8))
+            story.append(Spacer(1, 2))
         
-        story.append(Spacer(1, 16.5))
+        story.append(Spacer(1, 5))
 
         # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
         table_data = [
