@@ -1224,7 +1224,52 @@ def generate_pdf_report():
                                  facecolor='white', alpha=0.8,
                                  edgecolor='red'))
                 
-                if 'x_orange' in locals() and x_orange is not None:
+                # ПРЕИЗЧИСЛЯВАНЕ НА ОРАНЖЕВАТА ТОЧКА ТУК, ВЪТРЕ В ФУНКЦИЯТА
+                y_red = point_on_esr_eo[1]
+                
+                # Функция за интерполация по y за дадена fi изолиния (локална версия)
+                def interp_x_at_y_local(df_curve, y_target):
+                    x_arr = df_curve['H/D'].values
+                    y_arr = df_curve['y'].values
+                    for k in range(len(y_arr) - 1):
+                        y1, y2 = y_arr[k], y_arr[k + 1]
+                        if (y1 - y_target) * (y2 - y_target) <= 0:
+                            x1, x2 = x_arr[k], x_arr[k + 1]
+                            if y2 == y1:
+                                return x1
+                            t = (y_target - y1) / (y2 - y1)
+                            return x1 + t * (x2 - x1)
+                    return None
+                
+                # Интерполация на x (H/D) между fi изолинии (локална версия)
+                def interp_x_for_fi_interp_local(df, fi_target, y_target):
+                    fi_values = sorted(df['fi'].unique())
+                    lower_fi = [v for v in fi_values if v <= fi_target]
+                    upper_fi = [v for v in fi_values if v >= fi_target]
+        
+                    if not lower_fi or not upper_fi:
+                        return None
+        
+                    fi1 = lower_fi[-1]
+                    fi2 = upper_fi[0]
+        
+                    if fi1 == fi2:
+                        df1 = df[df['fi'] == fi1].sort_values(by='y')
+                        return interp_x_at_y_local(df1, y_target)
+                    else:
+                        df1 = df[df['fi'] == fi1].sort_values(by='y')
+                        df2 = df[df['fi'] == fi2].sort_values(by='y')
+                        x1 = interp_x_at_y_local(df1, y_target)
+                        x2 = interp_x_at_y_local(df2, y_target)
+                        if x1 is not None and x2 is not None:
+                            t = (fi_target - fi1) / (fi2 - fi1)
+                            return x1 + t * (x2 - x1)
+                    return None
+                
+                # Изчисляване на оранжевата точка
+                x_orange = interp_x_for_fi_interp_local(df_fi, Fi_values[layer_idx], y_red)
+                
+                if x_orange is not None:
                     # ОРАНЖЕВА ТОЧКА
                     plt.plot(x_orange, y_red, 'o', color='orange', 
                             markersize=10, label='Точка (φ)')
