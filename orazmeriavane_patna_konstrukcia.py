@@ -719,13 +719,39 @@ if all('h' in layer for layer in st.session_state.layers_data):
         """)
 
 # Функция за конвертиране на Plotly фигура в изображение
+# Функция за конвертиране на Plotly фигура в изображение (подобрена версия)
 def fig_to_image(fig):
     try:
-        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+        # Пробвайте първо с orca, ако имате инсталирана
+        try:
+            img_bytes = pio.to_image(fig, format="png", width=800, height=600, engine="orca")
+        except:
+            # Ако orca не работи, пробвайте с kaleido
+            try:
+                img_bytes = pio.to_image(fig, format="png", width=800, height=600, engine="kaleido")
+            except:
+                # Ако и двата не работят, използвайте matplotlib като резервен вариант
+                import matplotlib.pyplot as plt
+                import matplotlib
+                matplotlib.use('Agg')  # Използвайте non-interactive backend
+                
+                # Създайте проста резервна графика
+                plt.figure(figsize=(8, 6))
+                plt.text(0.5, 0.5, "Графика не може да бъде визуализирана\n(липсва Kaleido/Orca)", 
+                        ha='center', va='center', fontsize=14)
+                plt.axis('off')
+                
+                # Запазете като изображение
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+                plt.close()
+                buf.seek(0)
+                img_bytes = buf.read()
+        
         return Image.open(BytesIO(img_bytes))
     except Exception as e:
         st.error(f"Грешка при генериране на изображение: {e}")
-        st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
+        # Създайте празно изображение като fallback
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
