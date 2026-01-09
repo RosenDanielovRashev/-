@@ -728,7 +728,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             comment_style = ParagraphStyle(
                 'CommentStyle',
                 parent=styles['Normal'],
-                fontName='Helvetica',
+                fontName='DejaVuSans',
                 fontSize=10,
                 textColor=colors.HexColor('#5D4037'),
                 alignment=0,  # подравняване отляво
@@ -743,7 +743,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
             )
             
             # Добавяне на коментара с рамка
-            story.append(Paragraph("Бележки:", ParagraphStyle(
+            story.append(Paragraph("", ParagraphStyle(
                 'CommentTitle',
                 fontName=font_name,
                 fontSize=11,
