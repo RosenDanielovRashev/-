@@ -398,22 +398,25 @@ df_esr_eo = pd.read_csv("Esr_Eo_9.6.csv")
 df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
 df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
 
+
+# ЗАМЕНЕТЕ ЦЕЛИЯ ТОЗИ БЛОК КОД (от началото на фигурата до края на настройките):
+
 fig = go.Figure()
 
-# Изолинии fi
-unique_fi = sorted(df_fi['fi'].unique())
+# Изолинии fi - СИНИ с по-дебели линии
 for fi_val in unique_fi:
     df_level = df_fi[df_fi['fi'] == fi_val].sort_values(by='H/D')
     fig.add_trace(go.Scatter(
         x=df_level['H/D'],
         y=df_level['y'],
         mode='lines',
-        name=f'ϕ = {fi_val}',
-        line=dict(width=2)
+        name=f'ϕ = {fi_val}°',
+        line=dict(width=2.5, color='blue'),
+        opacity=0.8,
+        showlegend=True
     ))
 
-# Изолинии Esr/Eo
-unique_esr_eo = sorted(df_esr_eo['Esr_Eo'].unique())
+# Изолинии Esr/Eo - ЗЕЛЕНИ с по-дебели линии
 for val in unique_esr_eo:
     df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
     fig.add_trace(go.Scatter(
@@ -421,7 +424,9 @@ for val in unique_esr_eo:
         y=df_level['y'],
         mode='lines',
         name=f'Esr/Eo = {val}',
-        line=dict(width=2)
+        line=dict(width=2.5, color='green'),
+        opacity=0.8,
+        showlegend=True
     ))
 
 # Функция за интерполация на точка по H/D
@@ -477,7 +482,6 @@ def interp_x_at_y(df_curve, y_target):
             t = (y_target - y1) / (y2 - y1)
             return x1 + t * (x2 - x1)
     return None
-    
 
 # Интерполация на x (H/D) между fi изолинии
 def interp_x_for_fi_interp(df, fi_target, y_target):
@@ -506,19 +510,26 @@ def interp_x_for_fi_interp(df, fi_target, y_target):
 
 # Добавяне на червена точка и вертикална червена линия
 if point_on_esr_eo is not None:
+    # Червена точка - по-голяма
     fig.add_trace(go.Scatter(
         x=[point_on_esr_eo[0]],
         y=[point_on_esr_eo[1]],
-        mode='markers',
-        marker=dict(color='red', size=10),
-        name='Червена точка (Esr/Eo)'
+        mode='markers+text',
+        marker=dict(color='red', size=12, line=dict(width=2, color='darkred')),
+        text=['Esr/Eo точка'],
+        textposition="top center",
+        name='Точка (Esr/Eo)',
+        showlegend=True
     ))
+    
+    # Вертикална червена линия - ПЪНКТИРНА
     fig.add_trace(go.Scatter(
         x=[ratio, ratio],
         y=[0, point_on_esr_eo[1]],
         mode='lines',
-        line=dict(color='red', dash='dash'),
-        name='Вертикална линия H/D → Esr/Eo'
+        line=dict(color='red', width=3, dash='dash'),
+        name='Вертикална линия H/D → Esr/Eo',
+        showlegend=True
     ))
 
     # Добавяне на оранжева точка чрез интерполация по fi
@@ -526,37 +537,59 @@ if point_on_esr_eo is not None:
     x_orange = interp_x_for_fi_interp(df_fi, Fi_values[layer_idx], y_red)
 
     if x_orange is not None:
+        # Оранжева точка - по-голяма
         fig.add_trace(go.Scatter(
             x=[x_orange],
             y=[y_red],
-            mode='markers',
-            marker=dict(color='orange', size=10),
-            name='Оранжева точка'
+            mode='markers+text',
+            marker=dict(color='orange', size=12, line=dict(width=2, color='darkorange')),
+            text=['ϕ точка'],
+            textposition="top center",
+            name='Точка (ϕ)',
+            showlegend=True
         ))
+        
+        # Хоризонтална оранжева линия - ПЪНКТИРНА
         fig.add_trace(go.Scatter(
             x=[point_on_esr_eo[0], x_orange],
             y=[y_red, y_red],
             mode='lines',
-            line=dict(color='orange', dash='dash'),
-            name='Хоризонтална линия'
+            line=dict(color='orange', width=3, dash='dash'),
+            name='Хоризонтална линия',
+            showlegend=True
         ))
+        
+        # Вертикална оранжева линия до y=1.05 - ПЪНКТИРНА
         fig.add_trace(go.Scatter(
             x=[x_orange, x_orange],
             y=[y_red, 1.05],
             mode='lines',
-            line=dict(color='orange', dash='dash'),
-            name='Вертикална линия до y=1.05'
+            line=dict(color='orange', width=3, dash='dash'),
+            name='Вертикална линия до горен ръб',
+            showlegend=True
         ))
 
-# Настройки на графиката
-fig.update_layout(
-    title="Графика на изолинии и точки",
-    xaxis_title="H/D",
-    yaxis_title="y",
-    legend_title="Легенда",
-    width=900,
-    height=600
-)
+# Добавете ХОРИЗОНТАЛНИ референтни линии (светлосиви)
+for y_val in [0.2, 0.4, 0.6, 0.8, 1.0]:
+    fig.add_trace(go.Scatter(
+        x=[0, 1.5],
+        y=[y_val, y_val],
+        mode='lines',
+        line=dict(color='lightgray', width=1, dash='dot'),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
+
+# Добавете ВЕРТИКАЛНИ референтни линии (светлосиви)
+for x_val in [0.3, 0.6, 0.9, 1.2]:
+    fig.add_trace(go.Scatter(
+        x=[x_val, x_val],
+        y=[0, 1.05],
+        mode='lines',
+        line=dict(color='lightgray', width=1, dash='dot'),
+        showlegend=False,
+        hoverinfo='skip'
+    ))
 
 # Определяне на фиксиран мащаб
 xaxis_min = 0
@@ -575,20 +608,24 @@ fig.add_trace(go.Scatter(
 
 # Финални настройки на осите с padding за показване на последните стойности
 fig.update_layout(
-    title='Графика на изолинии',
+    title='Графика на изолинии - Номограма фиг. 9.6',
     xaxis=dict(
         title='H/D',
         showgrid=True,
-        zeroline=False,
-        range=[xaxis_min, xaxis_max * 1.005],  # Padding за последна стойност
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor='gray',
+        range=[xaxis_min, xaxis_max * 1.005],
         tickvals=np.linspace(xaxis_min, xaxis_max, 11),
         gridcolor='lightgray',
-        gridwidth=1
+        gridwidth=1,
+        tickfont=dict(size=12),
+        title_font=dict(size=14, color='darkblue')
     ),
     xaxis2=dict(
         overlaying='x',
         side='top',
-        range=[xaxis_min, xaxis_max * 1.005],  # Padding за последна стойност
+        range=[xaxis_min, xaxis_max * 1.005],
         showgrid=False,
         zeroline=False,
         ticks="outside",
@@ -597,21 +634,39 @@ fig.update_layout(
                  for x in np.linspace(xaxis_min, xaxis_max, 11)],
         ticklabeloverflow="allow",
         title='Ꚍμ/p',
-        fixedrange=True
+        fixedrange=True,
+        tickfont=dict(size=12),
+        title_font=dict(size=14, color='darkblue')
     ),
     yaxis=dict(
         title='y',
         showgrid=True,
+        zeroline=True,
+        zerolinewidth=2,
+        zerolinecolor='gray',
         gridcolor='lightgray',
-        gridwidth=1
+        gridwidth=1,
+        range=[0, 1.05],
+        tickfont=dict(size=12),
+        title_font=dict(size=14, color='darkblue')
     ),
-    showlegend=False,
-    height=600,
-    width=900,
-    margin=dict(l=50, r=50, t=50, b=50)  # Допълнителни margin за labels
+    legend=dict(
+        x=1.02,
+        y=1,
+        xanchor='left',
+        yanchor='top',
+        bgcolor='rgba(255,255,255,0.9)',
+        bordercolor='black',
+        borderwidth=1,
+        font=dict(size=10)
+    ),
+    showlegend=True,
+    height=700,
+    width=950,
+    margin=dict(l=50, r=200, t=50, b=50),  # Увеличен десен margin за легендата
+    plot_bgcolor='white',
+    paper_bgcolor='white'
 )
-
-
 
 st.plotly_chart(fig, use_container_width=True)
 
