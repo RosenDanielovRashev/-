@@ -1003,6 +1003,9 @@ def generate_pdf_report():
 
         # ... (продължавате с останалия код както е в оригиналната функция) ...
 
+        # НОВ ЛИСТ ЗА ГРАФИКИ
+        story.append(PageBreak())
+        
         # ИЗЧИСЛЕНИЯ
         calculations_title_style = ParagraphStyle(
             'CalculationsTitle',
