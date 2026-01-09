@@ -1251,9 +1251,14 @@ def generate_pdf_report():
                 width=1200, 
                 height=800,
                 scale=4,
-                engine="kaleido"
+                engine="kaleido",
+                # Добавете тези параметри:
+                engine_kwargs={
+                    'command': ['kaleido', '--format', 'png', '--scale', '4', '--width', '1200', '--height', '800'],
+                    'quiet': True,
+                    'timeout': 30
+                }
             )
-            
             pil_img = PILImage.open(BytesIO(img_bytes))
             img_buffer = io.BytesIO()
             pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
