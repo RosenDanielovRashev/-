@@ -670,6 +670,32 @@ st.image("9.8 Таблица.png", width=600)
 if 'K_values' not in st.session_state:
     st.session_state.K_values = {}
 
+# Запазване на стойностите за τμ/p и τμ в session_state за PDF отчета
+# Трябва да се изчисли преди функцията generate_pdf_report
+if 'point_on_esr_eo' in locals() and point_on_esr_eo is not None:
+    # Изчисляване на x_orange отново или използване на вече изчислената стойност
+    y_red = point_on_esr_eo[1]
+    
+    # Използвайте същата функция за интерполация
+    x_orange_for_pdf = interp_x_for_fi_interp(df_fi, Fi_values[layer_idx], y_red)
+    
+    if x_orange_for_pdf is not None:
+        sigma_r_pdf = round(x_orange_for_pdf / 10, 3)
+        p_value_pdf = 0.620 if axle_load == 100 else 0.633
+        tau_mu_pdf = sigma_r_pdf * p_value_pdf
+        
+        st.session_state['pdf_tau_mu_sigma_r'] = sigma_r_pdf
+        st.session_state['pdf_tau_mu_value'] = tau_mu_pdf
+        st.session_state['pdf_tau_mu_x_orange'] = x_orange_for_pdf
+    else:
+        st.session_state['pdf_tau_mu_sigma_r'] = 0.0
+        st.session_state['pdf_tau_mu_value'] = 0.0
+        st.session_state['pdf_tau_mu_x_orange'] = None
+else:
+    st.session_state['pdf_tau_mu_sigma_r'] = 0.0
+    st.session_state['pdf_tau_mu_value'] = 0.0
+    st.session_state['pdf_tau_mu_x_orange'] = None
+
 # Добавяне на полета за въвеждане на K стойностите и C
 st.markdown("### Въведете коефициентите за изчисление")
 cols = st.columns(4)  # Сега имаме 4 колони
@@ -995,16 +1021,25 @@ def generate_pdf_report():
             fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D}}} = {ratio:.3f}",
             fr"\frac{{Esr}}{{E_o}} = \frac{{{Esr}}}{{{Eo}}} = {Esr_over_Eo:.3f}",
         ]
-
-        if 'x_orange' in locals() and x_orange is not None:
+        
+        # Използвайте стойностите от session_state
+        sigma_r_pdf = st.session_state.get('pdf_tau_mu_sigma_r', 0.0)
+        tau_mu_pdf = st.session_state.get('pdf_tau_mu_value', 0.0)
+        x_orange_pdf = st.session_state.get('pdf_tau_mu_x_orange', None)
+        
+        # Определете p_value за PDF (същото като в основния код)
+        axle_load_pdf = st.session_state.get('axle_load', axle_load)
+        p_value_pdf = 0.620 if axle_load_pdf == 100 else 0.633
+        
+        if x_orange_pdf is not None and sigma_r_pdf > 0:
             calculation_formulas.extend([
-                fr"\frac{{\tau_\mu}}{{p}} = {sigma_r:.3f}",
-                fr"\tau_\mu = {sigma_r:.3f} \times {p_value:.3f} = {tau_mu:.6f} \ \mathrm{{MPa}}",
+                fr"\frac{{\tau_\mu}}{{p}} = {sigma_r_pdf:.3f}",
+                fr"\tau_\mu = {sigma_r_pdf:.3f} \times {p_value_pdf:.3f} = {tau_mu_pdf:.6f} \ \mathrm{{MPa}}",
             ])
         else:
             calculation_formulas.extend([
-                r"\frac{\tau_\mu}{p} = -",
-                r"\tau_\mu = -",
+                fr"\frac{{\tau_\mu}}{{p}} = {sigma_r_pdf:.3f}",
+                fr"\tau_\mu = {tau_mu_pdf:.6f} \ \mathrm{{MPa}}",
             ])
 
         if tau_b is not None:
@@ -1017,9 +1052,12 @@ def generate_pdf_report():
             fr"\tau_{{dop}} = {K:.3f} \times {C:.3f} = {tau_dop:.6f} \ \mathrm{{MPa}}",
         ])
 
-        if 'tau_mu' in locals() and tau_b is not None:
+        # Използвайте стойностите от session_state за τμ
+        tau_mu_for_sum = st.session_state.get('pdf_tau_mu_value', 0.0)
+        if tau_mu_for_sum > 0 and tau_b is not None:
+            left_side_pdf = tau_mu_for_sum + tau_b
             calculation_formulas.extend([
-                fr"\tau_\mu + \tau_b = {tau_mu:.6f} + {tau_b:.6f} = {left_side:.6f} \ \mathrm{{MPa}}",
+                fr"\tau_\mu + \tau_b = {tau_mu_for_sum:.6f} + {tau_b:.6f} = {left_side_pdf:.6f} \ \mathrm{{MPa}}",
             ])
 
         calc_table_data = []
@@ -1069,10 +1107,14 @@ def generate_pdf_report():
         )
         story.append(Paragraph("РЕЗУЛТАТ И ПРОВЕРКА", results_title_style))
 
-        check_passed = left_side <= right_side
+        # Използвайте правилните стойности
+        tau_mu_for_check = st.session_state.get('pdf_tau_mu_value', 0.0)
+        left_side_pdf = tau_mu_for_check + tau_b if tau_b is not None else tau_mu_for_check
+        check_passed = left_side_pdf <= right_side
+        
         results_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ"],
-            ["τμ + τb", f"{left_side:.6f} MPa"],
+            ["τμ + τb", f"{left_side_pdf:.6f} MPa"],
             ["K × C", f"{right_side:.6f} MPa"]
         ]
 
