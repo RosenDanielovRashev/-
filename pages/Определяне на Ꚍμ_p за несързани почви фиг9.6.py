@@ -1258,19 +1258,27 @@ def generate_pdf_report():
                 margin=dict(r=150)
             )
             
-            # Създаване на BytesIO буфер като при τb
-            img_buffer = io.BytesIO()
+            # Настройки за цветен експорт
+            config = {
+                'toImageButtonOptions': {
+                    'format': 'png',
+                    'scale': 4
+                }
+            }
             
-            # Запазване директно в буфера (подобно на tau_b_fig.savefig)
-            pdf_fig.write_image(
-                img_buffer,
-                format='png',
-                width=1200,
+            # Конвертиране на фигурата
+            img_bytes = pio.to_image(
+                pdf_fig, 
+                format="png", 
+                width=1200, 
                 height=800,
                 scale=4,
-                engine='kaleido'
+                engine="kaleido",
+                config=config
             )
-            
+            pil_img = PILImage.open(BytesIO(img_bytes))
+            img_buffer = io.BytesIO()
+            pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
             img_buffer.seek(0)
             
             story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
