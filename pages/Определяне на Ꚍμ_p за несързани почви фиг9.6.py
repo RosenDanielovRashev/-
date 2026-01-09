@@ -1158,89 +1158,12 @@ def generate_pdf_report():
         story.append(Paragraph("ГРАФИКА НА ИЗОЛИНИИТЕ", graph_title_style))
         
         try:
-            # Оптимизирана версия на графиката за PDF
-            pdf_fig = go.Figure()
+            # Използвай директно съществуващата цветна фигура 'fig'
+            # Създай копие на фигурата, за да не се промени оригиналната
+            pdf_fig = go.Figure(fig)
             
-            # Добавяне на изолиниите
-            for fi_val in unique_fi:
-                df_level = df_fi[df_fi['fi'] == fi_val].sort_values(by='H/D')
-                pdf_fig.add_trace(go.Scatter(
-                    x=df_level['H/D'],
-                    y=df_level['y'],
-                    mode='lines',
-                    name=f'ϕ = {fi_val}',
-                    line=dict(width=2)
-                ))
-
-            for val in unique_esr_eo:
-                df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
-                pdf_fig.add_trace(go.Scatter(
-                    x=df_level['H/D'],
-                    y=df_level['y'],
-                    mode='lines',
-                    name=f'Esr/Eo = {val}',
-                    line=dict(width=2)
-                ))
-
-            # Добавяне на точките и линиите (ако има изчисление)
-            if point_on_esr_eo is not None:
-                pdf_fig.add_trace(go.Scatter(
-                    x=[point_on_esr_eo[0]],
-                    y=[point_on_esr_eo[1]],
-                    mode='markers',
-                    marker=dict(color='red', size=10),
-                    name='Червена точка'
-                ))
-                
-                pdf_fig.add_trace(go.Scatter(
-                    x=[ratio, ratio],
-                    y=[0, point_on_esr_eo[1]],
-                    mode='lines',
-                    line=dict(color='red', dash='dash'),
-                    name='Вертикална линия'
-                ))
-
-                if 'x_orange' in locals() and x_orange is not None:
-                    pdf_fig.add_trace(go.Scatter(
-                        x=[x_orange],
-                        y=[y_red],
-                        mode='markers',
-                        marker=dict(color='orange', size=10),
-                        name='Оранжева точка'
-                    ))
-                    
-                    pdf_fig.add_trace(go.Scatter(
-                        x=[point_on_esr_eo[0], x_orange],
-                        y=[y_red, y_red],
-                        mode='lines',
-                        line=dict(color='orange', dash='dash'),
-                        name='Хоризонтална линия'
-                    ))
-
-            # Настройки за PDF
+            # Допълнителни настройки за подобрено качество на PDF експорта
             pdf_fig.update_layout(
-                title=dict(
-                    text="Номограма: Ꚍμ/p за несързани почви (фиг. 9.6)",
-                    font=dict(size=19.8, color='black', family="Arial")
-                ),
-                xaxis=dict(
-                    title="H/D",
-                    title_font=dict(size=15.4, color='black'),
-                    tickfont=dict(size=13.2, color='black'),
-                    linecolor='black',
-                    gridcolor='lightgray',
-                    mirror=True,
-                    showgrid=True
-                ),
-                yaxis=dict(
-                    title="y",
-                    title_font=dict(size=15.4, color='black'),
-                    tickfont=dict(size=13.2, color='black'),
-                    linecolor='black',
-                    gridcolor='lightgray',
-                    mirror=True,
-                    showgrid=True
-                ),
                 plot_bgcolor='white',
                 paper_bgcolor='white',
                 legend=dict(
@@ -1255,32 +1178,39 @@ def generate_pdf_report():
                 ),
                 width=1200,
                 height=800,
-                margin=dict(r=150)
+                margin=dict(r=150, l=50, t=50, b=50)
             )
             
             # Настройки за цветен експорт
             config = {
                 'toImageButtonOptions': {
                     'format': 'png',
-                    'scale': 4
+                    'scale': 4,
+                    'width': 1200,
+                    'height': 800
                 }
             }
             
-            # Конвертиране на фигурата
+            # Конвертиране на фигурата към изображение с цветовете
             img_bytes = pio.to_image(
-                pdf_fig, 
+                pdf_fig,  # <-- Използвай копието на съществуващата fig
                 format="png", 
                 width=1200, 
                 height=800,
-                scale=4,
+                scale=3,  # Добра скала за баланс между качество и размер
                 engine="kaleido",
                 config=config
             )
+            
+            # Отвори изображението и го запази
             pil_img = PILImage.open(BytesIO(img_bytes))
             img_buffer = io.BytesIO()
+            
+            # Запази с висока резолюция за PDF
             pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
             img_buffer.seek(0)
             
+            # Добави изображението към PDF
             story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
             story.append(Spacer(1, 15))
             
