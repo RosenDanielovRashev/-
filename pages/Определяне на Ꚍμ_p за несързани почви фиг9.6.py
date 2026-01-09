@@ -1165,21 +1165,47 @@ def generate_pdf_report():
             colors_fi = plt.cm.tab20(np.linspace(0, 1, len(unique_fi)))
             colors_esr = plt.cm.Set2(np.linspace(0, 1, len(unique_esr_eo)))
             
-            # φ изолинии (плътни линии)
+            # φ изолинии (плътни линии) с етикети на линията
             for idx, fi_val in enumerate(unique_fi):
                 df_level = df_fi[df_fi['fi'] == fi_val].sort_values(by='H/D')
                 if not df_level.empty:
                     plt.plot(df_level['H/D'], df_level['y'], 
                             color=colors_fi[idx], linewidth=2,
                             label=f'φ = {fi_val}°')
+                    
+                    # Добавяне на етикет на самата линия
+                    # Избери точка близо до края на линията за етикета
+                    x_pos = df_level['H/D'].iloc[-1] if len(df_level) > 0 else 0
+                    y_pos = df_level['y'].iloc[-1] if len(df_level) > 0 else 0
+                    
+                    plt.text(x_pos + 0.01, y_pos, f'φ={fi_val}°', 
+                            fontsize=9, color=colors_fi[idx],
+                            va='center', ha='left',
+                            bbox=dict(boxstyle='round,pad=0.2', 
+                                     facecolor='white', alpha=0.7,
+                                     edgecolor=colors_fi[idx]))
             
-            # Esr/Eo изолинии (пунктирани линии)
+            # Esr/Eo изолинии (пунктирани линии) с етикети на линията
             for idx, val in enumerate(unique_esr_eo):
                 df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
                 if not df_level.empty:
                     plt.plot(df_level['H/D'], df_level['y'], 
                             color=colors_esr[idx], linewidth=2, linestyle='--',
                             label=f'Esr/Eo = {val}')
+                    
+                    # Добавяне на етикет на самата линия
+                    # Избери средна точка за етикета
+                    mid_idx = len(df_level) // 2
+                    if mid_idx < len(df_level):
+                        x_pos = df_level['H/D'].iloc[mid_idx]
+                        y_pos = df_level['y'].iloc[mid_idx]
+                        
+                        plt.text(x_pos + 0.01, y_pos, f'Esr/Eo={val}', 
+                                fontsize=9, color=colors_esr[idx],
+                                va='center', ha='left',
+                                bbox=dict(boxstyle='round,pad=0.2', 
+                                         facecolor='white', alpha=0.7,
+                                         edgecolor=colors_esr[idx]))
             
             # Добавяне на точките и линиите
             if point_on_esr_eo is not None:
@@ -1188,6 +1214,14 @@ def generate_pdf_report():
                 plt.axvline(x=ratio, ymin=0, ymax=point_on_esr_eo[1]/1.05, 
                            color='red', linestyle='--', linewidth=2)
                 
+                # Етикет за червената точка
+                plt.text(point_on_esr_eo[0] + 0.02, point_on_esr_eo[1], 
+                        f'Esr/Eo={Esr_over_Eo:.2f}', 
+                        fontsize=9, color='red',
+                        bbox=dict(boxstyle='round,pad=0.2', 
+                                 facecolor='white', alpha=0.8,
+                                 edgecolor='red'))
+                
                 if 'x_orange' in locals() and x_orange is not None:
                     plt.plot(x_orange, y_red, 'o', color='orange', 
                             markersize=10, label='Точка (φ)')
@@ -1195,12 +1229,27 @@ def generate_pdf_report():
                                color='orange', linestyle='--', linewidth=2)
                     plt.axvline(x=x_orange, ymin=y_red/1.05, ymax=1.0, 
                                color='orange', linestyle='--', linewidth=2)
+                    
+                    # Етикет за оранжевата точка
+                    plt.text(x_orange + 0.02, y_red, f'φ={Fi_values[layer_idx]}°', 
+                            fontsize=9, color='orange',
+                            bbox=dict(boxstyle='round,pad=0.2', 
+                                     facecolor='white', alpha=0.8,
+                                     edgecolor='orange'))
             
             plt.xlabel('H/D', fontsize=12)
             plt.ylabel('y', fontsize=12)
             plt.title('Номограма: Ꚍμ/p за несързани почви (фиг. 9.6)', fontsize=14)
             plt.grid(True, alpha=0.3)
-            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
+            
+            # Добави втора ос x отгоре за Ꚍμ/p
+            ax_top = plt.gca().twiny()
+            ax_top.set_xlim(plt.gca().get_xlim())
+            ax_top.set_xlabel('Ꚍμ/p', fontsize=12)
+            
+            # Премахни легендата, тъй като вече имаме етикети на линиите
+            # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
+            
             plt.tight_layout()
             
             # Запази изображението
