@@ -1020,7 +1020,7 @@ def generate_pdf_report():
             fr"E_o = Ed_{{{layer_idx+1}}} = {Eo} \ \mathrm{{MPa}}",
             fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D}}} = {ratio:.3f}",
             fr"\frac{{Esr}}{{E_o}} = \frac{{{Esr}}}{{{Eo}}} = {Esr_over_Eo:.3f}",
-            fr"K \times C = {K:.3f} \times {C:.3f} = {tau_dop:.6f} \ \mathrm{{MPa}}",
+            fr"C = {C:.3f} \ \mathrm{{MPa}}",
         ]
         
         # Използвайте стойностите от session_state
