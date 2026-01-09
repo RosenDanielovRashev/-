@@ -830,6 +830,49 @@ def generate_pdf_report():
         story.append(Paragraph("Фигура 9.4 - maxH/D=2", subtitle_style))
         story.append(Spacer(1, 16.5))
 
+                # ДОБАВЕТЕ ТОВА: СВОБОДЕН ТЕКСТ ОТ ПОТРЕБИТЕЛЯ
+        # Проверка дали има текст и ако има - го добавете
+        free_text_content = st.session_state.get('pdf_comments', '')
+        if free_text_content and free_text_content.strip():
+            # Стил за коментарите
+            comment_style = ParagraphStyle(
+                'CommentStyle',
+                parent=styles['Normal'],
+                fontName='DejaVuSans',
+                fontSize=10,
+                textColor=colors.HexColor('#5D4037'),
+                alignment=0,  # подравняване отляво
+                spaceBefore=8,
+                spaceAfter=12,
+                leftIndent=10,
+                rightIndent=10,
+                borderPadding=5,
+                borderWidth=1,
+                borderColor=colors.HexColor('#BDBDBD'),
+                backColor=colors.HexColor('#FFF3E0')
+            )
+            
+            # Добавяне на коментара с рамка
+            story.append(Paragraph("", ParagraphStyle(
+                'CommentTitle',
+                fontName=font_name,
+                fontSize=11,
+                textColor=colors.HexColor('#2C5530'),
+                spaceBefore=15,
+                spaceAfter=5,
+                alignment=0
+            )))
+            
+            # Разделяне на текста на редове за по-добро форматиране
+            lines = free_text_content.strip().split('\n')
+            for line in lines:
+                if line.strip():  # Добавя само непразни редове
+                    story.append(Paragraph(line.strip(), comment_style))
+            
+            story.append(Spacer(1, 8))
+        
+        story.append(Spacer(1, 16.5))
+
         # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
         table_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ", "ЕДИНИЦА"],
@@ -1547,6 +1590,23 @@ start_page_number = st.number_input(
     help="Задайте от кой номер да започва номерацията на страниците",
     key="start_page_taumu_9_4"
 )
+
+# ДОБАВЕТЕ ТОВА НОВО ТЕКСТОВО ПОЛЕ:
+st.markdown("### Бележки и коментари")
+free_text = st.text_area(
+    "Въведете допълнителни бележки или коментари:",
+    value=st.session_state.get('pdf_comments', ''),
+    height=150,
+    help="Този текст ще се появи в PDF отчета под заглавието",
+    key="pdf_comments_input"
+)
+
+# Запазване на текста в session state
+if 'pdf_comments' not in st.session_state:
+    st.session_state.pdf_comments = ''
+if free_text != st.session_state.pdf_comments:
+    st.session_state.pdf_comments = free_text
+
 
 if st.button("📄 Генерирай PDF отчет", type="primary"):
     with st.spinner('Генериране на PDF отчет...'):
