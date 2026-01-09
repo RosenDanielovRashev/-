@@ -218,13 +218,14 @@ def plot_tau_b(fi_value, h_value):
                 h_tick_labels.append(f"{h_value:.1f}")
         
         ax.set_xticks(x_positions)
-        ax.set_xticklabels(h_tick_labels)
+        ax.set_xticklabels(h_tick_labels, fontsize=9)
+        ax.tick_params(axis='y', labelsize=9) 
         
-        ax.set_xlabel('H', fontsize=8)
-        ax.set_ylabel('τb', fontsize=8)
+        ax.set_xlabel('H', fontsize=10)
+        ax.set_ylabel('τb', fontsize=10)
         ax.set_title(f'Номограма за активно напрежение на срязване (τb)', fontsize=14)
         ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend(loc='lower left')
+        ax.legend(loc='lower left', fontsize=9) 
         
         return fig, y_tau
         
