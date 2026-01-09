@@ -398,7 +398,9 @@ df_esr_eo = pd.read_csv("Esr_Eo_9.6.csv")
 df_fi.rename(columns={df_fi.columns[2]: 'fi'}, inplace=True)
 df_esr_eo.rename(columns={df_esr_eo.columns[2]: 'Esr_Eo'}, inplace=True)
 
-
+# ⭐⭐⭐ ВАЖНО: ДЕФИНИРАЙТЕ unique_fi и unique_esr_eo ТУК ⭐⭐⭐
+unique_fi = sorted(df_fi['fi'].unique())
+unique_esr_eo = sorted(df_esr_eo['Esr_Eo'].unique())
 # ЗАМЕНЕТЕ ЦЕЛИЯ ТОЗИ БЛОК КОД (от началото на фигурата до края на настройките):
 
 fig = go.Figure()
