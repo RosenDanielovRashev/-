@@ -5,6 +5,42 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.interpolate import interp1d
 
+# ДОБАВЕНИ ИМПОРТИ ЗА PDF
+import os
+import tempfile
+import base64
+from io import BytesIO
+from datetime import datetime
+from fpdf import FPDF
+from PIL import Image
+import plotly.io as pio
+
+# Импорти за ReportLab
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Image as RLImage, Table, TableStyle, PageBreak
+)
+from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
+from reportlab.lib.utils import ImageReader
+import io
+from PIL import Image as PILImage
+from matplotlib import mathtext
+
+# Задайте настройки за kaleido за цветен експорт
+pio.kaleido.scope.default_format = "png"
+pio.kaleido.scope.default_scale = 4
+pio.kaleido.scope.default_width = 1200
+pio.kaleido.scope.default_height = 800
+pio.kaleido.scope.default_colorway = None
+pio.kaleido.scope.chromium_args = [
+    '--disable-web-security',
+    '--disable-features=VizDisplayCompositor'
+]
+
 st.markdown("""
     <style>
         .streamlit-expanderHeader {
@@ -620,6 +656,32 @@ else:
 
 st.image("9.8 Таблица.png", width=600)
 
+# Запазване на стойностите за τμ/p и τμ в session_state за PDF отчета
+# Трябва да се изчисли преди функцията generate_pdf_report
+if 'point_on_esr_eo' in locals() and point_on_esr_eo is not None:
+    # Изчисляване на x_orange отново или използване на вече изчислената стойност
+    y_red = point_on_esr_eo[1]
+    
+    # Използвайте същата функция за интерполация
+    x_orange_for_pdf = interp_x_for_fi_interp(df_fi, Fi_values[layer_idx], y_red)
+    
+    if x_orange_for_pdf is not None:
+        sigma_r_pdf = round(x_orange_for_pdf / 100, 3)
+        p_value_pdf = 0.620 if axle_load == 100 else 0.633
+        tau_mu_pdf = sigma_r_pdf * p_value_pdf
+        
+        st.session_state['pdf_tau_mu_sigma_r'] = sigma_r_pdf
+        st.session_state['pdf_tau_mu_value'] = tau_mu_pdf
+        st.session_state['pdf_tau_mu_x_orange'] = x_orange_for_pdf
+    else:
+        st.session_state['pdf_tau_mu_sigma_r'] = 0.0
+        st.session_state['pdf_tau_mu_value'] = 0.0
+        st.session_state['pdf_tau_mu_x_orange'] = None
+else:
+    st.session_state['pdf_tau_mu_sigma_r'] = 0.0
+    st.session_state['pdf_tau_mu_value'] = 0.0
+    st.session_state['pdf_tau_mu_x_orange'] = None
+
 # Инициализиране на session_state за K стойностите и C, ако не съществуват
 if 'K_values' not in st.session_state:
     st.session_state.K_values = {}
@@ -707,6 +769,813 @@ if left_side <= right_side:
     st.success(f"Условието е изпълнено: {left_side:.6f} ≤ {right_side:.6f}")
 else:
     st.error(f"Условието НЕ е изпълнено: {left_side:.6f} > {right_side:.6f}")
+
+# -------------------------------------------------
+# Функции за PDF отчет със стила от 9.6
+# -------------------------------------------------
+
+def render_formula_to_image(formula_text, fontsize=26, dpi=150):
+    """Рендва формула като изображение чрез matplotlib mathtext"""
+    plt.rcParams['text.usetex'] = False
+    plt.rcParams['mathtext.fontset'] = 'cm'
+    plt.rcParams['font.family'] = 'serif'
+    plt.rcParams['font.size'] = fontsize
+    
+    fig = plt.figure(figsize=(10.56, 1.58))
+    plt.text(0.5, 0.5, f'${formula_text}$', 
+             horizontalalignment='center', 
+             verticalalignment='center',
+             transform=plt.gca().transAxes,
+             fontsize=fontsize)
+    plt.axis('off')
+    
+    buf = BytesIO()
+    plt.savefig(buf, format='png', dpi=dpi, bbox_inches='tight', pad_inches=0.2,
+                facecolor='white', edgecolor='none')
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+def generate_pdf_report():
+    try:
+        buffer = io.BytesIO()
+        doc = SimpleDocTemplate(
+            buffer,
+            pagesize=A4,
+            leftMargin=15 * mm,
+            rightMargin=15 * mm,
+            topMargin=15 * mm,
+            bottomMargin=15 * mm
+        )
+        story = []
+        styles = getSampleStyleSheet()
+
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            font_name = 'DejaVuSans-Bold'
+        except:
+            font_name = 'Helvetica-Bold'
+
+        # ЗАГЛАВИЕ
+        title_style = ParagraphStyle(
+            'CustomTitle',
+            fontSize=20,
+            spaceAfter=5,
+            alignment=1,
+            textColor=colors.HexColor('#006064'),
+            fontName=font_name,
+            leading=20,
+        )
+        
+        story.append(Paragraph("ОПРЕДЕЛЯНЕ НА τμ/p ЗА СЪРЗАНИ ПОЧВИ", title_style))
+        subtitle_style = ParagraphStyle(
+            'Subtitle',
+            fontSize=10,
+            spaceAfter=10,
+            alignment=1,
+            textColor=colors.HexColor('#2C5530'),
+            fontName=font_name
+        )
+        story.append(Paragraph("Фигура 9.5 - maxH/D=4", subtitle_style))
+        story.append(Spacer(1, 16.5))
+
+        # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
+        table_data = [
+            ["ПАРАМЕТЪР", "СТОЙНОСТ", "ЕДИНИЦА"],
+            ["Диаметър D", f"{st.session_state.get('fig9_5_D', D):.2f}", "cm"],
+            ["Брой пластове", f"{n}", ""],
+            ["Осова тежест", f"{st.session_state.get('axle_load', axle_load)}", "kN"],
+            ["Избран пласт", f"{layer_idx + 1}", ""],
+            ["p", f"{p_value:.3f}", "MPa"],
+        ]
+
+        info_table = Table(table_data, colWidths=[66*mm, 55*mm, 33*mm], hAlign='LEFT')
+        info_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 9.9),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 5.5),
+            ('TOPPADDING', (0, 0), (-1, 0), 5.5),
+            
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+            ('FONTNAME', (0, 1), (-1, -1), font_name),
+            ('FONTSIZE', (0, 1), (-1, -1), 8.8),
+            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 3.3),
+            ('TOPPADDING', (0, 1), (-1, -1), 3.3),
+            
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+        ]))
+
+        story.append(info_table)
+        story.append(Spacer(1, 16.5))
+
+        # ТАБЛИЦА ЗА ПЛАСТОВЕТЕ
+        layer_table_data = [
+            ["Пласт", "h (cm)", "Ei (MPa)", "Ed (MPa)", "Fi (°)"]
+        ]
+        
+        # Добавяне на данните за пластовете
+        for i in range(n):
+            layer_table_data.append([
+                f"{i+1}",
+                f"{h_values[i]}",
+                f"{Ei_values[i]}",
+                f"{Ed_values[i]}",
+                f"{Fi_values[i]}"
+            ])
+        
+        # СЪЗДАВАНЕ НА СПИСЪК СЪС СТИЛОВЕ ДИНАМИЧНО
+        layer_table_style_commands = [
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C8E6C9')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.HexColor('#1B5E20')),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 10),
+            ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6),
+            ('TOPPADDING', (0, 0), (-1, 0), 6),
+            
+            # Основен фон за всички редове (бял)
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#FFFFFF')),
+            
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.black),
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 9),
+            ('ALIGN', (0, 1), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 4),
+            ('TOPPADDING', (0, 1), (-1, -1), 4),
+            
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#BDBDBD')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+        ]
+        
+        # ДОБАВЯНЕ НА АЛТЕРНИРАЩИ ЦВЕТОВЕ САМО ЗА СЪЩЕСТВУВАЩИТЕ РЕДОВЕ
+        # Добавяме светлосиви редове за всеки четен ред (след заглавния)
+        for row in range(2, len(layer_table_data), 2):  # Започваме от ред 2 (първи данни ред е 1)
+            if row < len(layer_table_data):  # Проверка за безопасност
+                layer_table_style_commands.append(
+                    ('BACKGROUND', (0, row), (-1, row), colors.HexColor('#F5F5F5'))
+                )
+        
+        layer_table = Table(layer_table_data, colWidths=[25*mm, 30*mm, 30*mm, 30*mm, 30*mm])
+        layer_table.setStyle(TableStyle(layer_table_style_commands))
+        
+        # Добавяне на заглавие за таблицата на пластовете
+        layer_title_style = ParagraphStyle(
+            'LayerTitle',
+            fontName=font_name,
+            fontSize=12,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=8,
+            alignment=0
+        )
+        story.append(Paragraph("Параметри на пластовете:", layer_title_style))
+        story.append(layer_table)
+        story.append(Spacer(1, 10))
+        
+        # ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
+        formulas_title_style = ParagraphStyle(
+            'FormulasTitle',
+            fontName=font_name,
+            fontSize=14.08,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=11,
+            alignment=0
+        )
+        story.append(Paragraph("2. Формули за изчисление", formulas_title_style))
+
+        formulas = [
+            r"H = \sum_{i=1}^n h_i",
+            r"Esr = \frac{\sum (E_i h_i)}{\sum h_i}",
+            r"\tau_\mu = \left(\frac{\tau_\mu}{p}\right) \times p",
+            r"\tau_{dop} = K \times C",
+            r"K = \frac{K_1 \cdot K_2}{d \cdot f} \cdot \frac{1}{K_3}",
+            r"\tau_\mu + \tau_b \leq K \cdot C"
+        ]
+
+        formula_table_data = []
+        for i in range(0, len(formulas), 3):
+            row = []
+            for j in range(3):
+                idx = i + j
+                if idx < len(formulas):
+                    try:
+                        img_buf = render_formula_to_image(formulas[idx], fontsize=23.76, dpi=150)
+                        row.append(RLImage(img_buf, width=85*mm, height=28*mm))
+                    except:
+                        row.append(Paragraph(formulas[idx].replace('_', '').replace('^', ''), formulas_title_style))
+                else:
+                    row.append('')
+            formula_table_data.append(row)
+
+        formula_table = Table(formula_table_data, colWidths=[70*mm, 70*mm, 70*mm])
+        formula_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        
+        story.append(formula_table)
+        story.append(Spacer(1, 16))
+
+        # ИЗЧИСЛЕНИЯ
+        calculations_title_style = ParagraphStyle(
+            'CalculationsTitle',
+            fontName=font_name,
+            fontSize=14.08,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=11,
+            alignment=0
+        )
+        story.append(Paragraph("3. Изчисления", calculations_title_style))
+
+        calculation_formulas = [
+            fr"H = {H:.2f} \ \mathrm{{cm}}",
+            fr"Esr = {Esr:.0f} \ \mathrm{{MPa}}",
+            fr"E_o = Ed_{{{layer_idx+1}}} = {Eo} \ \mathrm{{MPa}}",
+            fr"\frac{{H}}{{D}} = \frac{{{H:.2f}}}{{{D}}} = {ratio:.3f}",
+            fr"\frac{{Esr}}{{E_o}} = \frac{{{Esr}}}{{{Eo}}} = {Esr_over_Eo:.3f}",
+            fr"C = {C:.3f} \ \mathrm{{MPa}}",
+        ]
+        
+        # Използвайте стойностите от session_state
+        sigma_r_pdf = st.session_state.get('pdf_tau_mu_sigma_r', 0.0)
+        tau_mu_pdf = st.session_state.get('pdf_tau_mu_value', 0.0)
+        x_orange_pdf = st.session_state.get('pdf_tau_mu_x_orange', None)
+        
+        # Определете p_value за PDF (същото като в основния код)
+        axle_load_pdf = st.session_state.get('axle_load', axle_load)
+        p_value_pdf = 0.620 if axle_load_pdf == 100 else 0.633
+        
+        if x_orange_pdf is not None and sigma_r_pdf > 0:
+            calculation_formulas.extend([
+                fr"\frac{{\tau_\mu}}{{p}} = {sigma_r_pdf:.3f}",
+                fr"\tau_\mu = {sigma_r_pdf:.3f} \times {p_value_pdf:.3f} = {tau_mu_pdf:.6f} \ \mathrm{{MPa}}",
+            ])
+        else:
+            calculation_formulas.extend([
+                fr"\frac{{\tau_\mu}}{{p}} = {sigma_r_pdf:.3f}",
+                fr"\tau_\mu = {tau_mu_pdf:.6f} \ \mathrm{{MPa}}",
+            ])
+
+        if tau_b is not None:
+            calculation_formulas.extend([
+                fr"\tau_b = {tau_b:.6f} \ \mathrm{{MPa}}",
+            ])
+
+        calculation_formulas.extend([
+            fr"K = \frac{{{K1:.2f} \times {K2:.2f}}}{{1.15 \times 0.65}} \times \frac{{1}}{{{K3:.2f}}} = {K:.3f}",
+            fr"\tau_{{dop}} = {K:.3f} \times {C:.3f} = {tau_dop:.6f} \ \mathrm{{MPa}}",
+        ])
+
+        # Използвайте стойностите от session_state за τμ
+        tau_mu_for_sum = st.session_state.get('pdf_tau_mu_value', 0.0)
+        if tau_mu_for_sum > 0 and tau_b is not None:
+            left_side_pdf = tau_mu_for_sum + tau_b
+            calculation_formulas.extend([
+                fr"\tau_\mu + \tau_b = {tau_mu_for_sum:.6f} + {tau_b:.6f} = {left_side_pdf:.6f} \ \mathrm{{MPa}}",
+            ])
+
+        calc_table_data = []
+        for i in range(0, len(calculation_formulas), 2):
+            row = []
+            if i < len(calculation_formulas):
+                try:
+                    img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=21.12, dpi=150)
+                    row.append(RLImage(img_buf1, width=99*mm, height=28*mm))
+                except:
+                    simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
+            else:
+                row.append('')
+            
+            if i + 1 < len(calculation_formulas):
+                try:
+                    img_buf2 = render_formula_to_image(calculation_formulas[i + 1], fontsize=21.12, dpi=150)
+                    row.append(RLImage(img_buf2, width=99*mm, height=18.48*mm))
+                except:
+                    simple_text = calculation_formulas[i + 1].replace('{', '').replace('}', '').replace('\\', '')
+                    row.append(Paragraph(simple_text, calculations_title_style))
+            else:
+                row.append('')
+            
+            calc_table_data.append(row)
+
+        calc_table = Table(calc_table_data, colWidths=[105.6*mm, 105.6*mm])
+        calc_table.setStyle(TableStyle([
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+            ('TOPPADDING', (0, 0), (-1, -1), 1),
+        ]))
+        
+        story.append(calc_table)
+        story.append(Spacer(1, 10))
+
+        # РЕЗУЛТАТ И ПРОВЕРКА
+        results_title_style = ParagraphStyle(
+            'ResultsTitle',
+            fontName=font_name,
+            fontSize=17.6,
+            textColor=colors.HexColor('#006064'),
+            spaceAfter=16.5,
+            alignment=1
+        )
+        story.append(Paragraph("РЕЗУЛТАТ И ПРОВЕРКА", results_title_style))
+
+        # Използвайте правилните стойности
+        tau_mu_for_check = st.session_state.get('pdf_tau_mu_value', 0.0)
+        left_side_pdf = tau_mu_for_check + tau_b if tau_b is not None else tau_mu_for_check
+        check_passed = left_side_pdf <= right_side
+        
+        results_data = [
+            ["ПАРАМЕТЪР", "СТОЙНОСТ"],
+            ["τμ + τb", f"{left_side_pdf:.6f} MPa"],
+            ["K × C (τdop)", f"{right_side:.6f} MPa"]
+        ]
+
+        results_table = Table(results_data, colWidths=[88*mm, 66*mm], hAlign='CENTER')
+        results_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTNAME', (0, 0), (-1, 0), font_name),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 6.6),
+            ('TOPPADDING', (0, 0), (-1, 0), 6.6),
+            
+            ('BACKGROUND', (0, 1), (-1, -1), colors.HexColor('#F8F9FA')),
+            ('TEXTCOLOR', (0, 1), (-1, -1), colors.HexColor('#333333')),
+            ('FONTNAME', (0, 1), (-1, -1), font_name),
+            ('FONTSIZE', (0, 1), (-1, -1), 9.9),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 4.4),
+            ('TOPPADDING', (0, 1), (-1, -1), 4.4),
+            
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+        ]))
+
+        story.append(results_table)
+        story.append(Spacer(1, 16.5))
+
+        if check_passed:
+            status_style = ParagraphStyle(
+                'StatusOK',
+                fontName=font_name,
+                fontSize=13.2,
+                textColor=colors.HexColor('#2e7d32'),
+                spaceAfter=13.2,
+                alignment=1,
+                backColor=colors.HexColor('#e8f5e9')
+            )
+            story.append(Paragraph("УСЛОВИЕТО Е ИЗПЪЛНЕНО", status_style))
+            subtitle_style = ParagraphStyle(
+                'SubtitleStyle',
+                parent=styles['Normal'],
+                fontSize=11,
+                spaceAfter=5.5,
+                fontName=font_name,
+                textColor=colors.HexColor('#5D4037'),
+                alignment=1
+            )
+            story.append(Paragraph("τμ + τb ≤ K × C", subtitle_style))
+        else:
+            status_style = ParagraphStyle(
+                'StatusFail',
+                fontName=font_name,
+                fontSize=13.2,
+                textColor=colors.HexColor('#c62828'),
+                spaceAfter=13.2,
+                alignment=1,
+                backColor=colors.HexColor('#ffebee')
+            )
+            story.append(Paragraph("УСЛОВИЕТО НЕ Е ИЗПЪЛНЕНО", status_style))
+            subtitle_style = ParagraphStyle(
+                'SubtitleStyle',
+                parent=styles['Normal'],
+                fontSize=11,
+                spaceAfter=5.5,
+                fontName=font_name,
+                textColor=colors.HexColor('#5D4037'),
+                alignment=1
+            )
+            story.append(Paragraph("τμ + τb > K × C", subtitle_style))
+
+        # НОВ ЛИСТ ЗА ГРАФИКИ
+        story.append(PageBreak())
+
+        # ГРАФИКА НА ИЗОЛИНИИТЕ
+        graph_title_style = ParagraphStyle(
+            'GraphTitle',
+            fontName=font_name,
+            fontSize=17.6,
+            textColor=colors.HexColor('#2C5530'),
+            spaceAfter=16.5,
+            alignment=1
+        )
+        story.append(Paragraph("ГРАФИКА НА ИЗОЛИНИИТЕ", graph_title_style))
+        
+        try:
+            # Създай нова matplotlib фигура директно
+            plt.figure(figsize=(12, 8))
+            
+            # Рисуване на изолинии с различни цветове
+            colors_fi = plt.cm.tab20(np.linspace(0, 1, len(unique_fi)))
+            colors_esr = plt.cm.Set2(np.linspace(0, 1, len(unique_esr_eo)))
+            
+            # φ изолинии (плътни линии) с етикети на линията
+            for idx, fi_val in enumerate(unique_fi):
+                df_level = df_fi[df_fi['fi'] == fi_val].sort_values(by='H/D')
+                if not df_level.empty:
+                    plt.plot(df_level['H/D'], df_level['y'], 
+                            color=colors_fi[idx], linewidth=2,
+                            label=f'φ = {fi_val}°')
+                    
+                    # ДОБАВЯНЕ НА ЕТИКЕТ В СРЕДАТА НА ЛИНИЯТА
+                    if len(df_level) >= 3:
+                        # Намиране на средната точка
+                        mid_idx = len(df_level) // 2
+                        x_pos = df_level['H/D'].iloc[mid_idx]
+                        y_pos = df_level['y'].iloc[mid_idx]
+                        
+                        # Изчисляване на ъгъла на наклона на линията в тази точка
+                        if mid_idx > 0 and mid_idx < len(df_level) - 1:
+                            # Използваме точки преди и след за определяне на наклона
+                            x_before = df_level['H/D'].iloc[mid_idx - 1]
+                            y_before = df_level['y'].iloc[mid_idx - 1]
+                            x_after = df_level['H/D'].iloc[mid_idx + 1]
+                            y_after = df_level['y'].iloc[mid_idx + 1]
+                            
+                            # Изчисляване на ъгъла
+                            dx = x_after - x_before
+                            dy = y_after - y_before
+                            if dx != 0:
+                                angle = np.degrees(np.arctan(dy/dx))
+                            else:
+                                angle = 90 if dy > 0 else -90
+                        else:
+                            angle = 0
+                        
+                        # Добавяне на етикета с ротация според ъгъла на линията
+                        plt.text(x_pos, y_pos, f'φ={fi_val}°', 
+                                fontsize=9, color=colors_fi[idx],
+                                va='center', ha='center',
+                                rotation=angle,
+                                bbox=dict(boxstyle='round,pad=0.2', 
+                                         facecolor='white', alpha=0.7,
+                                         edgecolor=colors_fi[idx]))
+            
+            # Esr/Eo изолинии (пунктирани линии) с етикети на линията
+            for idx, val in enumerate(unique_esr_eo):
+                df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
+                if not df_level.empty:
+                    plt.plot(df_level['H/D'], df_level['y'], 
+                            color=colors_esr[idx], linewidth=2, linestyle='--',
+                            label=f'Esr/Eo = {val}')
+                    
+                    # ДОБАВЯНЕ НА ЕТИКЕТ В СРЕДАТА НА ЛИНИЯТА
+                    if len(df_level) >= 3:
+                        # Намиране на средната точка
+                        mid_idx = len(df_level) // 2
+                        x_pos = df_level['H/D'].iloc[mid_idx]
+                        y_pos = df_level['y'].iloc[mid_idx]
+                        
+                        # Изчисляване на ъгъла на наклона на линията в тази точка
+                        if mid_idx > 0 and mid_idx < len(df_level) - 1:
+                            # Използваме точки преди и след за определяне на наклона
+                            x_before = df_level['H/D'].iloc[mid_idx - 1]
+                            y_before = df_level['y'].iloc[mid_idx - 1]
+                            x_after = df_level['H/D'].iloc[mid_idx + 1]
+                            y_after = df_level['y'].iloc[mid_idx + 1]
+                            
+                            # Изчисляване на ъгъла
+                            dx = x_after - x_before
+                            dy = y_after - y_before
+                            if dx != 0:
+                                angle = np.degrees(np.arctan(dy/dx))
+                            else:
+                                angle = 90 if dy > 0 else -90
+                        else:
+                            angle = 0
+                        
+                        # Добавяне на етикета с ротация според ъгъла на линията
+                        plt.text(x_pos, y_pos, f'Esr/Eo={val}', 
+                                fontsize=9, color=colors_esr[idx],
+                                va='center', ha='center',
+                                rotation=angle,
+                                bbox=dict(boxstyle='round,pad=0.2', 
+                                         facecolor='white', alpha=0.7,
+                                         edgecolor=colors_esr[idx]))
+            
+            # Добавяне на точките и линиите
+            if point_on_esr_eo is not None:
+                plt.plot(point_on_esr_eo[0], point_on_esr_eo[1], 
+                        'ro', markersize=10, label='Точка (Esr/Eo)')
+                
+                # ВЕРТИКАЛНА ЧЕРВЕНА ЛИНИЯ (от H/D до точката)
+                plt.plot([ratio, ratio], [0, point_on_esr_eo[1]], 
+                        'r--', linewidth=2, label='Вертикална линия H/D')
+                
+                # Етикет за червената точка
+                plt.text(point_on_esr_eo[0] + 0.02, point_on_esr_eo[1], 
+                        f'Esr/Eo={Esr_over_Eo:.2f}', 
+                        fontsize=9, color='red',
+                        bbox=dict(boxstyle='round,pad=0.2', 
+                                 facecolor='white', alpha=0.8,
+                                 edgecolor='red'))
+                
+                # ПРЕИЗЧИСЛЯВАНЕ НА ОРАНЖЕВАТА ТОЧКА ТУК, ВЪТРЕ В ФУНКЦИЯТА
+                y_red = point_on_esr_eo[1]
+                
+                # Функция за интерполация по y за дадена fi изолиния (локална версия)
+                def interp_x_at_y_local(df_curve, y_target):
+                    x_arr = df_curve['H/D'].values
+                    y_arr = df_curve['y'].values
+                    for k in range(len(y_arr) - 1):
+                        y1, y2 = y_arr[k], y_arr[k + 1]
+                        if (y1 - y_target) * (y2 - y_target) <= 0:
+                            x1, x2 = x_arr[k], x_arr[k + 1]
+                            if y2 == y1:
+                                return x1
+                            t = (y_target - y1) / (y2 - y1)
+                            return x1 + t * (x2 - x1)
+                    return None
+                
+                # Интерполация на x (H/D) между fi изолинии (локална версия)
+                def interp_x_for_fi_interp_local(df, fi_target, y_target):
+                    fi_values = sorted(df['fi'].unique())
+                    lower_fi = [v for v in fi_values if v <= fi_target]
+                    upper_fi = [v for v in fi_values if v >= fi_target]
+        
+                    if not lower_fi or not upper_fi:
+                        return None
+        
+                    fi1 = lower_fi[-1]
+                    fi2 = upper_fi[0]
+        
+                    if fi1 == fi2:
+                        df1 = df[df['fi'] == fi1].sort_values(by='y')
+                        return interp_x_at_y_local(df1, y_target)
+                    else:
+                        df1 = df[df['fi'] == fi1].sort_values(by='y')
+                        df2 = df[df['fi'] == fi2].sort_values(by='y')
+                        x1 = interp_x_at_y_local(df1, y_target)
+                        x2 = interp_x_at_y_local(df2, y_target)
+                        if x1 is not None and x2 is not None:
+                            t = (fi_target - fi1) / (fi2 - fi1)
+                            return x1 + t * (x2 - x1)
+                    return None
+                
+                # Изчисляване на оранжевата точка
+                x_orange = interp_x_for_fi_interp_local(df_fi, Fi_values[layer_idx], y_red)
+                
+                if x_orange is not None:
+                    # ОРАНЖЕВА ТОЧКА
+                    plt.plot(x_orange, y_red, 'o', color='orange', 
+                            markersize=10, label='Точка (φ)')
+                    
+                    # ХОРИЗОНТАЛНА ОРАНЖЕВА ЛИНИЯ (от червена до оранжева точка)
+                    plt.plot([ratio, x_orange], [y_red, y_red], 
+                            '--', color='orange', linewidth=2, 
+                            label='Хоризонтална линия')
+                    
+                    # ВЕРТИКАЛНА ОРАНЖЕВА ЛИНИЯ (от оранжева точка до y=2.60)
+                    plt.plot([x_orange, x_orange], [y_red, 2.60], 
+                            '--', color='orange', linewidth=2,
+                            label='Вертикална линия до y=2.60')
+                    
+                    # Етикет за оранжевата точка
+                    plt.text(x_orange + 0.02, y_red, f'φ={Fi_values[layer_idx]}°', 
+                            fontsize=9, color='orange',
+                            bbox=dict(boxstyle='round,pad=0.2', 
+                                     facecolor='white', alpha=0.8,
+                                     edgecolor='orange'))
+            
+            # ЗАДАВАНЕ НА ТИКЧЕТАТЕ ПО ОСИТЕ
+            # Основна x-ос (долу): H/D
+            ax_bottom = plt.gca()
+            
+            # Задаване на диапазоните
+            x_min, x_max = 0, 4
+            ax_bottom.set_xlim(x_min, x_max)
+            ax_bottom.set_ylim(0, 2.60)
+            
+            # Тикчета за H/D (долна ос)
+            hd_ticks = np.linspace(0, 4, 11)  # 0, 0.4, 0.8, ..., 4.0
+            ax_bottom.set_xticks(hd_ticks)
+            ax_bottom.set_xticklabels([f'{tick:.1f}' for tick in hd_ticks], fontsize=9)
+            
+            # Тикчета за y-ос
+            y_ticks = np.linspace(0, 2.5, 11)  # 0, 0.25, 0.5, ..., 2.5
+            ax_bottom.set_yticks(y_ticks)
+            ax_bottom.set_yticklabels([f'{tick:.1f}' for tick in y_ticks], fontsize=9)
+            
+            ax_bottom.set_xlabel('H/D', fontsize=12)
+            ax_bottom.set_ylabel('y', fontsize=12)
+            ax_bottom.grid(True, alpha=0.3)
+            
+            # Създаване на втора x-ос (отгоре) за τμ/p
+            ax_top = ax_bottom.twiny()
+            ax_top.set_xlim(ax_bottom.get_xlim())  # Същия диапазон като долната ос
+            
+            # Тикчета за τμ/p (горна ос)
+            # Преобразуване: τμ/p = 0.040 * (H/D)
+            taumu_p_ticks = [0.040 * (tick / 4) for tick in hd_ticks]
+            ax_top.set_xticks(hd_ticks)
+            ax_top.set_xticklabels([f'{tick:.3f}' for tick in taumu_p_ticks], fontsize=9)
+            ax_top.set_xlabel('τμ/p', fontsize=12)
+            
+            # Позициониране на горната ос
+            ax_top.xaxis.set_ticks_position('top')
+            ax_top.xaxis.set_label_position('top')
+            
+            plt.title('Номограма: τμ/p за сързани почви (фиг. 9.5)', fontsize=14)
+            
+            plt.tight_layout()
+            
+            # Запази изображението
+            img_buffer = io.BytesIO()
+            plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight',
+                        facecolor='white', edgecolor='none')
+            plt.close()
+            img_buffer.seek(0)
+            
+            # Добави към PDF
+            story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
+            story.append(Spacer(1, 15))
+            
+        except Exception as e:
+            error_style = ParagraphStyle(
+                'ErrorStyle',
+                parent=styles['Normal'],
+                fontSize=11,
+                spaceAfter=5.5,
+                fontName=font_name,
+                textColor=colors.HexColor('#d32f2f'),
+                alignment=1
+            )
+            story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
+            
+        # ГРАФИКА ЗА τb
+        if tau_b_fig is not None:
+            try:
+                # Конвертиране на Matplotlib фигурата
+                img_buffer_tau = io.BytesIO()
+                tau_b_fig.savefig(img_buffer_tau, format='png', dpi=280, bbox_inches='tight')
+                img_buffer_tau.seek(0)
+                
+               
+                story.append(Paragraph("ГРАФИКА ЗА τb", graph_title_style))
+                story.append(RLImage(img_buffer_tau, width=130 * mm, height=80 * mm))
+            except Exception as e:
+                error_style = ParagraphStyle(
+                    'ErrorStyle',
+                    parent=styles['Normal'],
+                    fontSize=11,
+                    spaceAfter=5.5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=1
+                )
+                story.append(Paragraph(f"Грешка при добавяне на τb графика: {e}", error_style))
+
+        # ТАБЛИЦА 9.8
+
+        img_path_9_8 = "9.8 Таблица.png"
+        
+        if os.path.exists(img_path_9_8):
+            story.append(PageBreak())
+            table_title_style = ParagraphStyle(
+                'TableTitle',
+                fontName=font_name,
+                fontSize=15.4,
+                textColor=colors.HexColor('#2C5530'),
+                spaceAfter=11,
+                alignment=1
+            )
+            story.append(Paragraph("ТАБЛИЦА 9.8", table_title_style))
+            
+            try:
+                pil_img = PILImage.open(img_path_9_8)
+                
+                # Изчисляване на пропорциите
+                original_width, original_height = pil_img.size
+                aspect_ratio = original_height / original_width
+                
+                # Задаване на максимална ширина (например 160mm)
+                max_width = 160 * mm
+                
+                # Изчисляване на височина според пропорциите
+                calculated_height = max_width * aspect_ratio
+                
+                # Ограничаване на височината, ако е твърде голяма
+                max_height = 200 * mm
+                if calculated_height > max_height:
+                    calculated_height = max_height
+                    # Преизчисляване на ширината за новата височина
+                    max_width = calculated_height / aspect_ratio
+                
+                img_buffer_table = io.BytesIO()
+                pil_img.save(img_buffer_table, format="PNG")
+                img_buffer_table.seek(0)
+                
+                # Използвайте изчислените размери
+                story.append(RLImage(img_buffer_table, 
+                                   width=max_width, 
+                                   height=calculated_height))
+                story.append(Spacer(1, 15))
+            except Exception as e:
+                error_style = ParagraphStyle(
+                    'ErrorStyle',
+                    parent=styles['Normal'],
+                    fontSize=11,
+                    spaceAfter=5.5,
+                    fontName=font_name,
+                    textColor=colors.HexColor('#d32f2f'),
+                    alignment=1
+                )
+                story.append(Paragraph(f"Грешка при зареждане на таблицата: {e}", error_style))
+        
+        # ДАТА И ПОДПИС
+        story.append(Spacer(1, 22))
+        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
+        date_style = ParagraphStyle(
+            'DateStyle',
+            fontName=font_name,
+            fontSize=9.9,
+            alignment=2,
+            textColor=colors.HexColor('#666666')
+        )
+        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
+        
+        # Добавяне на номера на страниците С НАЧАЛЕН НОМЕР
+        def add_page_number(canvas, doc, start_page=1):
+            canvas.saveState()
+            try:
+                canvas.setFont('DejaVuSans', 8)
+            except:
+                canvas.setFont('Helvetica', 8)
+            # Добавяне на началния номер към текущия номер на страница
+            page_num = canvas.getPageNumber() + start_page - 1
+            canvas.drawString(190*mm, 15*mm, f"{page_num}")
+            canvas.restoreState()
+        
+        # Вземане на началния номер от session_state
+        start_page = st.session_state.get("start_page_taumu", 1)
+        
+        # Извикване на doc.build с правилните аргументи
+        doc.build(story, 
+                  onFirstPage=lambda canvas, doc: add_page_number(canvas, doc, start_page), 
+                  onLaterPages=lambda canvas, doc: add_page_number(canvas, doc, start_page))
+        buffer.seek(0)
+        
+        return buffer
+
+    except Exception as e:
+        st.error(f"Грешка при генериране на PDF: {e}")
+        import traceback
+        st.error(traceback.format_exc())
+        return None
+
+# -------------------------------------------------
+# UI за генериране на PDF отчет
+# -------------------------------------------------
+st.markdown("---")
+st.subheader("Генериране на PDF отчет")
+
+# Избор на начален номер на страница
+start_page_number = st.number_input(
+    "Начален номер на страница:",
+    min_value=1,
+    max_value=1000,
+    value=1,
+    step=1,
+    help="Задайте от кой номер да започва номерацията на страниците",
+    key="start_page_taumu"
+)
+
+if st.button("📄 Генерирай PDF отчет", type="primary"):
+    with st.spinner('Генериране на PDF отчет...'):
+        try:
+            pdf_buffer = generate_pdf_report()
+            if pdf_buffer:
+                st.success("✅ PDF отчетът с модерно графично оформление е готов!")
+                st.download_button(
+                    "📥 Изтегли PDF отчет",
+                    pdf_buffer,
+                    file_name=f"τμ_p_сързани_почви_Отчет_{datetime.now().strftime('%Y%m%d_%H%M')}.pdf",
+                    mime="application/pdf"
+                )
+            else:
+                st.error("❌ Неуспешно генериране на PDF. Моля, проверете грешките по-горе.")
+        except Exception as e:
+            st.error(f"Грешка при генериране на PDF: {str(e)}")
 
 # Линк към предишната страница
 st.page_link("orazmeriavane_patna_konstrukcia.py", label="Към Оразмеряване на пътна конструкция", icon="📄")
