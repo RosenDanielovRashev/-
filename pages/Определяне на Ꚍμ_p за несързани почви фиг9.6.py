@@ -1116,7 +1116,7 @@ def generate_pdf_report():
         results_data = [
             ["ПАРАМЕТЪР", "СТОЙНОСТ"],
             ["τμ + τb", f"{left_side_pdf:.6f} MPa"],
-            ["K × C (τ_dop)", f"{right_side:.6f} MPa"]
+            ["K × C (τ$_{dop}$)", f"{right_side:.6f} MPa"]
         ]
 
         results_table = Table(results_data, colWidths=[88*mm, 66*mm], hAlign='CENTER')
