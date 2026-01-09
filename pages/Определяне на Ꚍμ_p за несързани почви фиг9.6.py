@@ -966,9 +966,6 @@ def generate_pdf_report():
         formulas = [
             r"H = \sum_{i=1}^n h_i",
             r"Esr = \frac{\sum (E_i h_i)}{\sum h_i}",
-            r"E_o = Ed_i", 
-            r"\frac{H}{D}",
-            r"\frac{Esr}{E_o}",
             r"\tau_\mu = \left(\frac{\tau_\mu}{p}\right) \times p",
             r"\tau_{dop} = K \times C",
             r"K = \frac{K_1 \cdot K_2}{d \cdot f} \cdot \frac{1}{K_3}",
