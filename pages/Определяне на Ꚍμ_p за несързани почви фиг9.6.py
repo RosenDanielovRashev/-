@@ -983,7 +983,7 @@ def generate_pdf_report():
                 if idx < len(formulas):
                     try:
                         img_buf = render_formula_to_image(formulas[idx], fontsize=23.76, dpi=150)
-                        row.append(RLImage(img_buf, width=66*mm, height=19.8*mm))
+                        row.append(RLImage(img_buf, width=66*mm, height=23*mm))
                     except:
                         row.append(Paragraph(formulas[idx].replace('_', '').replace('^', ''), formulas_title_style))
                 else:
@@ -994,12 +994,12 @@ def generate_pdf_report():
         formula_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 8.8),
-            ('TOPPADDING', (0, 0), (-1, -1), 8.8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
         ]))
         
         story.append(formula_table)
-        story.append(Spacer(1, 22))
+        story.append(Spacer(1, 16))
 
         # ... (продължавате с останалия код както е в оригиналната функция) ...
 
@@ -1066,7 +1066,7 @@ def generate_pdf_report():
             if i < len(calculation_formulas):
                 try:
                     img_buf1 = render_formula_to_image(calculation_formulas[i], fontsize=21.12, dpi=150)
-                    row.append(RLImage(img_buf1, width=99*mm, height=18.48*mm))
+                    row.append(RLImage(img_buf1, width=99*mm, height=23*mm))
                 except:
                     simple_text = calculation_formulas[i].replace('{', '').replace('}', '').replace('\\', '')
                     row.append(Paragraph(simple_text, calculations_title_style))
@@ -1089,12 +1089,12 @@ def generate_pdf_report():
         calc_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6.6),
-            ('TOPPADDING', (0, 0), (-1, -1), 6.6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
         ]))
         
         story.append(calc_table)
-        story.append(Spacer(1, 22))
+        story.append(Spacer(1, 16))
 
         # РЕЗУЛТАТ И ПРОВЕРКА
         results_title_style = ParagraphStyle(
