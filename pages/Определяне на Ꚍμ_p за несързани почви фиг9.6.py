@@ -1237,15 +1237,45 @@ def generate_pdf_report():
                                      facecolor='white', alpha=0.8,
                                      edgecolor='orange'))
             
-            plt.xlabel('H/D', fontsize=12)
-            plt.ylabel('y', fontsize=12)
-            plt.title('Номограма: Ꚍμ/p за несързани почви (фиг. 9.6)', fontsize=14)
-            plt.grid(True, alpha=0.3)
+            # ЗАДАВАНЕ НА ТИКЧЕТАТЕ ПО ОСИТЕ (както в Plotly графиката)
+            # Основна x-ос (долу): H/D
+            ax_bottom = plt.gca()
             
-            # Добави втора ос x отгоре за Ꚍμ/p
-            ax_top = plt.gca().twiny()
-            ax_top.set_xlim(plt.gca().get_xlim())
+            # Задаване на диапазоните
+            x_min, x_max = 0, 1.5
+            ax_bottom.set_xlim(x_min, x_max)
+            ax_bottom.set_ylim(0, 1.05)
+            
+            # Тикчета за H/D (долна ос)
+            hd_ticks = np.linspace(0, 1.5, 11)  # 0, 0.15, 0.3, ..., 1.5
+            ax_bottom.set_xticks(hd_ticks)
+            ax_bottom.set_xticklabels([f'{tick:.1f}' for tick in hd_ticks], fontsize=9)
+            
+            # Тикчета за y-ос
+            y_ticks = np.linspace(0, 1.0, 11)  # 0, 0.1, 0.2, ..., 1.0
+            ax_bottom.set_yticks(y_ticks)
+            ax_bottom.set_yticklabels([f'{tick:.1f}' for tick in y_ticks], fontsize=9)
+            
+            ax_bottom.set_xlabel('H/D', fontsize=12)
+            ax_bottom.set_ylabel('y', fontsize=12)
+            ax_bottom.grid(True, alpha=0.3)
+            
+            # Създаване на втора x-ос (отгоре) за Ꚍμ/p
+            ax_top = ax_bottom.twiny()
+            ax_top.set_xlim(ax_bottom.get_xlim())  # Същия диапазон като долната ос
+            
+            # Тикчета за Ꚍμ/p (горна ос)
+            # Преобразуване: Ꚍμ/p = 0.150 * (H/D)
+            taumu_p_ticks = [0.150 * (tick / 1.5) for tick in hd_ticks]
+            ax_top.set_xticks(hd_ticks)
+            ax_top.set_xticklabels([f'{tick:.3f}' for tick in taumu_p_ticks], fontsize=9)
             ax_top.set_xlabel('Ꚍμ/p', fontsize=12)
+            
+            # Позициониране на горната ос
+            ax_top.xaxis.set_ticks_position('top')
+            ax_top.xaxis.set_label_position('top')
+            
+            plt.title('Номограма: Ꚍμ/p за несързани почви (фиг. 9.6)', fontsize=14)
             
             # Премахни легендата, тъй като вече имаме етикети на линиите
             # plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
@@ -1274,7 +1304,6 @@ def generate_pdf_report():
                 alignment=1
             )
             story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
-
         # ГРАФИКА ЗА τb
         if tau_b_fig is not None:
             try:
