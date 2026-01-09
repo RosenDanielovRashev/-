@@ -838,11 +838,10 @@ def generate_pdf_report():
             font_name_bold = 'Helvetica-Bold'
 
         try:
-            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
-            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
-            font_name = 'DejaVuSans-Bold'
+            # Използвайте вече регистрираните шрифтове
+            font_name = font_name_bold  # Това вече е 'DejaVuSans-Bold' или fallback
         except:
-            font_name = 'Helvetica-Bold'
+            font_name = font_name_bold
 
         # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
