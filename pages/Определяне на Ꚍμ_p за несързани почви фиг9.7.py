@@ -867,7 +867,7 @@ def generate_pdf_report():
             )
             
             # Добавяне на коментара с рамка
-            story.append(Paragraph("Бележки:", ParagraphStyle(
+            story.append(Paragraph("", ParagraphStyle(
                 'CommentTitle',
                 fontName=font_name,
                 fontSize=11,
