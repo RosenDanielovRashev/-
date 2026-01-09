@@ -1211,8 +1211,10 @@ def generate_pdf_report():
             if point_on_esr_eo is not None:
                 plt.plot(point_on_esr_eo[0], point_on_esr_eo[1], 
                         'ro', markersize=10, label='Точка (Esr/Eo)')
-                plt.axvline(x=ratio, ymin=0, ymax=point_on_esr_eo[1]/1.05, 
-                           color='red', linestyle='--', linewidth=2)
+                
+                # ВЕРТИКАЛНА ЧЕРВЕНА ЛИНИЯ (от H/D до точката)
+                plt.plot([ratio, ratio], [0, point_on_esr_eo[1]], 
+                        'r--', linewidth=2, label='Вертикална линия H/D')
                 
                 # Етикет за червената точка
                 plt.text(point_on_esr_eo[0] + 0.02, point_on_esr_eo[1], 
@@ -1223,12 +1225,19 @@ def generate_pdf_report():
                                  edgecolor='red'))
                 
                 if 'x_orange' in locals() and x_orange is not None:
+                    # ОРАНЖЕВА ТОЧКА
                     plt.plot(x_orange, y_red, 'o', color='orange', 
                             markersize=10, label='Точка (φ)')
-                    plt.axhline(y=y_red, xmin=ratio/1.5, xmax=x_orange/1.5, 
-                               color='orange', linestyle='--', linewidth=2)
-                    plt.axvline(x=x_orange, ymin=y_red/1.05, ymax=1.0, 
-                               color='orange', linestyle='--', linewidth=2)
+                    
+                    # ХОРИЗОНТАЛНА ОРАНЖЕВА ЛИНИЯ (от червена до оранжева точка)
+                    plt.plot([ratio, x_orange], [y_red, y_red], 
+                            '--', color='orange', linewidth=2, 
+                            label='Хоризонтална линия')
+                    
+                    # ВЕРТИКАЛНА ОРАНЖЕВА ЛИНИЯ (от оранжева точка до y=1.05)
+                    plt.plot([x_orange, x_orange], [y_red, 1.05], 
+                            '--', color='orange', linewidth=2,
+                            label='Вертикална линия до y=1.05')
                     
                     # Етикет за оранжевата точка
                     plt.text(x_orange + 0.02, y_red, f'φ={Fi_values[layer_idx]}°', 
@@ -1304,6 +1313,7 @@ def generate_pdf_report():
                 alignment=1
             )
             story.append(Paragraph(f"Грешка при генериране на графика: {e}", error_style))
+            
         # ГРАФИКА ЗА τb
         if tau_b_fig is not None:
             try:
