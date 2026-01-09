@@ -220,8 +220,8 @@ def plot_tau_b(fi_value, h_value):
         ax.set_xticks(x_positions)
         ax.set_xticklabels(h_tick_labels)
         
-        ax.set_xlabel('H', fontsize=12)
-        ax.set_ylabel('τb', fontsize=12)
+        ax.set_xlabel('H', fontsize=8)
+        ax.set_ylabel('τb', fontsize=8)
         ax.set_title(f'Номограма за активно напрежение на срязване (τb)', fontsize=14)
         ax.grid(True, linestyle='--', alpha=0.5)
         ax.legend(loc='lower left')
