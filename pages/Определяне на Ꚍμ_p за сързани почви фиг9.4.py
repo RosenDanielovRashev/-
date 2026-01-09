@@ -196,7 +196,7 @@ def plot_tau_b(fi_value, h_value):
         
         # Маркиране на пресечната точка с интерполирана x координата
         
-    
+        # НАМАЛЕНИ ШРИФТОВЕ В ЛЕГЕНДАТА - като в 9.6
         ax.plot(x_value, y_tau, 'ko', markersize=8, 
                 label=f'τb = {y_tau:.6f}\nH: {h_low}→{h_value}→{h_high}\nφ: {fi_low}→{fi_value}→{fi_high}')
         
@@ -218,21 +218,26 @@ def plot_tau_b(fi_value, h_value):
                 x_positions.append(x_value)
                 h_tick_labels.append(f"{h_value:.1f}")
         
+        # НАМАЛЕНИ ШРИФТОВЕ ПОД ТИКЧЕТАТА - като в 9.6
         ax.set_xticks(x_positions)
-        ax.set_xticklabels(h_tick_labels)
+        ax.set_xticklabels(h_tick_labels, fontsize=9)  # Добавен fontsize=9
+        ax.tick_params(axis='y', labelsize=9)  # Добавено за y-ос
         
-        ax.set_xlabel('H', fontsize=12)
-        ax.set_ylabel('τb', fontsize=12)
+        # НАМАЛЕНИ ШРИФТОВЕ ЗА ЕТИКЕТИТЕ - като в 9.6
+        ax.set_xlabel('H', fontsize=10)  # Променено от 12 на 10
+        ax.set_ylabel('τb', fontsize=10)  # Променено от 12 на 10
         ax.set_title(f'Номограма за активно напрежение на срязване (τb)', fontsize=14)
         ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend(loc='lower left')
+        
+        # НАМАЛЕНИ ШРИФТОВЕ В ЛЕГЕНДАТА - като в 9.6
+        ax.legend(loc='lower left', fontsize=12)  # Добавен fontsize=12
         
         return fig, y_tau
         
     except Exception as e:
         st.error(f"Грешка при изчисляване на τb: {str(e)}")
         return None, None
-
+        
 def to_subscript(number):
     subscripts = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
     return str(number).translate(subscripts)
