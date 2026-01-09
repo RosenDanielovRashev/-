@@ -811,7 +811,7 @@ def generate_pdf_report():
             
             story.append(Spacer(1, 2))
         
-        story.append(Spacer(1, 5))
+        story.append(Spacer(1, 10))
 
         # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
         table_data = [
