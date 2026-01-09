@@ -1298,7 +1298,7 @@ def generate_pdf_report():
                 story.append(Paragraph(f"Грешка при добавяне на τb графика: {e}", error_style))
 
         # ТАБЛИЦА 9.8
-        img_path_9_8 = "9.8 Таблица.png"
+       
         if os.path.exists(img_path_9_8):
             story.append(PageBreak())
             table_title_style = ParagraphStyle(
@@ -1313,10 +1313,32 @@ def generate_pdf_report():
             
             try:
                 pil_img = PILImage.open(img_path_9_8)
+                
+                # Изчисляване на пропорциите
+                original_width, original_height = pil_img.size
+                aspect_ratio = original_height / original_width
+                
+                # Задаване на максимална ширина (например 160mm)
+                max_width = 160 * mm
+                
+                # Изчисляване на височина според пропорциите
+                calculated_height = max_width * aspect_ratio
+                
+                # Ограничаване на височината, ако е твърде голяма
+                max_height = 200 * mm
+                if calculated_height > max_height:
+                    calculated_height = max_height
+                    # Преизчисляване на ширината за новата височина
+                    max_width = calculated_height / aspect_ratio
+                
                 img_buffer_table = io.BytesIO()
                 pil_img.save(img_buffer_table, format="PNG")
                 img_buffer_table.seek(0)
-                story.append(RLImage(img_buffer_table, width=170 * mm, height=130 * mm))
+                
+                # Използвайте изчислените размери
+                story.append(RLImage(img_buffer_table, 
+                                   width=max_width, 
+                                   height=calculated_height))
                 story.append(Spacer(1, 15))
             except Exception as e:
                 error_style = ParagraphStyle(
@@ -1329,7 +1351,6 @@ def generate_pdf_report():
                     alignment=1
                 )
                 story.append(Paragraph(f"Грешка при зареждане на таблицата: {e}", error_style))
-
         # ДАТА И ПОДПИС
         story.append(Spacer(1, 22))
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
