@@ -822,26 +822,12 @@ def generate_pdf_report():
         story = []
         styles = getSampleStyleSheet()
 
-                # РЕГИСТРИРАНЕ НА КИРИЛИЧЕН ШРИФТ
         try:
-            # Опитайте да заредите DejaVuSans
             pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
             pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
-            
-            # Създайте име на шрифта, което ще използваме
-            font_name_normal = 'DejaVuSans'
-            font_name_bold = 'DejaVuSans-Bold'
-        except Exception as font_error:
-            st.warning(f"Неуспешно зареждане на DejaVuSans шрифт: {font_error}")
-            # Fallback на стандартни шрифтове
-            font_name_normal = 'Helvetica'
-            font_name_bold = 'Helvetica-Bold'
-
-        try:
-            # Използвайте вече регистрираните шрифтове
-            font_name = font_name_bold  # Това вече е 'DejaVuSans-Bold' или fallback
+            font_name = 'DejaVuSans-Bold'
         except:
-            font_name = font_name_bold
+            font_name = 'Helvetica-Bold'
 
         # ЗАГЛАВИЕ
         title_style = ParagraphStyle(
