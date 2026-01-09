@@ -1173,17 +1173,39 @@ def generate_pdf_report():
                             color=colors_fi[idx], linewidth=2,
                             label=f'φ = {fi_val}°')
                     
-                    # Добавяне на етикет на самата линия
-                    # Избери точка близо до края на линията за етикета
-                    x_pos = df_level['H/D'].iloc[-1] if len(df_level) > 0 else 0
-                    y_pos = df_level['y'].iloc[-1] if len(df_level) > 0 else 0
-                    
-                    plt.text(x_pos + 0.01, y_pos, f'φ={fi_val}°', 
-                            fontsize=9, color=colors_fi[idx],
-                            va='center', ha='left',
-                            bbox=dict(boxstyle='round,pad=0.2', 
-                                     facecolor='white', alpha=0.7,
-                                     edgecolor=colors_fi[idx]))
+                    # ДОБАВЯНЕ НА ЕТИКЕТ В СРЕДАТА НА ЛИНИЯТА
+                    if len(df_level) >= 3:
+                        # Намиране на средната точка
+                        mid_idx = len(df_level) // 2
+                        x_pos = df_level['H/D'].iloc[mid_idx]
+                        y_pos = df_level['y'].iloc[mid_idx]
+                        
+                        # Изчисляване на ъгъла на наклона на линията в тази точка
+                        if mid_idx > 0 and mid_idx < len(df_level) - 1:
+                            # Използваме точки преди и след за определяне на наклона
+                            x_before = df_level['H/D'].iloc[mid_idx - 1]
+                            y_before = df_level['y'].iloc[mid_idx - 1]
+                            x_after = df_level['H/D'].iloc[mid_idx + 1]
+                            y_after = df_level['y'].iloc[mid_idx + 1]
+                            
+                            # Изчисляване на ъгъла
+                            dx = x_after - x_before
+                            dy = y_after - y_before
+                            if dx != 0:
+                                angle = np.degrees(np.arctan(dy/dx))
+                            else:
+                                angle = 90 if dy > 0 else -90
+                        else:
+                            angle = 0
+                        
+                        # Добавяне на етикета с ротация според ъгъла на линията
+                        plt.text(x_pos, y_pos, f'φ={fi_val}°', 
+                                fontsize=9, color=colors_fi[idx],
+                                va='center', ha='center',
+                                rotation=angle,
+                                bbox=dict(boxstyle='round,pad=0.2', 
+                                         facecolor='white', alpha=0.7,
+                                         edgecolor=colors_fi[idx]))
             
             # Esr/Eo изолинии (пунктирани линии) с етикети на линията
             for idx, val in enumerate(unique_esr_eo):
@@ -1193,16 +1215,36 @@ def generate_pdf_report():
                             color=colors_esr[idx], linewidth=2, linestyle='--',
                             label=f'Esr/Eo = {val}')
                     
-                    # Добавяне на етикет на самата линия
-                    # Избери средна точка за етикета
-                    mid_idx = len(df_level) // 2
-                    if mid_idx < len(df_level):
+                    # ДОБАВЯНЕ НА ЕТИКЕТ В СРЕДАТА НА ЛИНИЯТА
+                    if len(df_level) >= 3:
+                        # Намиране на средната точка
+                        mid_idx = len(df_level) // 2
                         x_pos = df_level['H/D'].iloc[mid_idx]
                         y_pos = df_level['y'].iloc[mid_idx]
                         
-                        plt.text(x_pos + 0.01, y_pos, f'Esr/Eo={val}', 
+                        # Изчисляване на ъгъла на наклона на линията в тази точка
+                        if mid_idx > 0 and mid_idx < len(df_level) - 1:
+                            # Използваме точки преди и след за определяне на наклона
+                            x_before = df_level['H/D'].iloc[mid_idx - 1]
+                            y_before = df_level['y'].iloc[mid_idx - 1]
+                            x_after = df_level['H/D'].iloc[mid_idx + 1]
+                            y_after = df_level['y'].iloc[mid_idx + 1]
+                            
+                            # Изчисляване на ъгъла
+                            dx = x_after - x_before
+                            dy = y_after - y_before
+                            if dx != 0:
+                                angle = np.degrees(np.arctan(dy/dx))
+                            else:
+                                angle = 90 if dy > 0 else -90
+                        else:
+                            angle = 0
+                        
+                        # Добавяне на етикета с ротация според ъгъла на линията
+                        plt.text(x_pos, y_pos, f'Esr/Eo={val}', 
                                 fontsize=9, color=colors_esr[idx],
-                                va='center', ha='left',
+                                va='center', ha='center',
+                                rotation=angle,
                                 bbox=dict(boxstyle='round,pad=0.2', 
                                          facecolor='white', alpha=0.7,
                                          edgecolor=colors_esr[idx]))
