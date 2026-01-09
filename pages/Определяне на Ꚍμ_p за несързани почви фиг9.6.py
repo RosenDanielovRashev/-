@@ -1406,12 +1406,12 @@ def generate_pdf_report():
             try:
                 # Конвертиране на Matplotlib фигурата
                 img_buffer_tau = io.BytesIO()
-                tau_b_fig.savefig(img_buffer_tau, format='png', dpi=300, bbox_inches='tight')
+                tau_b_fig.savefig(img_buffer_tau, format='png', dpi=280, bbox_inches='tight')
                 img_buffer_tau.seek(0)
                 
                
                 story.append(Paragraph("ГРАФИКА ЗА τb", graph_title_style))
-                story.append(RLImage(img_buffer_tau, width=170 * mm, height=130 * mm))
+                story.append(RLImage(img_buffer_tau, width=150 * mm, height=110 * mm))
             except Exception as e:
                 error_style = ParagraphStyle(
                     'ErrorStyle',
