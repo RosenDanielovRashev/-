@@ -1411,7 +1411,7 @@ def generate_pdf_report():
                 
                
                 story.append(Paragraph("ГРАФИКА ЗА τb", graph_title_style))
-                story.append(RLImage(img_buffer_tau, width=150 * mm, height=110 * mm))
+                story.append(RLImage(img_buffer_tau, width=130 * mm, height=80 * mm))
             except Exception as e:
                 error_style = ParagraphStyle(
                     'ErrorStyle',
