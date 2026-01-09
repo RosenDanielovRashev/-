@@ -720,6 +720,49 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
         story.append(Paragraph("ОПЪН В МЕЖДИНЕН ПЛАСТ", title_style))
         story.append(Spacer(1, 16.5))
 
+                # ДОБАВЕТЕ ТОВА: СВОБОДЕН ТЕКСТ ОТ ПОТРЕБИТЕЛЯ
+        # Проверка дали има текст и ако има - го добавете
+        free_text_content = st.session_state.get('pdf_comments', '')
+        if free_text_content and free_text_content.strip():
+            # Стил за коментарите
+            comment_style = ParagraphStyle(
+                'CommentStyle',
+                parent=styles['Normal'],
+                fontName='Helvetica',
+                fontSize=10,
+                textColor=colors.HexColor('#5D4037'),
+                alignment=0,  # подравняване отляво
+                spaceBefore=8,
+                spaceAfter=12,
+                leftIndent=10,
+                rightIndent=10,
+                borderPadding=5,
+                borderWidth=1,
+                borderColor=colors.HexColor('#BDBDBD'),
+                backColor=colors.HexColor('#FFF3E0')
+            )
+            
+            # Добавяне на коментара с рамка
+            story.append(Paragraph("Бележки:", ParagraphStyle(
+                'CommentTitle',
+                fontName=font_name,
+                fontSize=11,
+                textColor=colors.HexColor('#2C5530'),
+                spaceBefore=15,
+                spaceAfter=5,
+                alignment=0
+            )))
+            
+            # Разделяне на текста на редове за по-добро форматиране
+            lines = free_text_content.strip().split('\n')
+            for line in lines:
+                if line.strip():  # Добавя само непразни редове
+                    story.append(Paragraph(line.strip(), comment_style))
+            
+            story.append(Spacer(1, 8))
+        
+        story.append(Spacer(1, 16.5))
+
         # ИНФОРМАЦИЯ ЗА ПАРАМЕТРИ
         axle_load = st.session_state.get("axle_load", 100)
         table_data = [
@@ -1194,6 +1237,27 @@ pdf_start_page = st.number_input(
 # Актуализираме session_state при промяна
 if pdf_start_page != st.session_state.pdf_start_page:
     st.session_state.pdf_start_page = pdf_start_page
+
+
+# ДОБАВЕТЕ ТОВА НОВО ТЕКСТОВО ПОЛЕ:
+st.markdown("### Бележки и коментари")
+free_text = st.text_area(
+    "Въведете допълнителни бележки или коментари:",
+    value=st.session_state.get('pdf_comments', ''),
+    height=150,
+    help="Този текст ще се появи в PDF отчета под заглавието",
+    key="pdf_comments_input"
+)
+
+# Запазване на текста в session state
+if 'pdf_comments' not in st.session_state:
+    st.session_state.pdf_comments = ''
+if free_text != st.session_state.pdf_comments:
+    st.session_state.pdf_comments = free_text
+
+
+
+
 
 # -------------------------------------------------
 # ПРОМЕНЕТЕ БУТОНА ЗА ГЕНЕРИРАНЕ НА PDF
