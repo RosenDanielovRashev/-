@@ -850,7 +850,7 @@ def generate_pdf_report():
         ]))
 
         story.append(info_table)
-        story.append(Spacer(1, 27.5))
+        story.append(Spacer(1, 10))
 
         # ФОРМУЛИ ЗА ИЗЧИСЛЕНИЕ
         formulas_title_style = ParagraphStyle(
