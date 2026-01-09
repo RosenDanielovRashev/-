@@ -231,13 +231,14 @@ def plot_tau_b(fi_value, h_value):
                 h_tick_labels.append(f"{h_value:.1f}")
         
         ax.set_xticks(x_positions)
-        ax.set_xticklabels(h_tick_labels)
+        ax.set_xticklabels(h_tick_labels, fontsize=9)  # <-- ДОБАВЕНО fontsize=9
+        ax.tick_params(axis='y', labelsize=9)  # <-- ДОБАВЕНО за y-оста също
         
-        ax.set_xlabel('H', fontsize=12)
-        ax.set_ylabel('τb', fontsize=12)
+        ax.set_xlabel('H', fontsize=10)  # <-- ПРОМЕНЕНО от 12 на 10
+        ax.set_ylabel('τb', fontsize=10)  # <-- ПРОМЕНЕНО от 12 на 10
         ax.set_title(f'Номограма за активно напрежение на срязване (τb)', fontsize=14)
         ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend(loc='lower left')
+        ax.legend(loc='lower left', fontsize=12)  # <-- ДОБАВЕНО fontsize=12
         
         return fig, y_tau
         
@@ -984,6 +985,8 @@ def generate_pdf_report():
         story.append(formula_table)
         story.append(Spacer(1, 16))
 
+        story.append(PageBreak())
+        
         # ИЗЧИСЛЕНИЯ
         calculations_title_style = ParagraphStyle(
             'CalculationsTitle',
