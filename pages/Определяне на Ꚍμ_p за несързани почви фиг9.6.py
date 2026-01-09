@@ -843,7 +843,7 @@ def generate_pdf_report():
         story.append(Paragraph("ОПРЕДЕЛЯНЕ НА τμ/p ЗА НЕСЪРЗАНИ ПОЧВИ", title_style))
         subtitle_style = ParagraphStyle(
             'Subtitle',
-            fontSize=14,
+            fontSize=10,
             spaceAfter=10,
             alignment=1,
             textColor=colors.HexColor('#2C5530'),
