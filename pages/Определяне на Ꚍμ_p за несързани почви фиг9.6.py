@@ -1525,6 +1525,7 @@ def generate_pdf_report():
                     alignment=1
                 )
                 story.append(Paragraph(f"Грешка при зареждане на таблицата: {e}", error_style))
+        
         # ДАТА И ПОДПИС
         story.append(Spacer(1, 22))
         current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
@@ -1537,18 +1538,25 @@ def generate_pdf_report():
         )
         story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
         
-        # Добавяне на номера на страниците
-        def add_page_number(canvas, doc):
+        # Добавяне на номера на страниците С НАЧАЛЕН НОМЕР
+        def add_page_number(canvas, doc, start_page=1):
             canvas.saveState()
             try:
                 canvas.setFont('DejaVuSans', 8)
             except:
                 canvas.setFont('Helvetica', 8)
-            page_num = canvas.getPageNumber()
+            # Добавяне на началния номер към текущия номер на страница
+            page_num = canvas.getPageNumber() + start_page - 1
             canvas.drawString(190*mm, 15*mm, f"{page_num}")
             canvas.restoreState()
         
-        doc.build(story, onFirstPage=add_page_number, onLaterPages=add_page_number)
+        # Вземане на началния номер от session_state
+        start_page = st.session_state.get("start_page_taumu", 1)
+        
+        # Извикване на doc.build с правилните аргументи
+        doc.build(story, 
+                  onFirstPage=lambda canvas, doc: add_page_number(canvas, doc, start_page), 
+                  onLaterPages=lambda canvas, doc: add_page_number(canvas, doc, start_page))
         buffer.seek(0)
         
         return buffer
