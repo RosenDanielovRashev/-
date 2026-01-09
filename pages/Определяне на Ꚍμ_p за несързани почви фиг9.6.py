@@ -859,7 +859,7 @@ def generate_pdf_report():
             comment_style = ParagraphStyle(
                 'CommentStyle',
                 parent=styles['Normal'],
-                fontName='Helvetica',
+                fontName='DejaVuSans',
                 fontSize=10,
                 textColor=colors.HexColor('#5D4037'),
                 alignment=0,  # подравняване отляво
