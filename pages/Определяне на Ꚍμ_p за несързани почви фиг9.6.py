@@ -1158,50 +1158,59 @@ def generate_pdf_report():
         story.append(Paragraph("ГРАФИКА НА ИЗОЛИНИИТЕ", graph_title_style))
         
         try:
-            # Използвай директно съществуващата цветна фигура 'fig'
-            # Създай копие на фигурата, за да не се промени оригиналната
-            pdf_fig = go.Figure(fig)
+            # Създай нова matplotlib фигура директно
+            plt.figure(figsize=(12, 8))
             
-            # Допълнителни настройки за подобрено качество на PDF експорта
-            pdf_fig.update_layout(
-                plot_bgcolor='white',
-                paper_bgcolor='white',
-                legend=dict(
-                    bgcolor='rgba(255,255,255,0.9)',
-                    bordercolor='black',
-                    borderwidth=1,
-                    font=dict(size=11, color='black'),
-                    x=1.05,
-                    y=0.5,
-                    xanchor='left',
-                    yanchor='middle'
-                ),
-                width=1200,
-                height=800,
-                margin=dict(r=150, l=50, t=50, b=50)
-            )
+            # Рисуване на изолинии с различни цветове
+            colors_fi = plt.cm.tab20(np.linspace(0, 1, len(unique_fi)))
+            colors_esr = plt.cm.Set2(np.linspace(0, 1, len(unique_esr_eo)))
             
-            # Конвертиране на фигурата към изображение с цветовете
-            # ПРЕМАХНИ параметъра 'config' - той не се поддържа
-            img_bytes = pio.to_image(
-                pdf_fig,  # <-- Използвай копието на съществуващата fig
-                format="png", 
-                width=1200, 
-                height=800,
-                scale=3,  # Добра скала за баланс между качество и размер
-                engine="kaleido"
-                # config=config  <-- ПРЕМАХНИ ТОВА
-            )
+            # φ изолинии (плътни линии)
+            for idx, fi_val in enumerate(unique_fi):
+                df_level = df_fi[df_fi['fi'] == fi_val].sort_values(by='H/D')
+                if not df_level.empty:
+                    plt.plot(df_level['H/D'], df_level['y'], 
+                            color=colors_fi[idx], linewidth=2,
+                            label=f'φ = {fi_val}°')
             
-            # Отвори изображението и го запази
-            pil_img = PILImage.open(BytesIO(img_bytes))
+            # Esr/Eo изолинии (пунктирани линии)
+            for idx, val in enumerate(unique_esr_eo):
+                df_level = df_esr_eo[df_esr_eo['Esr_Eo'] == val].sort_values(by='H/D')
+                if not df_level.empty:
+                    plt.plot(df_level['H/D'], df_level['y'], 
+                            color=colors_esr[idx], linewidth=2, linestyle='--',
+                            label=f'Esr/Eo = {val}')
+            
+            # Добавяне на точките и линиите
+            if point_on_esr_eo is not None:
+                plt.plot(point_on_esr_eo[0], point_on_esr_eo[1], 
+                        'ro', markersize=10, label='Точка (Esr/Eo)')
+                plt.axvline(x=ratio, ymin=0, ymax=point_on_esr_eo[1]/1.05, 
+                           color='red', linestyle='--', linewidth=2)
+                
+                if 'x_orange' in locals() and x_orange is not None:
+                    plt.plot(x_orange, y_red, 'o', color='orange', 
+                            markersize=10, label='Точка (φ)')
+                    plt.axhline(y=y_red, xmin=ratio/1.5, xmax=x_orange/1.5, 
+                               color='orange', linestyle='--', linewidth=2)
+                    plt.axvline(x=x_orange, ymin=y_red/1.05, ymax=1.0, 
+                               color='orange', linestyle='--', linewidth=2)
+            
+            plt.xlabel('H/D', fontsize=12)
+            plt.ylabel('y', fontsize=12)
+            plt.title('Номограма: Ꚍμ/p за несързани почви (фиг. 9.6)', fontsize=14)
+            plt.grid(True, alpha=0.3)
+            plt.legend(loc='center left', bbox_to_anchor=(1, 0.5), fontsize=10)
+            plt.tight_layout()
+            
+            # Запази изображението
             img_buffer = io.BytesIO()
-            
-            # Запази с висока резолюция за PDF
-            pil_img.save(img_buffer, format="PNG", dpi=(300, 300))
+            plt.savefig(img_buffer, format='png', dpi=300, bbox_inches='tight',
+                        facecolor='white', edgecolor='none')
+            plt.close()
             img_buffer.seek(0)
             
-            # Добави изображението към PDF
+            # Добави към PDF
             story.append(RLImage(img_buffer, width=170 * mm, height=130 * mm))
             story.append(Spacer(1, 15))
             
