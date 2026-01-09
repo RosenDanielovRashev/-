@@ -15,6 +15,19 @@ from fpdf import FPDF  # Това е ключовият импорт, който
 from PIL import Image
 import plotly.io as pio
 
+# Задайте настройки за kaleido за цветен експорт
+pio.kaleido.scope.default_format = "png"
+pio.kaleido.scope.default_scale = 4
+pio.kaleido.scope.default_width = 1200
+pio.kaleido.scope.default_height = 800
+# Важно: забранете черно-белия режим
+pio.kaleido.scope.default_colorway = None
+# Допълнителни настройки за цветен експорт
+pio.kaleido.scope.chromium_args = [
+    '--disable-web-security',
+    '--disable-features=VizDisplayCompositor'
+]
+
 # ReportLab импорти за новия стил
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase import pdfmetrics
@@ -1245,6 +1258,15 @@ def generate_pdf_report():
                 margin=dict(r=150)
             )
             
+            # Настройки за цветен експорт
+            config = {
+                'toImageButtonOptions': {
+                    'format': 'png',
+                    'scale': 4
+                }
+            }
+            
+            # Конвертиране на фигурата
             img_bytes = pio.to_image(
                 pdf_fig, 
                 format="png", 
@@ -1252,12 +1274,7 @@ def generate_pdf_report():
                 height=800,
                 scale=4,
                 engine="kaleido",
-                # Добавете тези параметри:
-                engine_kwargs={
-                    'command': ['kaleido', '--format', 'png', '--scale', '4', '--width', '1200', '--height', '800'],
-                    'quiet': True,
-                    'timeout': 30
-                }
+                config=config
             )
             pil_img = PILImage.open(BytesIO(img_bytes))
             img_buffer = io.BytesIO()
