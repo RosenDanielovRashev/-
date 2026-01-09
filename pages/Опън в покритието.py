@@ -768,7 +768,7 @@ def generate_pdf_report():
         )
         
         story.append(Paragraph("ОПЪН В ПОКРИТИЕТО", title_style))
-        story.append(Spacer(1, 16.5))
+        story.append(Spacer(1, 2))
 
                 # ДОБАВЕТЕ ТОВА: СВОБОДЕН ТЕКСТ ОТ ПОТРЕБИТЕЛЯ
         # Проверка дали има текст и ако има - го добавете
