@@ -28,6 +28,10 @@ import io
 from PIL import Image as PILImage  # ✅ Преименуваме, за да не се бърка с reportlab Image
 from reportlab.platypus import Image as RLImage  # ✅ Ясно разграничение
 
+import matplotlib
+matplotlib.use('Agg')  # Това е МНОГО ВАЖНО за сървърна среда
+import matplotlib.pyplot as plt
+
 
 
 st.set_page_config(layout="wide")
@@ -997,149 +1001,92 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             story.append(Spacer(1, 8))  # По-малко разстояние
 
             # ГЕНЕРИРАНЕ НА ГРАФИКАТА
-            fig = go.Figure()
-            
-            # Списък с всички уникални стойности на Ee/Ei
-            all_e_ei_values = sorted(data["Ee_over_Ei"].unique())
-            
-            # Намиране на стойността Ee/Ei за текущия пласт
-            current_e_ei = layer['Ee'] / layer['Ei']
-            
-            # Изчисляваме Ed/Ei точката правилно
-            if 'Ed' in layer and 'Ei' in layer and layer['Ei'] > 0:
-                EdEi_point = layer['Ed'] / layer['Ei']
-            else:
-                EdEi_point = current_e_ei  # fallback стойност
-            
-            # Филтрираме само изолиниите, които са кратни на 0.05
-            multiples_of_005 = [val for val in all_e_ei_values if abs(val * 100) % 5 == 0]
-            
-            # Намираме двата най-близки изолинии до текущата стойност, които са кратни на 0.05
-            if multiples_of_005:
-                distances = [(abs(val - current_e_ei), val) for val in multiples_of_005]
-                distances.sort()
-                # Вземаме двата най-близки
-                isos_to_label = [distances[0][1], distances[1][1]] if len(distances) >= 2 else [distances[0][1]]
-            else:
-                # Ако няма изолинии, кратни на 0.05, вземаме двата най-близки от всички
-                distances = [(abs(val - current_e_ei), val) for val in all_e_ei_values]
-                distances.sort()
-                isos_to_label = [distances[0][1], distances[1][1]] if len(distances) >= 2 else [distances[0][1]]
-                        
-            # Добавяме всички изолинии
-            for val in all_e_ei_values:
-                group_sorted = data[data["Ee_over_Ei"] == val].sort_values("h_over_D")
-                
-                fig.add_trace(go.Scatter(
-                    x=group_sorted["h_over_D"],
-                    y=group_sorted["Ed_over_Ei"],
-                    mode='lines',
-                    line=dict(width=1.5),
-                    showlegend=False,
-                    hovertemplate=f"Ee/Ei = {val:.2f}<br>h/D = %{{x:.3f}}<br>Ed/Ei = %{{y:.3f}}<extra></extra>"
-                ))
-                
-                # Добавяме надпис само за двата най-близки изолинии, които са кратни на 0.05
-                if val in isos_to_label:
-                    # Намираме точка в диапазона h/D 0-0.2 за поставяне на надписа
-                    points_in_range = group_sorted[group_sorted["h_over_D"] <= 0.2]
-                    if len(points_in_range) > 0:
-                        # Вземаме средна точка в диапазона 0-0.2
-                        mid_idx = len(points_in_range) // 2
-                        x_pos = points_in_range.iloc[mid_idx]["h_over_D"]
-                        y_pos = points_in_range.iloc[mid_idx]["Ed_over_Ei"]
-                    else:
-                        # Ако няма точки в диапазона, вземаме първата точка
-                        x_pos = group_sorted.iloc[0]["h_over_D"]
-                        y_pos = group_sorted.iloc[0]["Ed_over_Ei"]
-                    
-                    fig.add_annotation(
-                        x=x_pos,
-                        y=y_pos,
-                        text=f"{val:.2f}",
-                        showarrow=False,
-                        font=dict(size=9, color="black"),
-                        bgcolor="rgba(0,0,0,0)",  # Прозрачен фон
-                        bordercolor="rgba(0,0,0,0)"  # Прозрачна рамка
-                    )
-            
-            if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
-                hD = layer["hD_point"]
-                # Използваме изчислената EdEi_point
-                EdEi = EdEi_point
-                
-                # Добавяне на интерполационна линия
-                if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
-                    fig.add_trace(go.Scatter(
-                        x=[hD, hD],
-                        y=[layer['y_low'], layer['y_high']],
-                        mode='lines',
-                        line=dict(color='purple', dash='dash', width=2),
-                        showlegend=False
-                    ))
-                
-                fig.add_trace(go.Scatter(
-                    x=[hD], y=[EdEi],
-                    mode='markers',
-                    marker=dict(color='red', size=12),
-                    showlegend=False
-                ))
-            fig.update_layout(
-                title=f"Пласт {i + 1} ",
-                xaxis_title="h / D",
-                yaxis_title="Ed / Ei",
-                showlegend=False,
-                template="plotly_white",
-                width=1200,
-                height=800
-            )
-            # Конвертиране на фигурата в изображение с PILImage
-            # Конвертиране на фигурата в изображение (с резервни опции)
+            # ГЕНЕРИРАНЕ НА ГРАФИКАТА С MATPLOTLIB (БЕЗ KALEIDO/PLOTLY)
             try:
-                # Пробвайте различни engine-и
-                try:
-                    img_bytes = pio.to_image(fig, format="png", width=1200, height=800, engine="orca")
-                except:
-                    try:
-                        img_bytes = pio.to_image(fig, format="png", width=1200, height=800, engine="kaleido")
-                    except Exception as k_err:
-                        # Резервен вариант с matplotlib
-                        st.warning(f"Грешка при генериране на графика за пласт {i+1}: {k_err}")
-                        import matplotlib.pyplot as plt
-                        import matplotlib
-                        matplotlib.use('Agg')
-                        
-                        fig_mat, ax = plt.subplots(figsize=(12, 8))
-                        
-                        # Опитайте да извлечете някои данни от plotly фигурата
-                        if len(fig.data) > 0:
-                            # Ако има данни, пробвайте да ги визуализирате с matplotlib
-                            try:
-                                for trace in fig.data[:5]:  # Вземи първите 5 трасета
-                                    if 'x' in trace and 'y' in trace:
-                                        ax.plot(trace.x, trace.y, label=trace.name if hasattr(trace, 'name') else None)
-                            except:
-                                pass
-                        
-                        ax.set_title(f"Пласт {i + 1}")
-                        ax.set_xlabel("h / D")
-                        ax.set_ylabel("Ed / Ei")
-                        if len(ax.lines) > 0:
-                            ax.legend()
-                        
-                        buf = io.BytesIO()
-                        plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
-                        plt.close(fig_mat)
-                        buf.seek(0)
-                        img_bytes = buf.read()
+                import matplotlib
+                matplotlib.use('Agg')  # Важно: използвайте non-interactive backend
+                import matplotlib.pyplot as plt
+                import numpy as np
                 
-                pil_img = PILImage.open(BytesIO(img_bytes))
+                # Създаване на фигура с matplotlib
+                fig, ax = plt.subplots(figsize=(12, 8))
+                
+                # Подготовка на данните
+                all_e_ei_values = sorted(data["Ee_over_Ei"].unique())
+                current_e_ei = layer['Ee'] / layer['Ei']
+                
+                if 'Ed' in layer and 'Ei' in layer and layer['Ei'] > 0:
+                    EdEi_point = layer['Ed'] / layer['Ei']
+                else:
+                    EdEi_point = current_e_ei
+                
+                # Начертаване на изолиниите
+                for val in all_e_ei_values:
+                    group_sorted = data[data["Ee_over_Ei"] == val].sort_values("h_over_D")
+                    
+                    # Вземем само първите 100 точки за по-бързо чертане
+                    if len(group_sorted) > 100:
+                        indices = np.linspace(0, len(group_sorted)-1, 100, dtype=int)
+                        group_sorted = group_sorted.iloc[indices]
+                    
+                    ax.plot(group_sorted["h_over_D"], 
+                            group_sorted["Ed_over_Ei"], 
+                            linewidth=1.5,
+                            label=f"Ee/Ei = {val:.2f}" if val in all_e_ei_values[:5] else None)  # Покажи само първите 5 в легендата
+                
+                # Добавяне на точката за текущия пласт
+                if all(k in layer for k in ["hD_point", "Ed", "Ei"]):
+                    hD = layer["hD_point"]
+                    EdEi = EdEi_point
+                    
+                    # Добавяне на интерполационна линия
+                    if all(key in layer for key in ['y_low', 'y_high', 'low_iso', 'high_iso']):
+                        ax.plot([hD, hD], [layer['y_low'], layer['y_high']], 
+                               color='purple', linestyle='--', linewidth=2)
+                    
+                    # Добавяне на точката
+                    ax.plot(hD, EdEi, 'ro', markersize=12, label='Резултат')
+                
+                # Настройка на графиката
+                ax.set_title(f"Пласт {i + 1}", fontsize=16, fontweight='bold')
+                ax.set_xlabel("h / D", fontsize=12)
+                ax.set_ylabel("Ed / Ei", fontsize=12)
+                ax.grid(True, alpha=0.3)
+                ax.set_xlim(0, data["h_over_D"].max() * 1.05)
+                ax.set_ylim(0, data["Ed_over_Ei"].max() * 1.05)
+                
+                # Добавяне на легенда (ограничена)
+                if len(all_e_ei_values) > 5:
+                    # Ако има много изолинии, не показвай всички в легендата
+                    handles, labels = ax.get_legend_handles_labels()
+                    if handles:  # Ако има някакви елементи в легендата
+                        ax.legend(handles=[handles[0], handles[-1]] if len(handles) > 1 else [handles[0]], 
+                                 labels=[f"Изолинии ({len(all_e_ei_values)} бр.)", "Резултат"] if len(handles) > 1 else [labels[0]],
+                                 loc='best')
+                elif ax.get_legend_handles_labels()[0]:  # Ако има елементи в легендата
+                    ax.legend(loc='best')
+                
+                # Запазване на изображението
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+                plt.close(fig)
+                buf.seek(0)
+                pil_img = PILImage.open(buf)
                 
             except Exception as e:
-                st.error(f"Критична грешка при генериране на изображение за пласт {i+1}: {e}")
-                # Създайте празно изображение
-                pil_img = PILImage.new("RGB", (1200, 800), color=(255, 255, 255))
-
+                st.warning(f"Грешка при генериране на графика за пласт {i+1}: {e}")
+                # Създайте проста резервна графика
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots(figsize=(12, 8))
+                ax.text(0.5, 0.5, f"Графика за пласт {i+1}\nДанните са налични, но визуализацията не е възможна", 
+                       ha='center', va='center', fontsize=14, transform=ax.transAxes)
+                ax.axis('off')
+                buf = io.BytesIO()
+                plt.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+                plt.close(fig)
+                buf.seek(0)
+                pil_img = PILImage.open(buf)
+    
             # Добавяне на изображението към PDF с МАКСИМАЛЕН РАЗМЕР
             img_buffer = io.BytesIO()
             pil_img.save(img_buffer, format="PNG")
