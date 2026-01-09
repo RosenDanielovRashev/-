@@ -1092,12 +1092,12 @@ def generate_pdf_report():
         calc_table.setStyle(TableStyle([
             ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
             ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
-            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 1),
+            ('TOPPADDING', (0, 0), (-1, -1), 1),
         ]))
         
         story.append(calc_table)
-        story.append(Spacer(1, 16))
+        story.append(Spacer(1, 10))
 
         # РЕЗУЛТАТ И ПРОВЕРКА
         results_title_style = ParagraphStyle(
