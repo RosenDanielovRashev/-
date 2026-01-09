@@ -1409,7 +1409,7 @@ def generate_pdf_report():
                 tau_b_fig.savefig(img_buffer_tau, format='png', dpi=300, bbox_inches='tight')
                 img_buffer_tau.seek(0)
                 
-                story.append(PageBreak())
+               
                 story.append(Paragraph("ГРАФИКА ЗА τb", graph_title_style))
                 story.append(RLImage(img_buffer_tau, width=170 * mm, height=130 * mm))
             except Exception as e:
