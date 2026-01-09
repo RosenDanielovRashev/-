@@ -1181,25 +1181,16 @@ def generate_pdf_report():
                 margin=dict(r=150, l=50, t=50, b=50)
             )
             
-            # Настройки за цветен експорт
-            config = {
-                'toImageButtonOptions': {
-                    'format': 'png',
-                    'scale': 4,
-                    'width': 1200,
-                    'height': 800
-                }
-            }
-            
             # Конвертиране на фигурата към изображение с цветовете
+            # ПРЕМАХНИ параметъра 'config' - той не се поддържа
             img_bytes = pio.to_image(
                 pdf_fig,  # <-- Използвай копието на съществуващата fig
                 format="png", 
                 width=1200, 
                 height=800,
                 scale=3,  # Добра скала за баланс между качество и размер
-                engine="kaleido",
-                config=config
+                engine="kaleido"
+                # config=config  <-- ПРЕМАХНИ ТОВА
             )
             
             # Отвори изображението и го запази
