@@ -168,13 +168,13 @@ def plot_tau_b(fi_value, h_value):
                 ax.plot([x_min, x_max], [group['y'].iloc[0]]*2, 
                         'b-', linewidth=0.5, alpha=0.3)
                 ax.text(x_max, group['y'].iloc[0], f'φ={fi_val}', color='blue', 
-                       va='center', ha='left', fontsize=9, alpha=0.7)
+                       va='center', ha='left', fontsize=8, alpha=0.7)  # ПОМАЛЪК ШРИФТ
             else:
                 x_smooth = np.linspace(group['x'].min(), group['x'].max(), 100)
                 y_smooth = fi_interpolators[fi_val](x_smooth)
                 ax.plot(x_smooth, y_smooth, 'b-', linewidth=0.5, alpha=0.3)
                 ax.text(x_smooth[-1], y_smooth[-1], f'φ={fi_val}', color='blue',
-                       va='center', ha='left', fontsize=9, alpha=0.7)
+                       va='center', ha='left', fontsize=8, alpha=0.7)  # ПОМАЛЪК ШРИФТ
 
         for h_val in h_values_available:
             x_pos = h_to_x[h_val]
@@ -231,13 +231,14 @@ def plot_tau_b(fi_value, h_value):
                 h_tick_labels.append(f"{h_value:.1f}")
         
         ax.set_xticks(x_positions)
-        ax.set_xticklabels(h_tick_labels)
+        ax.set_xticklabels(h_tick_labels, fontsize=9)  # ПОМАЛЪК ШРИФТ ЗА ТИКЧЕТАТА
+        ax.tick_params(axis='y', labelsize=9)  # ПОМАЛЪК ШРИФТ ЗА ТИКЧЕТАТА
         
-        ax.set_xlabel('H', fontsize=12)
-        ax.set_ylabel('τb', fontsize=12)
-        ax.set_title(f'Номограма за активно напрежение на срязване (τb)', fontsize=14)
+        ax.set_xlabel('H', fontsize=10)
+        ax.set_ylabel('τb', fontsize=10)
+        ax.set_title(f'Номограма за активно напрежение на срязване (τb)', fontsize=12)
         ax.grid(True, linestyle='--', alpha=0.5)
-        ax.legend(loc='lower left')
+        ax.legend(loc='lower left', fontsize=9, prop={'size': 9})  # ПОМАЛЪК ШРИФТ ЗА ЛЕГЕНДАТА
         
         return fig, y_tau
         
