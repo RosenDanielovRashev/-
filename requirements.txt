@@ -3,7 +3,7 @@ pandas
 numpy
 scipy
 matplotlib
-plotly==5.11.0
+plotly
 fpdf2
 kaleido==0.2.1
 imgkit==1.2.2
