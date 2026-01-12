@@ -758,7 +758,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontSize=24,
             spaceAfter=20,  # По-малко разстояние
             alignment=1,
-            textColor=colors.HexColor('#006064'),
+            textColor=colors.HexColor('#000000'),
             fontName=font_name,
             leading=30,
         )
@@ -1127,7 +1127,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontSize=18,
             spaceAfter=8,  # По-малко разстояние
             alignment=1,
-            textColor=colors.HexColor('#006064'),
+            textColor=colors.HexColor('#000000'),
             fontName=font_name,
             leading=20,
         )
@@ -1364,7 +1364,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             'ImagesTitle',
             fontName=font_name,
             fontSize=18,
-            textColor=colors.HexColor('#006064'),
+            textColor=colors.HexColor('#000000'),
             spaceAfter=15,
             alignment=1
         )
