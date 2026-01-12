@@ -758,7 +758,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontSize=24,
             spaceAfter=20,  # По-малко разстояние
             alignment=1,
-            textColor=colors.HexColor('#000000'),
+            textColor=colors.HexColor('#006064'),
             fontName=font_name,
             leading=30,
         )
@@ -788,7 +788,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         info_table = Table(table_data, colWidths=[64*mm, 48*mm], hAlign='LEFT')
         info_table.setStyle(TableStyle([
             # Header стил
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
@@ -811,7 +811,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             # Grid и border
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#000000')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
         ]))
 
         story.append(info_table)
@@ -824,7 +824,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontSize=12,
             spaceAfter=10,  # По-малко разстояние
             fontName=font_name,
-            textColor=colors.HexColor('#000000')
+            textColor=colors.HexColor('#2C5530')
         )
         
         legend_style = ParagraphStyle(
@@ -861,7 +861,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             'SummaryTitle',
             fontName=font_name,
             fontSize=18,
-            textColor=colors.HexColor('#000000'),
+            textColor=colors.HexColor('#2C5530'),
             spaceAfter=15,
             alignment=1
         )
@@ -920,7 +920,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 'LayerTitle',
                 fontName=font_name,
                 fontSize=16,
-                textColor=colors.HexColor('#000000'),
+                textColor=colors.HexColor('#2C5530'),
                 spaceAfter=10,  # По-малко разстояние
                 alignment=1
             )
@@ -934,7 +934,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 fontSize=11,
                 spaceAfter=6,  # По-малко разстояние
                 fontName=font_name,
-                textColor=colors.HexColor('#000000'),
+                textColor=colors.HexColor('#2C5530'),
                 leftIndent=10
             )
 
@@ -1127,7 +1127,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontSize=18,
             spaceAfter=8,  # По-малко разстояние
             alignment=1,
-            textColor=colors.HexColor('#000000'),
+            textColor=colors.HexColor('#006064'),
             fontName=font_name,
             leading=20,
         )
@@ -1155,7 +1155,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # Създаване на таблицата
         layers_table = Table(table_data, colWidths=[30*mm, 45*mm, 45*mm])
         layers_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
@@ -1171,7 +1171,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ('TOPPADDING', (0, 1), (-1, -1), 4),
             
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#000000')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
         ]))
         
         story.append(layers_table)
@@ -1285,7 +1285,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             check_table = Table(check_data, colWidths=[90*mm, 50*mm])
             check_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('FONTNAME', (0, 0), (-1, 0), font_name),
                 ('FONTSIZE', (0, 0), (-1, 0), 9),
@@ -1301,7 +1301,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 ('TOPPADDING', (0, 1), (-1, -1), 4),
                 
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#000000')),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
             ]))
             
             story.append(check_table)
@@ -1364,7 +1364,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             'ImagesTitle',
             fontName=font_name,
             fontSize=18,
-            textColor=colors.HexColor('#000000'),
+            textColor=colors.HexColor('#006064'),
             spaceAfter=15,
             alignment=1
         )
@@ -1381,7 +1381,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         
         # ФИГУРИ 5.2 и 5.3 НА ЕДИН ЛИСТ (една страница)
         story.append(Paragraph("Фигура 5.2 и Фигура 5.3", ParagraphStyle(
-            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#000000'), 
+            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#2C5530'), 
             spaceAfter=10, alignment=1
         )))
         
@@ -1425,7 +1425,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # НОВА СТРАНИЦА ЗА ТАБЛИЦИТЕ
         story.append(PageBreak())
         story.append(Paragraph("Таблици", ParagraphStyle(
-            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#000000'), 
+            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#2C5530'), 
             spaceAfter=15, alignment=1
         )))
         
