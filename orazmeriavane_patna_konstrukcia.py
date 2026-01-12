@@ -824,7 +824,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             fontSize=12,
             spaceAfter=10,  # По-малко разстояние
             fontName=font_name,
-            textColor=colors.HexColor('#2C5530')
+            textColor=colors.HexColor('#000000')
         )
         
         legend_style = ParagraphStyle(
@@ -861,7 +861,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             'SummaryTitle',
             fontName=font_name,
             fontSize=18,
-            textColor=colors.HexColor('#2C5530'),
+            textColor=colors.HexColor('#000000'),
             spaceAfter=15,
             alignment=1
         )
@@ -920,7 +920,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 'LayerTitle',
                 fontName=font_name,
                 fontSize=16,
-                textColor=colors.HexColor('#2C5530'),
+                textColor=colors.HexColor('#000000'),
                 spaceAfter=10,  # По-малко разстояние
                 alignment=1
             )
@@ -934,7 +934,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 fontSize=11,
                 spaceAfter=6,  # По-малко разстояние
                 fontName=font_name,
-                textColor=colors.HexColor('#2C5530'),
+                textColor=colors.HexColor('#000000'),
                 leftIndent=10
             )
 
@@ -1381,7 +1381,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         
         # ФИГУРИ 5.2 и 5.3 НА ЕДИН ЛИСТ (една страница)
         story.append(Paragraph("Фигура 5.2 и Фигура 5.3", ParagraphStyle(
-            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#2C5530'), 
+            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#000000'), 
             spaceAfter=10, alignment=1
         )))
         
@@ -1425,7 +1425,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # НОВА СТРАНИЦА ЗА ТАБЛИЦИТЕ
         story.append(PageBreak())
         story.append(Paragraph("Таблици", ParagraphStyle(
-            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#2C5530'), 
+            'SubTitle', fontName=font_name, fontSize=14, textColor=colors.HexColor('#000000'), 
             spaceAfter=15, alignment=1
         )))
         
