@@ -28,7 +28,32 @@ import io
 from PIL import Image as PILImage  # ✅ Преименуваме, за да не се бърка с reportlab Image
 from reportlab.platypus import Image as RLImage  # ✅ Ясно разграничение
 
+import shutil
+import kaleido
 
+def clear_kaleido_cache():
+    """Изчиства кеша на kaleido"""
+    try:
+        # Път към кеша на kaleido
+        cache_dir = os.path.join(os.path.expanduser("~"), ".kaleido")
+        
+        if os.path.exists(cache_dir):
+            # Изтриване на директорията
+            shutil.rmtree(cache_dir)
+            # Създаване на нова празна директория
+            os.makedirs(cache_dir, exist_ok=True)
+            
+            # Инициализиране на новия кеш
+            kaleido.scopes.plotly.reset()
+            
+            return True, "Кеша на Kaleido е изчистен успешно!"
+        else:
+            return False, "Директорията на кеша не е намерена."
+            
+    except PermissionError:
+        return False, "Нямате разрешение да изтриете файловете. Опитайте да рестартирате приложението."
+    except Exception as e:
+        return False, f"Грешка при изчистване на кеша: {str(e)}"
 
 st.set_page_config(layout="wide")
 
@@ -1489,3 +1514,30 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
 
     except Exception as e:
         st.error(f"Грешка при генериране на PDF: {e}")
+
+# Добавете след последния except блок
+st.markdown("---")
+st.subheader("Управление на кеша")
+
+if st.button("🧹 Изчисти Kaleido кеш", type="secondary"):
+    with st.spinner("Изчистване на кеша..."):
+        success, message = clear_kaleido_cache()
+        
+        if success:
+            st.success(message)
+        else:
+            st.error(message)
+    
+    # Информация за рестартиране
+    st.info("""
+    **Важно:** След изчистване на кеша може да се наложи:
+    1. Да рестартирате приложението
+    2. Да презаредите страницата
+    3. Да опитате отново да генерирате PDF
+    """)
+    
+    # Възможност за рестартиране
+    if st.button("🔄 Рестартирай сесия", key="restart_session"):
+        st.rerun()
+
+
