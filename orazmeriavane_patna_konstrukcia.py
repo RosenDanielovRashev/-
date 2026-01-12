@@ -788,7 +788,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         info_table = Table(table_data, colWidths=[64*mm, 48*mm], hAlign='LEFT')
         info_table.setStyle(TableStyle([
             # Header стил
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
@@ -811,7 +811,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             # Grid и border
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#000000')),
         ]))
 
         story.append(info_table)
@@ -1155,7 +1155,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
         # Създаване на таблицата
         layers_table = Table(table_data, colWidths=[30*mm, 45*mm, 45*mm])
         layers_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
             ('FONTNAME', (0, 0), (-1, 0), font_name),
             ('FONTSIZE', (0, 0), (-1, 0), 9),
@@ -1171,7 +1171,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             ('TOPPADDING', (0, 1), (-1, -1), 4),
             
             ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+            ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#000000')),
         ]))
         
         story.append(layers_table)
@@ -1285,7 +1285,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             
             check_table = Table(check_data, colWidths=[90*mm, 50*mm])
             check_table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#4A7C59')),
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#000000')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
                 ('FONTNAME', (0, 0), (-1, 0), font_name),
                 ('FONTSIZE', (0, 0), (-1, 0), 9),
@@ -1301,7 +1301,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 ('TOPPADDING', (0, 1), (-1, -1), 4),
                 
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#D1D5DB')),
-                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#4A7C59')),
+                ('BOX', (0, 0), (-1, -1), 1, colors.HexColor('#000000')),
             ]))
             
             story.append(check_table)
