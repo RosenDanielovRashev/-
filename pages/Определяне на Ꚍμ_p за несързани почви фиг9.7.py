@@ -1538,17 +1538,7 @@ def generate_pdf_report():
                 )
                 story.append(Paragraph(f"Грешка при зареждане на таблицата: {e}", error_style))
         
-        # ДАТА И ПОДПИС
-        story.append(Spacer(1, 22))
-        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        date_style = ParagraphStyle(
-            'DateStyle',
-            fontName=font_name,
-            fontSize=9.9,
-            alignment=2,
-            textColor=colors.HexColor('#666666')
-        )
-        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
+
         
         # Добавяне на номера на страниците С НАЧАЛЕН НОМЕР
         def add_page_number(canvas, doc, start_page=1):
