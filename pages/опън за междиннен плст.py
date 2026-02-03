@@ -1179,18 +1179,7 @@ def generate_pdf_report(layer_idx, results, D, sigma_r=None, sigma_final=None, m
                 )
                 story.append(Paragraph("Изчисленото σR е по-голямо от допустимото σR", subtitle_style))
 
-        # ДАТА И ПОДПИС
-        story.append(Spacer(1, 22))
-        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        date_style = ParagraphStyle(
-            'DateStyle',
-            fontName=font_name,
-            fontSize=9.9,
-            alignment=2,
-            textColor=colors.HexColor('#666666')
-        )
-        story.append(Paragraph(f"Генерирано на: {current_date}", date_style))
-        
+
         # Добавяне на номера на страниците
         def add_page_number(canvas, doc):
             canvas.saveState()
