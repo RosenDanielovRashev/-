@@ -1451,12 +1451,7 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                     
             except Exception as e:
                 continue
-                
-        # Дата и подпис
-        story.append(Spacer(1, 20))
-        current_date = datetime.now().strftime("%d.%m.%Y %H:%M")
-        story.append(Paragraph(f"Генерирано на: {current_date}", ParagraphStyle('Date',
-            fontSize=9, alignment=2, textColor=colors.grey, fontName=font_name)))
+            
 
 
 
