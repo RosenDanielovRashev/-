@@ -8,6 +8,15 @@ import tempfile
 from datetime import datetime
 import base64
 import plotly.io as pio
+
+# 🔥 FIX за Kaleido (точно тук)
+pio.kaleido.scope.chromium_args = [
+    "--disable-gpu",
+    "--disable-dev-shm-usage",
+    "--no-sandbox",
+    "--single-process"
+]
+
 from fpdf import FPDF
 from PIL import Image
 import requests
