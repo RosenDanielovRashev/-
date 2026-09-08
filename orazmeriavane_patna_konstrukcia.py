@@ -730,11 +730,13 @@ if all('h' in layer for layer in st.session_state.layers_data):
 # Функция за конвертиране на Plotly фигура в изображение
 def fig_to_image(fig):
     try:
-        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
-        return Image.open(BytesIO(img_bytes))
+        # Използваме директния метод fig.to_image, който е по-надежден в Plotly 6.x
+        img_bytes = fig.to_image(format="png", width=800, height=600)
+        return Image.open(io.BytesIO(img_bytes))
     except Exception as e:
         st.error(f"Грешка при генериране на изображение: {e}")
-        st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
+        st.info("Проверете дали във файла **requirements.txt** е добавено: `kaleido>=1.0.0` и `plotly>=6.1.0`. След промяна рестартирайте приложението чрез **Reboot app**.")
+        # Връщаме празно бяло изображение при грешка
         return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
