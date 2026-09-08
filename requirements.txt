@@ -13,4 +13,3 @@ cairocffi==1.6.0
 CairoSVG==2.7.1
 reportlab
 pillow
-requests
