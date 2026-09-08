@@ -728,16 +728,15 @@ if all('h' in layer for layer in st.session_state.layers_data):
         """)
 
 # Функция за конвертиране на Plotly фигура в изображение
+# Модерна функция БЕЗ Kaleido - показва графиката директно на екрана
 def fig_to_image(fig):
     try:
-        # Използваме директния метод fig.to_image, който е по-надежден в Plotly 6.x
-        img_bytes = fig.to_image(format="png", width=800, height=600)
-        return Image.open(io.BytesIO(img_bytes))
+        # Показваме интерактивната графика директно в Streamlit
+        st.plotly_chart(fig, use_container_width=True)
+        return fig
     except Exception as e:
-        st.error(f"Грешка при генериране на изображение: {e}")
-        st.info("Проверете дали във файла **requirements.txt** е добавено: `kaleido>=1.0.0` и `plotly>=6.1.0`. След промяна рестартирайте приложението чрез **Reboot app**.")
-        # Връщаме празно бяло изображение при грешка
-        return Image.new('RGB', (800, 600), color=(255, 255, 255))
+        st.error(f"Грешка при визуализация: {e}")
+        return fig
 
 
 # Генериране на PDF отчет със заглавие, таблици и графики
@@ -1079,16 +1078,16 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 height=800
             )
             # Конвертиране на фигурата в изображение с PILImage
+            # Показване на графиката БЕЗ Kaleido директно в уеб страницата
             try:
-                # Използваме директния метод fig.to_image с новите размери
-                img_bytes = fig.to_image(format="png", width=1200, height=800)
-                pil_img = PILImage.open(io.BytesIO(img_bytes))
+                st.subheader(f"Графика за пласт {i+1}")
+                # Изчертаваме интерактивния пласт на екрана
+                st.plotly_chart(fig, use_container_width=True)
+                pil_img = None  # Вече не ни трябва тежко изображение в паметта
             except Exception as e:
-                st.error(f"Грешка при генериране на изображение за пласт {i+1}: {e}")
-                st.info("Ако грешката е свързана с Kaleido, уверете се, че в **requirements.txt** имате `kaleido>=1.0.0` и рестартирайте приложението (Reboot).")
-                # Връщаме празно бяло изображение с размер 1200x800 при грешка
-                pil_img = PILImage.new("RGB", (1200, 800), color=(255, 255, 255))
-
+                st.error(f"Грешка при показване на пласт {i+1}: {e}")
+                pil_img = None
+                
             # Добавяне на изображението към PDF с МАКСИМАЛЕН РАЗМЕР
             img_buffer = io.BytesIO()
             pil_img.save(img_buffer, format="PNG")
