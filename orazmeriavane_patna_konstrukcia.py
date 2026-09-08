@@ -728,15 +728,14 @@ if all('h' in layer for layer in st.session_state.layers_data):
         """)
 
 # Функция за конвертиране на Plotly фигура в изображение
-# Модерна функция БЕЗ Kaleido - показва графиката директно на екрана
 def fig_to_image(fig):
     try:
-        # Показваме интерактивната графика директно в Streamlit
-        st.plotly_chart(fig, use_container_width=True)
-        return fig
+        img_bytes = pio.to_image(fig, format="png", width=800, height=600)
+        return Image.open(BytesIO(img_bytes))
     except Exception as e:
-        st.error(f"Грешка при визуализация: {e}")
-        return fig
+        st.error(f"Грешка при генериране на изображение: {e}")
+        st.info("Моля, добавете 'kaleido==0.2.1' във файла requirements.txt")
+        return Image.new('RGB', (800, 600), color=(255, 255, 255))
 
 
 # Генериране на PDF отчет със заглавие, таблици и графики
@@ -1078,16 +1077,13 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
                 height=800
             )
             # Конвертиране на фигурата в изображение с PILImage
-            # Показване на графиката БЕЗ Kaleido директно в уеб страницата
             try:
-                st.subheader(f"Графика за пласт {i+1}")
-                # Изчертаваме интерактивния пласт на екрана
-                st.plotly_chart(fig, use_container_width=True)
-                pil_img = None  # Вече не ни трябва тежко изображение в паметта
+                img_bytes = pio.to_image(fig, format="png", width=1200, height=800)
+                pil_img = PILImage.open(BytesIO(img_bytes))
             except Exception as e:
-                st.error(f"Грешка при показване на пласт {i+1}: {e}")
-                pil_img = None
-                
+                st.error(f"Грешка при генериране на изображение за пласт {i+1}: {e}")
+                pil_img = PILImage.new("RGB", (1200, 800), color=(255, 255, 255))
+
             # Добавяне на изображението към PDF с МАКСИМАЛЕН РАЗМЕР
             img_buffer = io.BytesIO()
             pil_img.save(img_buffer, format="PNG")
