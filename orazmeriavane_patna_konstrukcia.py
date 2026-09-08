@@ -12,7 +12,7 @@ import plotly.io as pio
 
 # 🔥 КОРЕКЦИЯ за Kaleido: Импортираме и активираме scope ръчно
 from kaleido.scopes.plotly import PlotlyScope
-🔥 FIX за Kaleido (точно тук)
+#🔥 FIX за Kaleido (точно тук)
 pio.kaleido.scope.chromium_args = [
     "--disable-gpu",
     "--disable-dev-shm-usage",
