@@ -3,9 +3,9 @@ pandas
 numpy
 scipy
 matplotlib
-plotly
+plotly>=6.1.1
 fpdf2
-kaleido==0.2.1
+kaleido>=1.0.0
 imgkit==1.2.2
 wkhtmltopdf==0.2
 cairosvg
