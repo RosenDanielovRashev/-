@@ -3,9 +3,9 @@ pandas
 numpy
 scipy
 matplotlib
-plotly>=6.1.1
+plotly
 fpdf2
-kaleido>=1.0.0
+kaleido==0.2.1
 imgkit==1.2.2
 wkhtmltopdf==0.2
 cairosvg
@@ -13,4 +13,3 @@ cairocffi==1.6.0
 CairoSVG==2.7.1
 reportlab
 pillow
-requests
