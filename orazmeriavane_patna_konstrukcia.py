@@ -1080,10 +1080,13 @@ if st.button("📄 Генерирай PDF отчет (с графики)", type=
             )
             # Конвертиране на фигурата в изображение с PILImage
             try:
-                img_bytes = pio.to_image(fig, format="png", width=1200, height=800)
-                pil_img = PILImage.open(BytesIO(img_bytes))
+                # Използваме директния метод fig.to_image с новите размери
+                img_bytes = fig.to_image(format="png", width=1200, height=800)
+                pil_img = PILImage.open(io.BytesIO(img_bytes))
             except Exception as e:
                 st.error(f"Грешка при генериране на изображение за пласт {i+1}: {e}")
+                st.info("Ако грешката е свързана с Kaleido, уверете се, че в **requirements.txt** имате `kaleido>=1.0.0` и рестартирайте приложението (Reboot).")
+                # Връщаме празно бяло изображение с размер 1200x800 при грешка
                 pil_img = PILImage.new("RGB", (1200, 800), color=(255, 255, 255))
 
             # Добавяне на изображението към PDF с МАКСИМАЛЕН РАЗМЕР
