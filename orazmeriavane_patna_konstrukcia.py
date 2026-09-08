@@ -9,6 +9,8 @@ from datetime import datetime
 import base64
 import plotly.io as pio
 
+# 🔥 КОРЕКЦИЯ за Kaleido: Импортираме и активираме scope ръчно
+from kaleido.scopes.plotly import PlotlyScope
 # 🔥 FIX за Kaleido (точно тук)
 pio.kaleido.scope.chromium_args = [
     "--disable-gpu",
