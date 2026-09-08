@@ -2,6 +2,7 @@
 import streamlit as st 
 import pandas as pd 
 import numpy as np 
+import kaleido 
 import plotly.graph_objs as go 
 import os
 import tempfile
@@ -10,14 +11,14 @@ import base64
 import plotly.io as pio
 
 # 🔥 КОРЕКЦИЯ за Kaleido: Импортираме и активираме scope ръчно
-#from kaleido.scopes.plotly import PlotlyScope
-# 🔥 FIX за Kaleido (точно тук)
-#pio.kaleido.scope.chromium_args = [
-    #"--disable-gpu",
-    #"--disable-dev-shm-usage",
-    #"--no-sandbox",
-    #"--single-process"
-#]
+from kaleido.scopes.plotly import PlotlyScope
+🔥 FIX за Kaleido (точно тук)
+pio.kaleido.scope.chromium_args = [
+    "--disable-gpu",
+    "--disable-dev-shm-usage",
+    "--no-sandbox",
+    "--single-process"
+]
 
 from fpdf import FPDF
 from PIL import Image
